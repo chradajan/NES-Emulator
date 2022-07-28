@@ -1,10 +1,36 @@
 #ifndef CPU_HPP
 #define CPU_HPP
 
+#include "OpCodes.hpp"
 #include <array>
 #include <cstdint>
 #include <functional>
-#include "OpCodes.hpp"
+#include <memory>
+
+constexpr uint8_t CARRY_FLAG = 0x01;
+constexpr uint8_t ZERO_FLAG = 0x02;
+constexpr uint8_t INTERRUPT_DISABLE_FLAG = 0x04;
+constexpr uint8_t DECIMAL_FLAG = 0x08;
+constexpr uint8_t OVERFLOW_FLAG = 0x40;
+constexpr uint8_t NEGATIVE_FLAG = 0x80;
+
+constexpr uint16_t ZERO_PAGE_MASK = 0x00FF;
+constexpr uint16_t PAGE_MASK = 0xFF00;
+constexpr uint16_t STACK_PAGE = 0x0100;
+constexpr uint8_t MSB = 0x80;
+constexpr uint8_t LSB = 0x01;
+
+static constexpr uint16_t NMI_VECTOR_LO = 0xFFFA;
+constexpr uint16_t NMI_VECTOR_HI = 0xFFFB;
+constexpr uint16_t RESET_VECTOR_LO = 0xFFFC;
+constexpr uint16_t RESET_VECTOR_HI = 0xFFFD;
+constexpr uint16_t BRK_VECTOR_LO = 0xFFFE;
+constexpr uint16_t BRK_VECTOR_HI = 0xFFFF;
+
+class APU;
+class Cartridge;
+class Controller;
+class PPU;
 
 class CPU
 {
@@ -13,6 +39,13 @@ public:
     ~CPU() = default;
     void Tick();
     void Reset();
+
+// Other components
+private:
+    std::shared_ptr<APU> apu;
+    std::shared_ptr<Cartridge> cartridge;
+    std::shared_ptr<Controller> controller;
+    std::shared_ptr<PPU> ppu;
 
 // R/W functions
 private:
