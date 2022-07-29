@@ -16,6 +16,8 @@ public:
     NES(std::string romPath);
     ~NES() = default;
 
+    void Run();
+
 private:
     std::unique_ptr<APU> apu;
     std::unique_ptr<Cartridge> cartridge;

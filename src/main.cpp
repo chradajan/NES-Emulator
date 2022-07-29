@@ -8,5 +8,6 @@
 int main()
 {
     NES nes("../roms/nestest.nes");
+    nes.Run();
     return 0;
 }

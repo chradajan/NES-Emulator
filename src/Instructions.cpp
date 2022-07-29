@@ -4,7 +4,7 @@
 void CPU::ADC()
 {
     uint16_t temp = iData + Registers.accumulator + (IsCarry() ? 1 : 0);
-    SetZero(temp == 0x0000);
+    SetZero((temp & 0x00FF) == 0x0000);
     SetNegative((temp & MSB) == MSB);
     SetOverflow((((Registers.accumulator ^ iData) & 0x80) != 0x80) && (((Registers.accumulator ^ temp) & 0x80) == 0x80));
     SetCarry(temp > 0xFF);
@@ -249,6 +249,7 @@ void CPU::PLP()
             break;
         case 3:
             Registers.status = Pop() & 0xCF;
+            Registers.status |= 0x20;
             break;
         case 4:
             SetNextOpCode();
@@ -295,6 +296,7 @@ void CPU::RTI()
             break;
         case 3:
             Registers.status = Pop() & 0xCF;
+            Registers.status |= 0x20;
             break;
         case 4:
             iAddr = Pop();
@@ -339,12 +341,14 @@ void CPU::RTS()
 void CPU::SBC()
 {
     uint16_t temp = Registers.accumulator - iData;
-    if (IsCarry())
+
+    if (!IsCarry())
     {
         --temp;
     }
+
     SetNegative((temp & MSB) == MSB);
-    SetZero((temp & 0x00FF) == 0x00);
+    SetZero((temp & 0x00FF) == 0x0000);
     SetOverflow((((Registers.accumulator ^ temp) & 0x0080) == 0x0080) && (((Registers.accumulator ^ iData) & 0x0080) == 0x0080));
     SetCarry(temp < 0x0100);
     Registers.accumulator = temp & 0x00FF;

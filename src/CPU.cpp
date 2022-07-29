@@ -311,7 +311,7 @@ void CPU::DecodeOpCode()
 {
     isStoreOp = false;
 
-    switch(opCode)
+    switch (opCode)
     {
         case OpCode::Immediate_ADC:
             instruction = std::bind(&CPU::ADC, this);
@@ -658,7 +658,7 @@ void CPU::DecodeOpCode()
         case OpCode::Absolute_Y_LDA:
             index = Registers.y;
             instruction = std::bind(&CPU::LDA, this);
-            tickFunction = std::bind(&CPU::Immediate, this);
+            tickFunction = std::bind(&CPU::AbsoluteIndexed, this);
             break;
         case OpCode::Indirect_X_LDA:
             instruction = std::bind(&CPU::LDA, this);
@@ -990,7 +990,7 @@ void CPU::DecodeOpCode()
             tickFunction = std::bind(&CPU::Implied, this);
             break;
         default:
-            std::cout << "INVALID OPCODE" << (int)opCode << std::endl;
+            std::cout << "INVALID OPCODE " << std::hex << (unsigned int)opCode << std::endl;
             SetNextOpCode();
     }
 

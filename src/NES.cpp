@@ -21,6 +21,14 @@ NES::NES(std::string const romPath)
     cpu = std::make_unique<CPU>(*apu, *cartridge, *controller, *ppu);
 }
 
+void NES::Run()
+{
+    while(true)
+    {
+        cpu->Tick();
+    }
+}
+
 void NES::InitializeCartridge(std::string const romPath)
 {
     std::ifstream rom(romPath, std::ios::binary);

@@ -3,7 +3,7 @@
 
 void CPU::Immediate()
 {
-    switch(cycle)
+    switch (cycle)
     {
         case 1:
             iData = ReadAndIncrementPC();
@@ -16,7 +16,7 @@ void CPU::Immediate()
 
 void CPU::Absolute()
 {
-    switch(cycle)
+    switch (cycle)
     {
         case 1:
             iData = ReadAndIncrementPC();
@@ -42,7 +42,7 @@ void CPU::Absolute()
 
 void CPU::ZeroPage()
 {
-    switch(cycle)
+    switch (cycle)
     {
         case 1:
             iAddr = ReadAndIncrementPC();
@@ -65,7 +65,7 @@ void CPU::ZeroPage()
 
 void CPU::Implied()
 {
-    switch(cycle)
+    switch (cycle)
     {
         case 1:
             // Dummy Read
@@ -79,7 +79,7 @@ void CPU::Implied()
 
 void CPU::AbsoluteIndexed()
 {
-    switch(cycle)
+    switch (cycle)
     {
         case 1:
             iData = ReadAndIncrementPC();
@@ -119,7 +119,7 @@ void CPU::AbsoluteIndexed()
 
 void CPU::ZeroPageIndexed()
 {
-    switch(cycle)
+    switch (cycle)
     {
         case 1:
             iAddr = ReadAndIncrementPC();
@@ -147,7 +147,7 @@ void CPU::ZeroPageIndexed()
 
 void CPU::IndirectX()
 {
-    switch(cycle)
+    switch (cycle)
     {
         case 1:
             iData = ReadAndIncrementPC();
@@ -182,23 +182,24 @@ void CPU::IndirectX()
 
 void CPU::IndirectY()
 {
-    switch(cycle)
+    switch (cycle)
     {
         case 1:
             iData = ReadAndIncrementPC();
             break;
         case 2:
             iAddr = Read(iData);
-            iData = (iData + Registers.y) & ZERO_PAGE_MASK;
+            ++iData;
             break;
         case 3:
-            iAddr = (Read(iData) << 8) | iAddr;
+            iAddr |= (Read(iData) << 8);
             break;
         case 4:
             if (isStoreOp || (((iAddr + Registers.y) & PAGE_MASK) != (iAddr & PAGE_MASK)))
             {
-                Read((iAddr & PAGE_MASK) + ((iAddr + Registers.y) & ZERO_PAGE_MASK));
-                iAddr = (iAddr + Registers.y) & 0xFFFF;
+                // Dummy Read
+                Read((iAddr & PAGE_MASK) | ((iAddr + Registers.y) & ZERO_PAGE_MASK));
+                iAddr += Registers.y;
             }
             else
             {
@@ -225,7 +226,7 @@ void CPU::IndirectY()
 
 void CPU::Relative()
 {
-    switch(cycle)
+    switch (cycle)
     {
         case 1:
             iData = ReadAndIncrementPC();
@@ -262,7 +263,7 @@ void CPU::Relative()
 
 void CPU::Accumulator()
 {
-    switch(cycle)
+    switch (cycle)
     {
         case 1:
             // Dummy Read
@@ -278,7 +279,7 @@ void CPU::Accumulator()
 
 void CPU::ZeroPageRMW()
 {
-    switch(cycle)
+    switch (cycle)
     {
         case 1:
             iAddr = ReadAndIncrementPC();
@@ -301,7 +302,7 @@ void CPU::ZeroPageRMW()
 
 void CPU::ZeroPageIndexedRMW()
 {
-    switch(cycle)
+    switch (cycle)
     {
         case 1:
             iAddr = ReadAndIncrementPC();
@@ -329,7 +330,7 @@ void CPU::ZeroPageIndexedRMW()
 
 void CPU::AbsoluteRWM()
 {
-    switch(cycle)
+    switch (cycle)
     {
         case 1:
             iAddr = ReadAndIncrementPC();
@@ -355,7 +356,7 @@ void CPU::AbsoluteRWM()
 
 void CPU::AbsoluteIndexedRMW()
 {
-    switch(cycle)
+    switch (cycle)
     {
         case 1:
             iData = ReadAndIncrementPC();
