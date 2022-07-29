@@ -2,11 +2,14 @@
 #define PPU_HPP
 
 #include <cstdint>
+#include <memory>
+
+class Cartridge;
 
 class PPU
 {
 public:
-    PPU();
+    PPU(Cartridge& cartridge);
     ~PPU() = default;
     void Reset();
 
@@ -14,6 +17,9 @@ public:
     void WriteReg(uint16_t addr, uint8_t data);
 
     bool NMI();
+
+private:
+    Cartridge& cartridge;
 };
 
 #endif

@@ -1,7 +1,8 @@
 #include "../include/PPU.hpp"
 #include <cstdint>
 
-PPU::PPU()
+PPU::PPU(Cartridge& cartridge) :
+    cartridge(cartridge)
 {
 
 }

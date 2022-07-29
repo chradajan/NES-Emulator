@@ -35,17 +35,17 @@ class PPU;
 class CPU
 {
 public:
-    CPU();
+    CPU(APU& apu, Cartridge& cartridge, Controller& controller, PPU& ppu);
     ~CPU() = default;
     void Tick();
     void Reset();
 
 // Other components
 private:
-    std::shared_ptr<APU> apu;
-    std::shared_ptr<Cartridge> cartridge;
-    std::shared_ptr<Controller> controller;
-    std::shared_ptr<PPU> ppu;
+    APU& apu;
+    Cartridge& cartridge;
+    Controller& controller;
+    PPU& ppu;
 
 // R/W functions
 private:

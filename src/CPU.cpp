@@ -8,7 +8,11 @@
 #include <functional>
 #include <iostream>
 
-CPU::CPU()
+CPU::CPU(APU& apu, Cartridge& cartridge, Controller& controller, PPU& ppu) :
+    apu(apu),
+    cartridge(cartridge),
+    controller(controller),
+    ppu(ppu)
 {
     Registers.accumulator = 0x00;
     Registers.status = 0x34;
@@ -36,15 +40,15 @@ uint8_t CPU::Read(uint16_t addr)
     }
     else if (addr < 0x4000)
     {
-        return ppu->ReadReg(addr);
+        return ppu.ReadReg(addr);
     }
     else if (addr < 0x4016)
     {
-        return apu->ReadReg(addr);
+        return apu.ReadReg(addr);
     }
     else if (addr < 0x4018)
     {
-        return controller->ReadReg(addr);
+        return controller.ReadReg(addr);
     }
     else if (addr < 0x4020)
     {
@@ -53,7 +57,7 @@ uint8_t CPU::Read(uint16_t addr)
     }
     else
     {
-        return cartridge->ReadPRG(addr);
+        return cartridge.ReadPRG(addr);
     }
 }
 
@@ -65,7 +69,7 @@ void CPU::Write(uint16_t addr, uint8_t data)
     }
     else if (addr < 0x4000)
     {
-        ppu->WriteReg(addr, data);
+        ppu.WriteReg(addr, data);
     }
     else if (addr == OAMDMA_ADDR)
     {
@@ -73,11 +77,11 @@ void CPU::Write(uint16_t addr, uint8_t data)
     }
     else if ((addr < 0x4016) || (addr == JOY2_ADDR))
     {
-        apu->WriteReg(addr, data);
+        apu.WriteReg(addr, data);
     }
     else if (addr == JOY1_ADDR)
     {
-        controller->WriteReg(data);
+        controller.WriteReg(data);
     }
     else if (addr < 0x4020)
     {
@@ -86,7 +90,7 @@ void CPU::Write(uint16_t addr, uint8_t data)
     }
     else
     {
-        cartridge->WritePRG(addr, data);
+        cartridge.WritePRG(addr, data);
     }
 }
 
@@ -104,7 +108,7 @@ void CPU::Push(uint8_t data)
 
 void CPU::SetNextOpCode()
 {
-    if (ppu->NMI())
+    if (ppu.NMI())
     {
         // TODO: Handle NMI
     }
@@ -243,7 +247,7 @@ void CPU::ExecuteOamDmaTransfer()
         }
         else
         {
-            ppu->WriteReg(OAMDATA_ADDR, OamDmaData);
+            ppu.WriteReg(OAMDATA_ADDR, OamDmaData);
         }
     }
 
