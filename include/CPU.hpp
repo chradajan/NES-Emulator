@@ -58,6 +58,12 @@ private:
     void SetNextOpCode();
     uint8_t ReadAndIncrementPC();
 
+// Interrupt Vectors
+private:
+    void NMIVector();
+    void ResetVector();
+    void IrqBrqVector();
+
 // State variables
 private:
     OpCode opCode;
@@ -105,6 +111,7 @@ private:
     uint8_t OamDmaData;
     uint16_t OamDmaAddr;
     uint16_t OamDmaCycle;
+    uint8_t postOamDmaReturnCycle;
 
 // Instruction Data
 private:

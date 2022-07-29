@@ -19,12 +19,41 @@ CPU::CPU(APU& apu, Cartridge& cartridge, Controller& controller, PPU& ppu) :
     Registers.stackPointer = 0xFD;
     Registers.x = 0x00;
     Registers.y = 0x00;
+
+    cycle = 0;
+    oddCycle = false;
+
+    iData = 0x00;
+    iAddr = 0x0000;
+    index = 0x00;
+    regData = 0x00;
+    isStoreOp = false;
+    branchCondition = false;
+    instruction = [](){};
+    tickFunction = [](){};
+
     RAM.fill(0x00);
+    ResetVector();
+    SetNextOpCode();
 }
 
 void CPU::Tick()
 {
+    oddCycle = !oddCycle;
+    ++cycle;
 
+    if (isOamDmaTransfer)
+    {
+        ExecuteOamDmaTransfer();
+    }
+    else if (cycle == 1)
+    {
+        DecodeOpCode();
+    }
+    else
+    {
+        tickFunction();
+    }
 }
 
 void CPU::Reset()
@@ -124,6 +153,23 @@ uint8_t CPU::ReadAndIncrementPC()
     uint8_t data = Read(Registers.programCounter);
     ++Registers.programCounter;
     return data;
+}
+
+void CPU::NMIVector()
+{
+    // TODO
+}
+
+void CPU::ResetVector()
+{
+    iAddr = Read(RESET_VECTOR_LO);
+    iAddr |= (Read(RESET_VECTOR_HI) << 8);
+    Registers.programCounter = iAddr;
+}
+
+void CPU::IrqBrqVector()
+{
+    // TODO
 }
 
 bool CPU::IsCarry() const
@@ -234,6 +280,7 @@ void CPU::InitiateOamDmaTransfer(uint8_t sourcePage)
     OamDmaData = 0x00;
     OamDmaAddr = (sourcePage << 8);
     OamDmaCycle = oddCycle ? 514 : 513;
+    postOamDmaReturnCycle = cycle;
 }
 
 void CPU::ExecuteOamDmaTransfer()
@@ -256,12 +303,14 @@ void CPU::ExecuteOamDmaTransfer()
     if (OamDmaCycle == 0)
     {
         isOamDmaTransfer = false;
+        cycle = postOamDmaReturnCycle;
     }
 }
 
 void CPU::DecodeOpCode()
 {
     isStoreOp = false;
+
     switch(opCode)
     {
         case OpCode::Immediate_ADC:
@@ -944,4 +993,6 @@ void CPU::DecodeOpCode()
             std::cout << "INVALID OPCODE" << (int)opCode << std::endl;
             SetNextOpCode();
     }
+
+    tickFunction();
 }
