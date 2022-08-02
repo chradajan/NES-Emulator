@@ -45,6 +45,8 @@ public:
     ~PPU() = default;
     void Reset();
 
+    void Tick();
+
     uint8_t ReadReg(uint16_t addr);
     void WriteReg(uint16_t addr, uint8_t data);
 
@@ -55,9 +57,18 @@ private:
     void Write(uint16_t addr, uint8_t data);
 
     bool RenderingEnabled();
+
+// Scanlines
+private:
+    void PreRenderLine();
+    void VisibleLine();
+
+// Pointer Increments
+private:
     void IncrementVRAMAddr();
     void CoarseXIncrement();
     void YIncrement();
+    void DotIncrement();
 
     uint8_t PaletteAddress(uint16_t addr);
 
@@ -95,6 +106,7 @@ private:
 private:
     uint16_t scanline;
     uint16_t dot;
+    bool oddFrame;
 };
 
 #endif

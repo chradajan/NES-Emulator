@@ -14,6 +14,24 @@ void PPU::Reset()
 
 }
 
+void PPU::Tick()
+{
+    if (scanline < 240)
+    {
+        VisibleLine();
+    }
+    else if ((scanline == 241) && (dot == 1))
+    {
+        MemMappedRegisters.PPUSTATUS |= 0x80;
+    }
+    else if (scanline == 261)
+    {
+        PreRenderLine();
+    }
+
+    DotIncrement();
+}
+
 uint8_t PPU::ReadReg(uint16_t addr)
 {
     if (addr > 0x2007)
@@ -168,6 +186,16 @@ bool PPU::RenderingEnabled()
     return (MemMappedRegisters.PPUMASK & renderFlags) != 0x00;
 }
 
+void PPU::PreRenderLine()
+{
+
+}
+
+void PPU::VisibleLine()
+{
+
+}
+
 void PPU::IncrementVRAMAddr()
 {
     InternalRegisters.v &= 0x7FFF;
@@ -225,6 +253,41 @@ void PPU::YIncrement()
         }
 
         InternalRegisters.v = (InternalRegisters.v & ~0x03E0) | (y << 5);
+    }
+}
+
+void PPU::DotIncrement()
+{
+    if (dot < 339)
+    {
+        ++dot;
+    }
+    else if (dot == 339)
+    {
+        if (oddFrame && (scanline == 261) && RenderingEnabled())
+        {
+            dot = 0;
+            scanline = 0;
+            oddFrame = !oddFrame;
+        }
+        else
+        {
+            ++dot;
+        }
+    }
+    else
+    {
+        dot = 0;
+
+        if (scanline == 261)
+        {
+            scanline = 0;
+            oddFrame = !oddFrame;
+        }
+        else
+        {
+            ++scanline;
+        }
     }
 }
 

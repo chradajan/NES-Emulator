@@ -26,6 +26,7 @@ void NES::Run()
     while(true)
     {
         cpu->Tick();
+        ppu->Tick();
     }
 }
 
