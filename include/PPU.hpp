@@ -59,6 +59,8 @@ private:
     void CoarseXIncrement();
     void YIncrement();
 
+    uint8_t PaletteAddress(uint16_t addr);
+
 // Other components
 private:
     Cartridge& cartridge;
@@ -79,10 +81,6 @@ private:
         uint8_t PPUMASK;    // $2001
         uint8_t PPUSTATUS;  // $2002
         uint8_t OAMADDR;    // $2003
-        uint8_t OAMDATA;    // $2004
-        uint8_t PPUSCROLL;  // $2005
-        uint8_t PPUADDR;    // $2006
-        uint8_t PPUDATA;    // $2007
     } MemMappedRegisters;
 
     uint8_t readBuffer;
@@ -90,6 +88,8 @@ private:
 // Memory
 private:
     std::array<uint8_t, 0x0100> OAM;
+    std::array<uint8_t, 0x0800> VRAM;
+    std::array<uint8_t, 0x0020> PaletteRAM;
 
 // Frame state
 private:

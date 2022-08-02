@@ -1,4 +1,5 @@
 #include "../include/PPU.hpp"
+#include "../include/Cartridge.hpp"
 #include "../include/RegisterAddresses.hpp"
 #include <cstdint>
 
@@ -131,14 +132,34 @@ bool PPU::NMI()
 
 uint8_t PPU::Read(uint16_t addr)
 {
-    (void)addr;
-    return 0x00;
+    if (addr < 0x2000)
+    {
+        return cartridge.ReadCHR(addr);
+    }
+    else if (addr < 0x3F00)
+    {
+        return VRAM[cartridge.NameTableAddress(addr)];
+    }
+    else
+    {
+        return PaletteRAM[PaletteAddress(addr)];
+    }
 }
 
 void PPU::Write(uint16_t addr, uint8_t data)
 {
-    (void)addr;
-    (void)data;
+    if (addr < 0x2000)
+    {
+        cartridge.WriteCHR(addr, data);
+    }
+    else if (addr < 0x3F00)
+    {
+        VRAM[cartridge.NameTableAddress(addr)] = data;
+    }
+    else
+    {
+        PaletteRAM[PaletteAddress(addr)] = data;
+    }
 }
 
 bool PPU::RenderingEnabled()
@@ -205,4 +226,17 @@ void PPU::YIncrement()
 
         InternalRegisters.v = (InternalRegisters.v & ~0x03E0) | (y << 5);
     }
+}
+
+uint8_t PPU::PaletteAddress(uint16_t addr)
+{
+    // TODO: Is this correct implementation?
+    uint8_t paletteAddr = addr % 0x20;
+
+    if (paletteAddr == 0x10)
+    {
+        paletteAddr = 0x00;
+    }
+
+    return paletteAddr;
 }
