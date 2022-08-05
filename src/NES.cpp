@@ -10,8 +10,6 @@
 #include <fstream>
 #include <memory>
 
-#include <iostream>
-
 NES::NES(std::string const romPath)
 {
     InitializeCartridge(romPath);
@@ -23,11 +21,18 @@ NES::NES(std::string const romPath)
 
 void NES::Run()
 {
-    while(true)
+    while (!ppu->FrameReady())
     {
         cpu->Tick();
         ppu->Tick();
+        ppu->Tick();
+        ppu->Tick();
     }
+}
+
+char* NES::GetFrameBuffer()
+{
+    return ppu->GetFrameBuffer();
 }
 
 void NES::InitializeCartridge(std::string const romPath)

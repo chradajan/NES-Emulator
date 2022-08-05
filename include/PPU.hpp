@@ -46,6 +46,8 @@ public:
     void Reset();
 
     void Tick();
+    bool FrameReady();
+    char* GetFrameBuffer();
 
     uint8_t ReadReg(uint16_t addr);
     void WriteReg(uint16_t addr, uint8_t data);
@@ -57,6 +59,8 @@ private:
     void Write(uint16_t addr, uint8_t data);
 
     bool RenderingEnabled();
+    void SetNMI();
+
 
 // Scanlines
 private:
@@ -69,12 +73,41 @@ private:
     void CoarseXIncrement();
     void YIncrement();
     void DotIncrement();
+    void TransferHorizontalPosition();
+    void TransferVerticalPosition();
 
     uint8_t PaletteAddress(uint16_t addr);
 
+// Background Fetch
+private:
+    uint8_t backgroundFetchCycle_;
+    uint8_t nametableByte_;
+    uint8_t attributeTableByte_;
+    uint16_t patternTableAddress_;
+    uint8_t patternTableLowByte_;
+    uint8_t patternTableHighByte_;
+
+    uint16_t patternTableShifterHigh_;
+    uint16_t patternTableShifterLow_;
+    uint8_t attributeTableShifterHigh_;
+    uint8_t attributeTableShifterLow_;
+    bool attributeTableLatchHigh_;
+    bool attributeTableLatchLow_;
+
+    void BackgroundFetch();
+    void LoadShiftRegisters();
+    void ShiftRegisters();
+
+// Pixel retrieval
+private:
+    uint16_t backgroundPixel_;
+    void CreateBackgroundPixel();
+    uint8_t PixelMultiplexer();
+    void RenderPixel();
+
 // Other components
 private:
-    Cartridge& cartridge;
+    Cartridge& cartridge_;
 
 // Registers
 private:
@@ -84,7 +117,7 @@ private:
         uint16_t t; // Temporary VRAM address
         uint8_t x;  // Fine X scroll
         bool w;     // Write toggle
-    } InternalRegisters;
+    } InternalRegisters_;
 
     struct
     {
@@ -92,21 +125,36 @@ private:
         uint8_t PPUMASK;    // $2001
         uint8_t PPUSTATUS;  // $2002
         uint8_t OAMADDR;    // $2003
-    } MemMappedRegisters;
+    } MemMappedRegisters_;
 
-    uint8_t readBuffer;
+    uint8_t readBuffer_;
 
 // Memory
 private:
-    std::array<uint8_t, 0x0100> OAM;
-    std::array<uint8_t, 0x0800> VRAM;
-    std::array<uint8_t, 0x0020> PaletteRAM;
+    std::array<uint8_t, 0x0100> OAM_;
+    std::array<uint8_t, 0x0800> VRAM_;
+    std::array<uint8_t, 0x0020> PaletteRAM_;
+
+    struct RGB
+    {
+        uint8_t R;
+        uint8_t G;
+        uint8_t B;
+    };
+    std::array<RGB, 0x40> Colors_;
 
 // Frame state
 private:
-    uint16_t scanline;
-    uint16_t dot;
-    bool oddFrame;
+    uint16_t scanline_;
+    uint16_t dot_;
+    bool oddFrame_;
+    bool nmiCpuCheck_;
+
+// Frame buffer
+private:
+    bool frameReady_;
+    std::array<char, 256 * 240 * 3> frameBuffer_;
+    size_t framePointer_;
 };
 
 #endif

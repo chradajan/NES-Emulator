@@ -139,7 +139,9 @@ void CPU::SetNextOpCode()
 {
     if (ppu.NMI())
     {
-        // TODO: Handle NMI
+        cycle = 1;
+        tickFunction = std::bind(&CPU::NMI, this);
+        tickFunction();
     }
     else
     {
@@ -170,6 +172,39 @@ void CPU::ResetVector()
 void CPU::IrqBrqVector()
 {
     // TODO
+}
+
+void CPU::NMI()
+{
+    switch (cycle)
+    {
+        case 1:
+            // Rummy Read
+            Read(Registers.programCounter);
+            break;
+        case 2:
+            // Rummy Read
+            Read(Registers.programCounter);
+            break;
+        case 3:
+            Push(Registers.programCounter >> 8);
+            break;
+        case 4:
+            Push(Registers.programCounter & 0xFF);
+            break;
+        case 5:
+            Push((Registers.status | 0x20) & 0xEF);
+            break;
+        case 6:
+            iAddr = Read(NMI_VECTOR_LO);
+            break;
+        case 7:
+            iAddr |= (Read(NMI_VECTOR_HI) << 8);
+            break;
+        case 8:
+            Registers.programCounter = iAddr;
+            SetNextOpCode();
+    }
 }
 
 bool CPU::IsCarry() const

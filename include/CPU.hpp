@@ -20,7 +20,7 @@ constexpr uint16_t STACK_PAGE = 0x0100;
 constexpr uint8_t MSB = 0x80;
 constexpr uint8_t LSB = 0x01;
 
-static constexpr uint16_t NMI_VECTOR_LO = 0xFFFA;
+constexpr uint16_t NMI_VECTOR_LO = 0xFFFA;
 constexpr uint16_t NMI_VECTOR_HI = 0xFFFB;
 constexpr uint16_t RESET_VECTOR_LO = 0xFFFC;
 constexpr uint16_t RESET_VECTOR_HI = 0xFFFD;
@@ -63,6 +63,10 @@ private:
     void NMIVector();
     void ResetVector();
     void IrqBrqVector();
+
+// Interrupt Handling
+private:
+    void NMI();
 
 // State variables
 private:

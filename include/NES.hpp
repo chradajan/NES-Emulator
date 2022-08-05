@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 
 class APU;
 class Cartridge;
@@ -17,6 +18,7 @@ public:
     ~NES() = default;
 
     void Run();
+    char* GetFrameBuffer();
 
 private:
     std::unique_ptr<APU> apu;
