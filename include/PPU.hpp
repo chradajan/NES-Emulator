@@ -21,7 +21,7 @@ constexpr uint8_t GREYSCALE_MASK = 0x01;
 constexpr uint8_t SHOW_LEFT_BACKGROUND_MASK = 0x02;
 constexpr uint8_t SHOW_LEFT_SPRITE_MASK = 0x04;
 constexpr uint8_t SHOW_BACKGROUND_MASK = 0x08;
-constexpr uint8_t SHOW_SPITES_MASK = 0x10;
+constexpr uint8_t SHOW_SPRITES_MASK = 0x10;
 constexpr uint8_t EMPHASIZE_RED_MASK = 0x20;
 constexpr uint8_t EMPHASIZE_GREEN_MASK = 0x40;
 constexpr uint8_t EMPHASIZE_BLUE_MASK = 0x80;
@@ -32,6 +32,14 @@ constexpr uint8_t PPU_OPEN_BUS_MASK = 0x1F;
 constexpr uint8_t SPRITE_OVERFLOW_MASK = 0x20;
 constexpr uint8_t SPRITE_0_HIT_MASK = 0x40;
 constexpr uint8_t VBLANK_STARTED_MASK = 0x80;
+
+// Sprite Attributes
+constexpr uint8_t BANK_SELECTION_MASK = 0x01;
+constexpr uint8_t SPRITE_PALETTE_MASK = 0x03;
+constexpr uint8_t BACKGROUND_PRIORITY_MASK = 0x20;
+constexpr uint8_t FLIP_HORIZONTAL_MASK = 0x40;
+constexpr uint8_t FLIP_VERTICAL_MASK = 0x80;
+constexpr uint8_t LARGE_SPRITE_TILE_MASK = 0xFE;
 
 // Other Masks
 constexpr uint16_t VRAM_ADDR_MASK = 0x3FFF;
@@ -61,6 +69,20 @@ private:
     bool RenderingEnabled();
     void SetNMI();
 
+// Memory
+private:
+    std::array<uint8_t, 0x0100> OAM_;
+    std::array<uint8_t, 0x0020> OAM_Secondary_;
+    std::array<uint8_t, 0x0800> VRAM_;
+    std::array<uint8_t, 0x0020> PaletteRAM_;
+
+    struct RGB
+    {
+        uint8_t R;
+        uint8_t G;
+        uint8_t B;
+    };
+    std::array<RGB, 0x40> Colors_;
 
 // Scanlines
 private:
@@ -98,11 +120,58 @@ private:
     void LoadShiftRegisters();
     void ShiftRegisters();
 
+// Sprite Evaluation
+private:
+    size_t oamIndex_;
+    size_t oamOffset_;
+    size_t oamSecondaryIndex_;
+    uint8_t oamByte_;
+    uint8_t spritesFound_;
+    bool sprite0Loaded_;
+
+    enum class SpriteEvalState
+    {
+        READ,
+        WRITE_Y,
+        WRITE_DATA,
+        OVERFLOW,
+        FINISHED,
+    };
+    SpriteEvalState spriteState_;
+
+    void ResetSpriteEvaluation();
+    void SpriteEvaluation();
+
+// Sprite Fetch
+private:
+    uint8_t spriteFetchCycle_;
+    size_t spriteIndex_;
+    bool checkSprite0Hit_;
+
+    struct Sprite
+    {
+        uint8_t y;
+        uint8_t tile;
+        uint8_t attributes;
+        int16_t x;
+
+        bool sprite0;
+        bool valid;
+        uint8_t patternTableLowByte;
+        uint8_t patternTableHighByte;
+    };
+    std::array<Sprite, 8> Sprites_;
+    void SpriteFetch();
+
 // Pixel retrieval
 private:
-    uint16_t backgroundPixel_;
+    uint16_t backgroundPixelAddr_;
+    uint16_t spritePixelAddr_;
+    bool backgroundPriority_;
+
     void CreateBackgroundPixel();
-    uint8_t PixelMultiplexer();
+    void CreateSpritePixel();
+    RGB PixelMultiplexer();
     void RenderPixel();
 
 // Other components
@@ -128,20 +197,6 @@ private:
     } MemMappedRegisters_;
 
     uint8_t readBuffer_;
-
-// Memory
-private:
-    std::array<uint8_t, 0x0100> OAM_;
-    std::array<uint8_t, 0x0800> VRAM_;
-    std::array<uint8_t, 0x0020> PaletteRAM_;
-
-    struct RGB
-    {
-        uint8_t R;
-        uint8_t G;
-        uint8_t B;
-    };
-    std::array<RGB, 0x40> Colors_;
 
 // Frame state
 private:

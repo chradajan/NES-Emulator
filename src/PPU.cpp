@@ -226,7 +226,7 @@ void PPU::Write(uint16_t addr, uint8_t data)
 
 bool PPU::RenderingEnabled()
 {
-    constexpr uint8_t renderFlags = SHOW_BACKGROUND_MASK | SHOW_SPITES_MASK;
+    constexpr uint8_t renderFlags = SHOW_BACKGROUND_MASK | SHOW_SPRITES_MASK;
     return (MemMappedRegisters_.PPUMASK & renderFlags) != 0x00;
 }
 
@@ -243,6 +243,7 @@ void PPU::PreRenderLine()
         switch (dot_)
         {
             case 0:
+                ResetSpriteEvaluation();
                 break;
             case 1:
                 MemMappedRegisters_.PPUSTATUS &= ~(VBLANK_STARTED_MASK | SPRITE_0_HIT_MASK);
@@ -253,13 +254,18 @@ void PPU::PreRenderLine()
                 break;
             case 257:
                 TransferHorizontalPosition();
+                oamSecondaryIndex_ = 0;
+                SpriteFetch();
                 break;
             case 258 ... 279:
+                SpriteFetch();
                 break;
             case 280 ... 304:
                 TransferVerticalPosition();
+                SpriteFetch();
                 break;
             case 305 ... 320:
+                SpriteFetch();
                 break;
             case 321 ... 336:
                 BackgroundFetch();
@@ -285,22 +291,32 @@ void PPU::VisibleLine()
         switch (dot_)
         {
             case 0:
+                ResetSpriteEvaluation();
                 if (!oddFrame_)
                 {
                     Read(0x2000 | (InternalRegisters_.v & 0x0FFF));
                 }
                 break;
-            case 1 ... 256:
+            case 1 ... 64:
                 CreateBackgroundPixel();
+                CreateSpritePixel();
                 RenderPixel();
                 BackgroundFetch();
                 break;
+            case 65 ... 256:
+                CreateBackgroundPixel();
+                CreateSpritePixel();
+                RenderPixel();
+                BackgroundFetch();
+                SpriteEvaluation();
+                break;
             case 257:
                 TransferHorizontalPosition();
+                oamSecondaryIndex_ = 0;
+                SpriteFetch();
                 break;
-            case 258 ... 279:
-                break;
-            case 280 ... 320:
+            case 258 ... 320:
+                SpriteFetch();
                 break;
             case 321 ... 336:
                 BackgroundFetch();
@@ -519,27 +535,339 @@ void PPU::ShiftRegisters()
     attributeTableShifterLow_ |= (attributeTableLatchLow_ ? 0x01 : 0x00);
 }
 
+void PPU::ResetSpriteEvaluation()
+{
+    oamIndex_ = 0;
+    oamOffset_ = 0;
+    oamSecondaryIndex_ = 0;
+    spritesFound_ = 0;
+    sprite0Loaded_ = false;
+    spriteState_ = SpriteEvalState::READ;
+    spriteIndex_ = 0;
+    OAM_Secondary_.fill(0xFF);
+}
+
+void PPU::SpriteEvaluation()
+{
+    switch (spriteState_)
+    {
+        case SpriteEvalState::READ:
+        {
+            oamByte_ = OAM_[((oamIndex_ * 4) + oamOffset_)];
+
+            if (spritesFound_ == 8)
+            {
+                spriteState_ = SpriteEvalState::OVERFLOW;
+            }
+            else if (oamOffset_ == 0)
+            {
+                spriteState_ = SpriteEvalState::WRITE_Y;
+            }
+            else
+            {
+                spriteState_ = SpriteEvalState::WRITE_DATA;
+            }
+            break;
+        }
+        case SpriteEvalState::WRITE_Y:
+        {
+            OAM_Secondary_[oamSecondaryIndex_] = oamByte_;
+            int16_t yOffset = scanline_ - oamByte_;
+            uint8_t spriteHeight = ((MemMappedRegisters_.PPUCTRL & SPRITE_SIZE_MASK) == SPRITE_SIZE_MASK) ? 16 : 8;
+
+            if ((yOffset >= 0) && (yOffset < spriteHeight))
+            {
+                if (oamIndex_ == 0)
+                {
+                    sprite0Loaded_ = true;
+                }
+
+                ++oamOffset_;
+                ++oamSecondaryIndex_;
+                spriteState_ = SpriteEvalState::READ;
+            }
+            else
+            {
+                ++oamIndex_;
+
+                if (oamIndex_ == 64)
+                {
+                    spriteState_ = SpriteEvalState::FINISHED;
+                }
+                else
+                {
+                    spriteState_ = SpriteEvalState::READ;
+                }
+            }
+            break;
+        }
+        case SpriteEvalState::WRITE_DATA:
+        {
+            OAM_Secondary_[oamSecondaryIndex_] = oamByte_;
+            ++oamOffset_;
+            ++oamSecondaryIndex_;
+
+            if (oamOffset_ == 4)
+            {
+                ++spritesFound_;
+                ++oamIndex_;
+                oamOffset_ = 0;
+
+                if (oamIndex_ == 64)
+                {
+                    spriteState_ = SpriteEvalState::FINISHED;
+                }
+                else
+                {
+                    spriteState_ = SpriteEvalState::READ;
+                }
+            }
+            else
+            {
+                spriteState_ = SpriteEvalState::READ;
+            }
+            break;
+        }
+        case SpriteEvalState::OVERFLOW:
+        {
+            int16_t yOffset = scanline_ - oamByte_;
+            uint8_t spriteHeight = ((MemMappedRegisters_.PPUCTRL & SPRITE_SIZE_MASK) == SPRITE_SIZE_MASK) ? 16 : 8;
+
+            if ((yOffset >= 0) && (yOffset < spriteHeight))
+            {
+                MemMappedRegisters_.PPUSTATUS |= SPRITE_OVERFLOW_MASK;
+                spriteState_ = SpriteEvalState::FINISHED;
+            }
+            else
+            {
+                ++oamIndex_;
+                oamOffset_ = (oamOffset_ + 1) % 4;
+
+                if (oamIndex_ == 64)
+                {
+                    spriteState_ = SpriteEvalState::FINISHED;
+                }
+                else
+                {
+                    spriteState_ = SpriteEvalState::READ;
+                }
+            }
+            break;
+        }
+        case SpriteEvalState::FINISHED:
+            break;
+    }
+}
+
+void PPU::SpriteFetch()
+{
+    ++spriteFetchCycle_;
+
+    switch (spriteFetchCycle_)
+    {
+        case 2:
+        {
+            Read(0x2000 | (InternalRegisters_.v & 0x0FFF));
+            break;
+        }
+        case 4:
+        {
+            Read(0x23C0 |
+                 (InternalRegisters_.v & 0x0C00) |
+                 ((InternalRegisters_.v >> 4) & 0x0038) |
+                 ((InternalRegisters_.v >> 2) & 0x0007));
+            break;
+        }
+        case 6:
+        {
+            Sprites_[spriteIndex_].y = OAM_Secondary_[oamSecondaryIndex_++];
+            Sprites_[spriteIndex_].tile = OAM_Secondary_[oamSecondaryIndex_++];
+            Sprites_[spriteIndex_].attributes = OAM_Secondary_[oamSecondaryIndex_++];
+            Sprites_[spriteIndex_].x = OAM_Secondary_[oamSecondaryIndex_++];
+
+            if (sprite0Loaded_ && (spriteIndex_ == 0))
+            {
+                Sprites_[spriteIndex_].sprite0 = true;
+            }
+
+            uint8_t yOffset = scanline_ - Sprites_[spriteIndex_].y;
+
+            if ((MemMappedRegisters_.PPUCTRL & SPRITE_SIZE_MASK) == SPRITE_SIZE_MASK)
+            {
+                // 8x16 sprite mode
+
+                if ((Sprites_[spriteIndex_].attributes & FLIP_VERTICAL_MASK) == FLIP_VERTICAL_MASK)
+                {
+                    yOffset = (yOffset - 15) * -1;
+                }
+
+                if (yOffset < 8)
+                {
+                    patternTableAddress_ = ((Sprites_[spriteIndex_].tile & BANK_SELECTION_MASK) << 12) |
+                                           ((Sprites_[spriteIndex_].tile & LARGE_SPRITE_TILE_MASK) << 4) |
+                                           yOffset;
+                }
+                else
+                {
+                    patternTableAddress_ = ((Sprites_[spriteIndex_].tile & BANK_SELECTION_MASK) << 12) |
+                                           ((Sprites_[spriteIndex_].tile & LARGE_SPRITE_TILE_MASK) << 4) |
+                                           yOffset | 0x10;
+                }
+            }
+            else
+            {
+                // 8x8 sprite mode
+
+                if ((Sprites_[spriteIndex_].attributes & FLIP_VERTICAL_MASK) == FLIP_VERTICAL_MASK)
+                {
+                    yOffset = (yOffset - 7) * -1;
+                }
+
+                patternTableAddress_ = ((MemMappedRegisters_.PPUCTRL & SPRITE_PT_ADDRESS_MASK) << 9) |
+                                       (Sprites_[spriteIndex_].tile << 4) |
+                                       yOffset;
+            }
+
+            Sprites_[spriteIndex_].patternTableLowByte = Read(patternTableAddress_);
+            break;
+        }
+        case 8:
+        {
+            patternTableAddress_ |= 0x08;
+            Sprites_[spriteIndex_].patternTableHighByte = Read(patternTableAddress_);
+
+            if (spritesFound_ > 0)
+            {
+                Sprites_[spriteIndex_].valid = true;
+                --spritesFound_;
+            }
+
+            spriteFetchCycle_ = 0;
+            ++spriteIndex_;
+            break;
+        }
+    }
+}
+
 void PPU::CreateBackgroundPixel()
 {
-    backgroundPixel_ = 0x3F00;
+    backgroundPixelAddr_ = 0x3F00;
     uint16_t attributeTableMask = 0x0080 >> InternalRegisters_.x;
     uint16_t patternTableMask = 0x8000 >> InternalRegisters_.x;
 
-    backgroundPixel_ |= (((attributeTableShifterHigh_ & attributeTableMask) == attributeTableMask) ? 0x0008 : 0x0000);
-    backgroundPixel_ |= (((attributeTableShifterLow_ & attributeTableMask) == attributeTableMask) ? 0x0004 : 0x0000);
-    backgroundPixel_ |= (((patternTableShifterHigh_ & patternTableMask) == patternTableMask) ? 0x0002 : 0x0000);
-    backgroundPixel_ |= (((patternTableShifterLow_ & patternTableMask) == patternTableMask) ? 0x0001 : 0x0000);
+    backgroundPixelAddr_ |= (((attributeTableShifterHigh_ & attributeTableMask) == attributeTableMask) ? 0x0008 : 0x0000);
+    backgroundPixelAddr_ |= (((attributeTableShifterLow_ & attributeTableMask) == attributeTableMask) ? 0x0004 : 0x0000);
+    backgroundPixelAddr_ |= (((patternTableShifterHigh_ & patternTableMask) == patternTableMask) ? 0x0002 : 0x0000);
+    backgroundPixelAddr_ |= (((patternTableShifterLow_ & patternTableMask) == patternTableMask) ? 0x0001 : 0x0000);
 }
 
-uint8_t PPU::PixelMultiplexer()
+void PPU::CreateSpritePixel()
 {
-    return Read(backgroundPixel_);
+    spritePixelAddr_ = 0x3F10;
+
+    if (scanline_ == 0)
+    {
+        return;
+    }
+
+    for (int i = 7; i >= 0; --i)
+    {
+        Sprite& sprite = Sprites_[i];
+
+        if (!sprite.valid)
+        {
+            continue;
+        }
+
+        --sprite.x;
+
+        if ((sprite.x >= -8) && (sprite.x <= -1))
+        {
+            uint8_t pixelNibble = ((sprite.attributes & SPRITE_PALETTE_MASK) << 2);
+
+            if ((sprite.attributes & FLIP_HORIZONTAL_MASK) == FLIP_HORIZONTAL_MASK)
+            {
+                pixelNibble |= ((sprite.patternTableHighByte & 0x01) << 1);
+                pixelNibble |= (sprite.patternTableLowByte & 0x01);
+                sprite.patternTableHighByte >>= 1;
+                sprite.patternTableLowByte >>= 1;
+            }
+            else
+            {
+                pixelNibble |= ((sprite.patternTableHighByte & 0x80) >> 6);
+                pixelNibble |= ((sprite.patternTableLowByte & 0x80) >> 7);
+                sprite.patternTableHighByte <<= 1;
+                sprite.patternTableLowByte <<= 1;
+            }
+
+            if ((pixelNibble & 0x03) != 0x00)
+            {
+                spritePixelAddr_ = 0x3F10 | pixelNibble;
+                checkSprite0Hit_ = sprite.sprite0;
+                backgroundPriority_ = ((sprite.attributes & BACKGROUND_PRIORITY_MASK) == BACKGROUND_PRIORITY_MASK);
+            }
+        }
+    }
+}
+
+PPU::RGB PPU::PixelMultiplexer()
+{
+    uint16_t colorAddr = 0x3F00;
+
+    bool showBackground = ((MemMappedRegisters_.PPUMASK & SHOW_BACKGROUND_MASK) == SHOW_BACKGROUND_MASK);
+    bool showSprites = ((MemMappedRegisters_.PPUMASK & SHOW_SPRITES_MASK) == SHOW_SPRITES_MASK);
+    bool leftBackgroundHidden = ((MemMappedRegisters_.PPUMASK & SHOW_LEFT_BACKGROUND_MASK) != SHOW_LEFT_BACKGROUND_MASK);
+    bool leftSpritesHidden = ((MemMappedRegisters_.PPUMASK & SHOW_LEFT_SPRITE_MASK) != SHOW_LEFT_SPRITE_MASK);
+
+    bool opaqueBackground = ((backgroundPixelAddr_ & 0x03) != 0x00);
+    bool opaqueSprite = ((spritePixelAddr_ & 0x03) != 0x00);
+
+    if ((leftBackgroundHidden || leftSpritesHidden) && (dot_ < 9))
+    {
+        if (leftBackgroundHidden && !leftSpritesHidden && showSprites)
+        {
+            colorAddr = spritePixelAddr_;
+        }
+        else if (leftSpritesHidden && !leftBackgroundHidden && showBackground)
+        {
+            colorAddr = backgroundPixelAddr_;
+        }
+    }
+    else if (showBackground && !showSprites)
+    {
+        colorAddr = backgroundPixelAddr_;
+    }
+    else if (showSprites && !showBackground)
+    {
+        colorAddr = spritePixelAddr_;
+    }
+    else
+    {
+        if (opaqueBackground && opaqueSprite)
+        {
+            colorAddr = backgroundPriority_ ? backgroundPixelAddr_ : spritePixelAddr_;
+
+            if (checkSprite0Hit_ && (dot_ != 255))
+            {
+                MemMappedRegisters_.PPUSTATUS |= SPRITE_0_HIT_MASK;
+            }
+        }
+        else if (opaqueBackground)
+        {
+            colorAddr = backgroundPixelAddr_;
+        }
+        else if (opaqueSprite)
+        {
+            colorAddr = spritePixelAddr_;
+        }
+    }
+
+    return Colors_[Read(colorAddr)];
 }
 
 void PPU::RenderPixel()
 {
-    uint8_t colorIndex = PixelMultiplexer();
-    auto rgb = Colors_[colorIndex];
+    RGB rgb = PixelMultiplexer();
 
     frameBuffer_[framePointer_++] = rgb.R;
     frameBuffer_[framePointer_++] = rgb.G;
