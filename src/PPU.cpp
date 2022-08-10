@@ -442,12 +442,16 @@ void PPU::TransferVerticalPosition()
 
 uint8_t PPU::PaletteAddress(uint16_t addr)
 {
-    // TODO: Is this correct implementation?
     uint8_t paletteAddr = addr % 0x20;
 
-    if (paletteAddr == 0x10)
+    switch (paletteAddr)
     {
-        paletteAddr = 0x00;
+        case 0x10:
+        case 0x14:
+        case 0x18:
+        case 0x1C:
+            paletteAddr -= 0x10;
+            break;
     }
 
     return paletteAddr;
@@ -684,11 +688,7 @@ void PPU::SpriteFetch()
             Sprites_[spriteIndex_].tile = OAM_Secondary_[oamSecondaryIndex_++];
             Sprites_[spriteIndex_].attributes = OAM_Secondary_[oamSecondaryIndex_++];
             Sprites_[spriteIndex_].x = OAM_Secondary_[oamSecondaryIndex_++];
-
-            if (sprite0Loaded_ && (spriteIndex_ == 0))
-            {
-                Sprites_[spriteIndex_].sprite0 = true;
-            }
+            Sprites_[spriteIndex_].sprite0 = (sprite0Loaded_ && (spriteIndex_ == 0));
 
             uint8_t yOffset = scanline_ - Sprites_[spriteIndex_].y;
 
@@ -740,6 +740,10 @@ void PPU::SpriteFetch()
             {
                 Sprites_[spriteIndex_].valid = true;
                 --spritesFound_;
+            }
+            else
+            {
+                Sprites_[spriteIndex_].valid = false;
             }
 
             spriteFetchCycle_ = 0;
