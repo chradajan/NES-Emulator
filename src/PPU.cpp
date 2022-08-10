@@ -27,6 +27,8 @@ PPU::PPU(Cartridge& cartridge) :
         Colors_[colorIndex] = RGB{paletteArray[i], paletteArray[i + 1], paletteArray[i + 2]};
         ++colorIndex;
     }
+
+    dot_ = 30;
 }
 
 void PPU::Reset()
@@ -417,15 +419,12 @@ void PPU::DotIncrement()
     else
     {
         dot_ = 0;
+        ++scanline_;
 
-        if (scanline_ == 261)
+        if (scanline_ == 262)
         {
             scanline_ = 0;
             oddFrame_ = !oddFrame_;
-        }
-        else
-        {
-            ++scanline_;
         }
     }
 }
