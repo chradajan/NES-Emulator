@@ -42,7 +42,7 @@ NROM::NROM(std::ifstream& rom, std::array<uint8_t, 16> const& header)
         mirrorType = MirrorType::HORIZONTAL;
     }
 
-    LoadROM(rom);
+    LoadROM(rom, 1, 1);
 }
 
 uint8_t NROM::ReadPRG(uint16_t addr)
@@ -113,8 +113,11 @@ uint16_t NROM::NameTableAddress(uint16_t addr)
     return addr;
 }
 
-void NROM::LoadROM(std::ifstream& rom)
+void NROM::LoadROM(std::ifstream& rom, uint8_t prgRomBanks, uint8_t chrRomBanks)
 {
+    (void)prgRomBanks;
+    (void)chrRomBanks;
+
     // Load PRG ROM data.
     uint16_t maxPrgAddr = PRG_Mirroring ? 0x4000 : 0x8000;
 

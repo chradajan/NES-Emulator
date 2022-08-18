@@ -41,11 +41,11 @@ public:
     virtual uint16_t NameTableAddress(uint16_t addr) = 0;
 
 protected:
-    enum class MirrorType {HORIZONTAL, VERTICAL, SINGLE, QUAD};
+    enum class MirrorType {HORIZONTAL, VERTICAL, SINGLE_LOW, SINGLE_HIGH, QUAD};
 
 protected:
     MirrorType mirrorType;
-    virtual void LoadROM(std::ifstream& rom) = 0;
+    virtual void LoadROM(std::ifstream& rom, uint8_t prgRomBanks, uint8_t chrRomBanks) = 0;
 };
 
 #endif

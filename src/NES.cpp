@@ -3,6 +3,7 @@
 #include "../include/Cartridge.hpp"
 #include "../include/CPU.hpp"
 #include "../include/Controller.hpp"
+#include "../include/mappers/MMC1.hpp"
 #include "../include/mappers/NROM.hpp"
 #include "../include/PPU.hpp"
 #include <cstdint>
@@ -23,10 +24,10 @@ void NES::Run()
 {
     while (!ppu->FrameReady())
     {
+        ppu->Tick();
+        ppu->Tick();
+        ppu->Tick();
         cpu->Tick();
-        ppu->Tick();
-        ppu->Tick();
-        ppu->Tick();
     }
 }
 
@@ -51,6 +52,9 @@ void NES::InitializeCartridge(std::string const romPath)
     {
         case 0:
             cartridge = std::make_unique<NROM>(rom, header);
+            break;
+        case 1:
+            cartridge = std::make_unique<MMC1>(rom, header);
             break;
         default:
             cartridge = nullptr;

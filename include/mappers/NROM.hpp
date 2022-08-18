@@ -26,7 +26,7 @@ private:
     std::array<uint8_t, 0x2000> CHR_ROM;
     bool PRG_Mirroring;
 
-    void LoadROM(std::ifstream& rom) override;
+    void LoadROM(std::ifstream& rom, uint8_t prgRomBanks, uint8_t chrRomBanks) override;
 };
 
 #endif
