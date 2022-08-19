@@ -10,6 +10,7 @@ Controller::Controller()
 
 uint8_t Controller::ReadReg(uint16_t addr)
 {
+    busData_ = addr;
     uint8_t controllerReading = 0x00;
 
     if (addr == JOY1_ADDR)
@@ -31,12 +32,13 @@ uint8_t Controller::ReadReg(uint16_t addr)
         // TODO: Implement controller 2 inputs.
     }
 
+    controllerReading |= ((busData_ & BUS_MASK) >> 8);
     return controllerReading;
 }
 
 void Controller::WriteReg(uint8_t data)
 {
-    if ((data & LATCH_FLAG) == LATCH_FLAG)
+    if ((data & LATCH_MASK) == LATCH_MASK)
     {
         strobeLatch_ = true;
         controller1_ = 0x00;
