@@ -204,6 +204,7 @@ private:
     uint16_t dot_;
     bool oddFrame_;
     bool nmiCpuCheck_;
+    uint8_t openBus_;
 
 // Frame buffer
 private:

@@ -20,7 +20,7 @@ CPU::CPU(APU& apu, Cartridge& cartridge, Controller& controller, PPU& ppu) :
     Registers.x = 0x00;
     Registers.y = 0x00;
 
-    cycle = 0;
+    cycle = 1;
     oddCycle = false;
 
     iData = 0x00;
@@ -33,8 +33,7 @@ CPU::CPU(APU& apu, Cartridge& cartridge, Controller& controller, PPU& ppu) :
     tickFunction = [](){};
 
     RAM.fill(0x00);
-    ResetVector();
-    SetNextOpCode();
+    tickFunction = std::bind(&CPU::ResetVector, this);
 }
 
 void CPU::Tick()
@@ -157,16 +156,21 @@ uint8_t CPU::ReadAndIncrementPC()
     return data;
 }
 
-void CPU::NMIVector()
-{
-    // TODO
-}
-
 void CPU::ResetVector()
 {
-    iAddr = Read(RESET_VECTOR_LO);
-    iAddr |= (Read(RESET_VECTOR_HI) << 8);
-    Registers.programCounter = iAddr;
+    switch (cycle)
+    {
+        case 6:
+            iAddr = Read(RESET_VECTOR_LO);
+            break;
+        case 7:
+            iAddr |= (Read(RESET_VECTOR_HI) << 8);
+            break;
+        case 8:
+            Registers.programCounter = iAddr;
+            SetNextOpCode();
+            break;
+    }
 }
 
 void CPU::IrqBrqVector()
@@ -179,11 +183,11 @@ void CPU::NMI()
     switch (cycle)
     {
         case 1:
-            // Rummy Read
+            // Dummy Read
             Read(Registers.programCounter);
             break;
         case 2:
-            // Rummy Read
+            // Dummy Read
             Read(Registers.programCounter);
             break;
         case 3:

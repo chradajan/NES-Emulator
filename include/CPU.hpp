@@ -60,7 +60,6 @@ private:
 
 // Interrupt Vectors
 private:
-    void NMIVector();
     void ResetVector();
     void IrqBrqVector();
 

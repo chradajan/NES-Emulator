@@ -28,7 +28,14 @@ PPU::PPU(Cartridge& cartridge) :
         ++colorIndex;
     }
 
-    dot_ = 30;
+    oddFrame_ = false;
+    scanline_ = 0;
+    dot_ = 0;
+    VRAM_.fill(0x00);
+    OAM_.fill(0xFF);
+    OAM_Secondary_.fill(0xFF);
+    PaletteRAM_.fill(0xFF);
+    openBus_ = 0x00;
 }
 
 void PPU::Reset()
@@ -86,9 +93,12 @@ uint8_t PPU::ReadReg(uint16_t addr)
             InternalRegisters_.w = false;
             returnData = MemMappedRegisters_.PPUSTATUS;
             MemMappedRegisters_.PPUSTATUS &= ~VBLANK_STARTED_MASK;
+            returnData |= (openBus_ & 0x1F);
+            openBus_ = returnData;
             break;
         case OAMDATA_ADDR:
             returnData = OAM_[MemMappedRegisters_.OAMADDR];
+            openBus_ = returnData;
             break;
         case PPUDATA_ADDR:
             if (InternalRegisters_.v < 0x3F00)
@@ -111,6 +121,8 @@ uint8_t PPU::ReadReg(uint16_t addr)
             {
                 IncrementVRAMAddr();
             }
+
+            openBus_ = returnData;
             break;
         default:
             break;
@@ -125,6 +137,8 @@ void PPU::WriteReg(uint16_t addr, uint8_t data)
     {
         addr = 0x2000 + (addr % 0x0008);
     }
+
+    openBus_ = data;
 
     switch (addr)
     {
@@ -850,7 +864,7 @@ PPU::RGB PPU::PixelMultiplexer()
         {
             colorAddr = backgroundPriority_ ? backgroundPixelAddr_ : spritePixelAddr_;
 
-            if (checkSprite0Hit_ && (dot_ != 255))
+            if (checkSprite0Hit_ && (dot_ > 1) && (dot_ != 255))
             {
                 MemMappedRegisters_.PPUSTATUS |= SPRITE_0_HIT_MASK;
             }

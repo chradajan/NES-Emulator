@@ -2,6 +2,7 @@
 #define APU_HPP
 
 #include <array>
+#include <cstdint>
 
 class APU
 {
