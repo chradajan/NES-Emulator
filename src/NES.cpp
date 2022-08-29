@@ -11,12 +11,12 @@
 #include <fstream>
 #include <memory>
 
-NES::NES(std::string const romPath)
+NES::NES(std::string const romPath, char* frameBuffer)
 {
     InitializeCartridge(romPath);
     apu = std::make_unique<APU>();
     controller = std::make_unique<Controller>();
-    ppu = std::make_unique<PPU>(*cartridge);
+    ppu = std::make_unique<PPU>(*cartridge, frameBuffer);
     cpu = std::make_unique<CPU>(*apu, *cartridge, *controller, *ppu);
 }
 
@@ -25,15 +25,8 @@ void NES::Run()
     while (!ppu->FrameReady())
     {
         ppu->Tick();
-        ppu->Tick();
-        ppu->Tick();
         cpu->Tick();
     }
-}
-
-char* NES::GetFrameBuffer()
-{
-    return ppu->GetFrameBuffer();
 }
 
 void NES::InitializeCartridge(std::string const romPath)

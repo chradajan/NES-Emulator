@@ -8,15 +8,21 @@
 #include <memory>
 #include <string>
 #include <SDL2/SDL.h>
+#include <iostream>
 
 GameWindow::GameWindow(std::string const romPath)
 {
-    nes = std::make_unique<NES>(romPath);
-    frameBuffer = nes->GetFrameBuffer();
-    screenSurface = SDL_CreateRGBSurfaceFrom((void*)frameBuffer, SCREEN_WIDTH, SCREEN_HEIGHT, CHANNELS * 8, SCREEN_WIDTH * CHANNELS, 0x0000FF, 0x00FF00, 0xFF0000, 0);
+    screenSurface = SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, CHANNELS * 8, 0x0000FF, 0x00FF00, 0xFF0000, 0);
+    nes = std::make_unique<NES>(romPath, static_cast<char*>(screenSurface->pixels));
     SDL_Init(SDL_INIT_VIDEO);
-    window = SDL_CreateWindow("NES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+    window = SDL_CreateWindow("NES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     windowSurface = SDL_GetWindowSurface(window);
+}
+
+GameWindow::~GameWindow()
+{
+    SDL_FreeSurface(screenSurface);
+    SDL_DestroyWindow(window);
 }
 
 void GameWindow::StartEmulator()
@@ -36,6 +42,10 @@ void GameWindow::StartEmulator()
             {
                 quit = true;
             }
+            else if (e.type == SDL_WINDOWEVENT)
+            {
+                windowSurface = SDL_GetWindowSurface(window);
+            }
         }
 
         nes->Run();
@@ -52,6 +62,7 @@ void GameWindow::StartEmulator()
 
 void GameWindow::UpdateScreen()
 {
-    SDL_BlitSurface(screenSurface, NULL, windowSurface, NULL);
+    SDL_BlitScaled(screenSurface, NULL, windowSurface, NULL);
+    // SDL_BlitSurface(screenSurface, NULL, windowSurface, NULL);
     SDL_UpdateWindowSurface(window);
 }

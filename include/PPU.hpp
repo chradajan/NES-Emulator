@@ -49,7 +49,7 @@ class Cartridge;
 class PPU
 {
 public:
-    PPU(Cartridge& cartridge);
+    PPU(Cartridge& cartridge, char* frameBuffer);
     ~PPU() = default;
     void Reset();
 
@@ -205,11 +205,12 @@ private:
     bool oddFrame_;
     bool nmiCpuCheck_;
     uint8_t openBus_;
+    bool renderingEnabled_;
 
 // Frame buffer
 private:
     bool frameReady_;
-    std::array<char, 256 * 240 * 3> frameBuffer_;
+    char* frameBuffer_;
     size_t framePointer_;
 };
 

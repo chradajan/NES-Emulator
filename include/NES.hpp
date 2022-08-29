@@ -14,11 +14,10 @@ class PPU;
 class NES
 {
 public:
-    NES(std::string romPath);
+    NES(std::string romPath, char* frameBuffer);
     ~NES() = default;
 
     void Run();
-    char* GetFrameBuffer();
 
 private:
     std::unique_ptr<APU> apu;

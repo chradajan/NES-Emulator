@@ -1,9 +1,9 @@
-COMPILER_FLAGS = -std=c++17 -Wall -Wextra -Wl,-subsystem,windows
+COMPILER_FLAGS = -std=c++17 -O2 -Wall -Wextra -Wl,-subsystem,windows
 OUT_DIR = ./bin
 SRC_DIR = ./src
 MAPPER_DIR = ./src/mappers
-SDL_INCLUDE = C:\Programs\SDL2\include
-SDL_LIBRARY = C:\Programs\SDL2\lib
+SDL_INCLUDE = ./SDL2/include
+SDL_LIBRARY = ./SDL2/lib
 LINKER_FLAGS = -lmingw32 -lSDL2main -lSDL2
 
 main: ./src/*.cpp

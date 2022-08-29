@@ -17,7 +17,7 @@ class GameWindow
 {
 public:
     GameWindow(std::string romPath);
-    ~GameWindow() = default;
+    ~GameWindow();
     void StartEmulator();
 
 private:

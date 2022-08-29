@@ -6,10 +6,18 @@
 #include "../include/NES.hpp"
 #include "../include/PPU.hpp"
 #include <SDL2/SDL.h>
+#include <iostream>
+#include <string>
 
 int main(int, char**)
 {
-    GameWindow window("../roms/nestest.nes");
+    std::string path = "../roms/";
+    std::string extension = ".nes";
+    std::string game;
+
+    std::cin >> game;
+
+    GameWindow window(path + game + extension);
     window.StartEmulator();
     return 0;
 }

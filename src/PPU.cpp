@@ -3,8 +3,9 @@
 #include "../include/RegisterAddresses.hpp"
 #include <cstdint>
 
-PPU::PPU(Cartridge& cartridge) :
-    cartridge_(cartridge)
+PPU::PPU(Cartridge& cartridge, char* frameBuffer) :
+    cartridge_(cartridge),
+    frameBuffer_(frameBuffer)
 {
     uint8_t paletteArray[192] = {
         0x7C, 0x7C, 0x7C, 0x00, 0x00, 0xFC, 0x00, 0x00, 0xBC, 0x44, 0x28, 0xBC, 0x94, 0x00, 0x84, 0xA8, 0x00, 0x20,
@@ -45,21 +46,32 @@ void PPU::Reset()
 
 void PPU::Tick()
 {
-    if (scanline_ < 240)
-    {
-        VisibleLine();
-    }
-    else if ((scanline_ == 241) && (dot_ == 1))
-    {
-        MemMappedRegisters_.PPUSTATUS |= VBLANK_STARTED_MASK;
-        SetNMI();
-    }
-    else if (scanline_ == 261)
-    {
-        PreRenderLine();
-    }
+    renderingEnabled_ = RenderingEnabled();
 
-    DotIncrement();
+    for (size_t i = 0; i < 3; ++i)
+    {
+        if (scanline_ < 240)
+        {
+            VisibleLine();
+
+            if ((scanline_ == 239) && (dot_ == 256))
+            {
+                frameReady_ = true;
+                framePointer_ = 0;
+            }
+        }
+        else if ((scanline_ == 241) && (dot_ == 1))
+        {
+            MemMappedRegisters_.PPUSTATUS |= VBLANK_STARTED_MASK;
+            SetNMI();
+        }
+        else if (scanline_ == 261)
+        {
+            PreRenderLine();
+        }
+
+        DotIncrement();
+    }
 }
 
 bool PPU::FrameReady()
@@ -71,11 +83,6 @@ bool PPU::FrameReady()
     }
 
     return false;
-}
-
-char* PPU::GetFrameBuffer()
-{
-    return frameBuffer_.data();
 }
 
 uint8_t PPU::ReadReg(uint16_t addr)
@@ -242,8 +249,7 @@ void PPU::Write(uint16_t addr, uint8_t data)
 
 bool PPU::RenderingEnabled()
 {
-    constexpr uint8_t renderFlags = SHOW_BACKGROUND_MASK | SHOW_SPRITES_MASK;
-    return (MemMappedRegisters_.PPUMASK & renderFlags) != 0x00;
+    return (MemMappedRegisters_.PPUMASK & (SHOW_BACKGROUND_MASK | SHOW_SPRITES_MASK)) != 0x00;
 }
 
 void PPU::SetNMI()
@@ -254,100 +260,95 @@ void PPU::SetNMI()
 
 void PPU::PreRenderLine()
 {
-    if (RenderingEnabled())
+    switch (dot_)
     {
-        switch (dot_)
-        {
-            case 0:
-                ResetSpriteEvaluation();
-                break;
-            case 1:
-                MemMappedRegisters_.PPUSTATUS &= ~(VBLANK_STARTED_MASK | SPRITE_0_HIT_MASK);
-                BackgroundFetch();
-                break;
-            case 2 ... 256:
-                BackgroundFetch();
-                break;
-            case 257:
+        case 0:
+            ResetSpriteEvaluation();
+            break;
+        case 1:
+            MemMappedRegisters_.PPUSTATUS &= ~(VBLANK_STARTED_MASK | SPRITE_0_HIT_MASK);
+            BackgroundFetch();
+            break;
+        case 2 ... 256:
+            BackgroundFetch();
+            break;
+        case 257:
+            if (renderingEnabled_)
+            {
                 TransferHorizontalPosition();
-                oamSecondaryIndex_ = 0;
-                SpriteFetch();
-                break;
-            case 258 ... 279:
-                SpriteFetch();
-                break;
-            case 280 ... 304:
+            }
+            oamSecondaryIndex_ = 0;
+            SpriteFetch();
+            break;
+        case 258 ... 279:
+            SpriteFetch();
+            break;
+        case 280 ... 304:
+            if (renderingEnabled_)
+            {
                 TransferVerticalPosition();
-                SpriteFetch();
-                break;
-            case 305 ... 320:
-                SpriteFetch();
-                break;
-            case 321 ... 336:
-                BackgroundFetch();
-                break;
-            case 337 ... 340:
-                if ((dot_ % 2) == 0)
-                {
-                    Read(0x2000 | (InternalRegisters_.v & 0x0FFF));
-                }
-                break;
-        }
-    }
-    else if (dot_ == 1)
-    {
-        MemMappedRegisters_.PPUSTATUS &= ~(VBLANK_STARTED_MASK | SPRITE_0_HIT_MASK);
+            }
+            SpriteFetch();
+            break;
+        case 305 ... 320:
+            SpriteFetch();
+            break;
+        case 321 ... 336:
+            BackgroundFetch();
+            break;
+        case 337 ... 340:
+            if ((dot_ % 2) == 0)
+            {
+                Read(0x2000 | (InternalRegisters_.v & 0x0FFF));
+            }
+            break;
     }
 }
 
 void PPU::VisibleLine()
 {
-    if (RenderingEnabled())
+    switch (dot_)
     {
-        switch (dot_)
-        {
-            case 0:
-                ResetSpriteEvaluation();
-                if (!oddFrame_)
-                {
-                    Read(0x2000 | (InternalRegisters_.v & 0x0FFF));
-                }
-                break;
-            case 1 ... 64:
-                CreateBackgroundPixel();
-                CreateSpritePixel();
-                RenderPixel();
-                BackgroundFetch();
-                break;
-            case 65 ... 256:
-                CreateBackgroundPixel();
-                CreateSpritePixel();
-                RenderPixel();
-                BackgroundFetch();
-                SpriteEvaluation();
-                break;
-            case 257:
+        case 0:
+            ResetSpriteEvaluation();
+            if (!oddFrame_ && renderingEnabled_)
+            {
+                Read(0x2000 | (InternalRegisters_.v & 0x0FFF));
+            }
+            break;
+        case 1 ... 64:
+            CreateBackgroundPixel();
+            CreateSpritePixel();
+            RenderPixel();
+            BackgroundFetch();
+            break;
+        case 65 ... 256:
+            CreateBackgroundPixel();
+            CreateSpritePixel();
+            RenderPixel();
+            BackgroundFetch();
+            SpriteEvaluation();
+            break;
+        case 257:
+            if (renderingEnabled_)
+            {
                 TransferHorizontalPosition();
-                oamSecondaryIndex_ = 0;
-                SpriteFetch();
-                break;
-            case 258 ... 320:
-                SpriteFetch();
-                break;
-            case 321 ... 336:
-                BackgroundFetch();
-                break;
-            case 337 ... 340:
-                if ((dot_ % 2) == 0)
-                {
-                    Read(0x2000 | (InternalRegisters_.v & 0x0FFF));
-                }
-                break;
-        }
-    }
-    else
-    {
-        return;
+            }
+            oamSecondaryIndex_ = 0;
+            SpriteFetch();
+            break;
+        case 258 ... 320:
+            SpriteFetch();
+            break;
+        case 321 ... 336:
+            BackgroundFetch();
+            break;
+        case 337 ... 340:
+            if (renderingEnabled_ && ((dot_ % 2) == 0))
+            {
+                Read(0x2000 | (InternalRegisters_.v & 0x0FFF));
+            }
+            break;
     }
 }
 
@@ -475,38 +476,67 @@ void PPU::BackgroundFetch()
     ShiftRegisters();
     ++backgroundFetchCycle_;
 
-    switch (backgroundFetchCycle_)
+    if (renderingEnabled_)
     {
-        case 2:
-            nametableByte_ = Read(0x2000 | (InternalRegisters_.v & 0x0FFF));
-            break;
-        case 4:
-            attributeTableByte_ = Read(0x23C0 |
-                                       (InternalRegisters_.v & 0x0C00) |
-                                       ((InternalRegisters_.v >> 4) & 0x0038) |
-                                       ((InternalRegisters_.v >> 2) & 0x0007));
-            break;
-        case 6:
-            patternTableAddress_ = ((MemMappedRegisters_.PPUCTRL & BACKGROUND_PT_ADDRESS_MASK) << 8) |
-                                   (nametableByte_ << 4) |
-                                   ((InternalRegisters_.v & 0x7000) >> 12);
-            patternTableLowByte_ = Read(patternTableAddress_);
-            break;
-        case 8:
-            patternTableAddress_ |= 0x0008;
-            patternTableHighByte_ = Read(patternTableAddress_);
-            LoadShiftRegisters();
-            CoarseXIncrement();
+        switch (backgroundFetchCycle_)
+        {
+            case 2:
+                nametableByte_ = Read(0x2000 | (InternalRegisters_.v & 0x0FFF));
+                break;
+            case 4:
+                attributeTableByte_ = Read(0x23C0 |
+                                        (InternalRegisters_.v & 0x0C00) |
+                                        ((InternalRegisters_.v >> 4) & 0x0038) |
+                                        ((InternalRegisters_.v >> 2) & 0x0007));
+                break;
+            case 6:
+                patternTableAddress_ = ((MemMappedRegisters_.PPUCTRL & BACKGROUND_PT_ADDRESS_MASK) << 8) |
+                                        (nametableByte_ << 4) |
+                                        ((InternalRegisters_.v & 0x7000) >> 12);
+                patternTableLowByte_ = Read(patternTableAddress_);
+                break;
+            case 8:
+                patternTableAddress_ |= 0x0008;
+                patternTableHighByte_ = Read(patternTableAddress_);
+                LoadShiftRegisters();
+                CoarseXIncrement();
 
-            if (dot_ == 256)
-            {
-                YIncrement();
-            }
+                if (dot_ == 256)
+                {
+                    YIncrement();
+                }
 
-            backgroundFetchCycle_ = 0;
-            break;
-        default:
-            break;
+                backgroundFetchCycle_ = 0;
+                break;
+            default:
+                break;
+        }
+    }
+    else
+    {
+        switch (backgroundFetchCycle_)
+        {
+            case 2:
+                nametableByte_ = 0x00;
+                break;
+            case 4:
+                attributeTableByte_ = 0x00;
+                break;
+            case 6:
+                patternTableAddress_ = ((MemMappedRegisters_.PPUCTRL & BACKGROUND_PT_ADDRESS_MASK) << 8) |
+                                        (nametableByte_ << 4) |
+                                        ((InternalRegisters_.v & 0x7000) >> 12);
+                patternTableLowByte_ = Read(patternTableAddress_);
+                break;
+            case 8:
+                patternTableAddress_ |= 0x0008;
+                patternTableHighByte_ = Read(patternTableAddress_);
+                LoadShiftRegisters();
+                backgroundFetchCycle_ = 0;
+                break;
+            default:
+                break;
+        }
     }
 }
 
@@ -684,15 +714,21 @@ void PPU::SpriteFetch()
     {
         case 2:
         {
-            Read(0x2000 | (InternalRegisters_.v & 0x0FFF));
+            if (renderingEnabled_)
+            {
+                Read(0x2000 | (InternalRegisters_.v & 0x0FFF));
+            }
             break;
         }
         case 4:
         {
-            Read(0x23C0 |
-                 (InternalRegisters_.v & 0x0C00) |
-                 ((InternalRegisters_.v >> 4) & 0x0038) |
-                 ((InternalRegisters_.v >> 2) & 0x0007));
+            if (renderingEnabled_)
+            {
+                Read(0x23C0 |
+                     (InternalRegisters_.v & 0x0C00) |
+                     ((InternalRegisters_.v >> 4) & 0x0038) |
+                     ((InternalRegisters_.v >> 2) & 0x0007));
+            }
             break;
         }
         case 6:
@@ -858,7 +894,7 @@ PPU::RGB PPU::PixelMultiplexer()
     {
         colorAddr = spritePixelAddr_;
     }
-    else
+    else if (showBackground && showSprites)
     {
         if (opaqueBackground && opaqueSprite)
         {
@@ -889,10 +925,4 @@ void PPU::RenderPixel()
     frameBuffer_[framePointer_++] = rgb.R;
     frameBuffer_[framePointer_++] = rgb.G;
     frameBuffer_[framePointer_++] = rgb.B;
-
-    if (framePointer_ >= 184320)
-    {
-        frameReady_ = true;
-        framePointer_ = 0;
-    }
 }
