@@ -20,6 +20,8 @@ public:
 
     uint16_t NameTableAddress(uint16_t addr) override;
 
+    void SaveRAM() override;
+
 private:
     std::array<uint8_t, 0x2000> PRG_RAM;
     std::vector<uint8_t> PRG_ROM;

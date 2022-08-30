@@ -11,13 +11,18 @@
 #include <fstream>
 #include <memory>
 
-NES::NES(std::string const romPath, char* frameBuffer)
+NES::NES(std::string const romPath, std::string const savePath, char* frameBuffer)
 {
-    InitializeCartridge(romPath);
+    InitializeCartridge(romPath, savePath);
     apu = std::make_unique<APU>();
     controller = std::make_unique<Controller>();
     ppu = std::make_unique<PPU>(*cartridge, frameBuffer);
     cpu = std::make_unique<CPU>(*apu, *cartridge, *controller, *ppu);
+}
+
+NES::~NES()
+{
+    cartridge->SaveRAM();
 }
 
 void NES::Run()
@@ -29,7 +34,7 @@ void NES::Run()
     }
 }
 
-void NES::InitializeCartridge(std::string const romPath)
+void NES::InitializeCartridge(std::string const romPath, std::string const savePath)
 {
     std::ifstream rom(romPath, std::ios::binary);
     std::array<uint8_t, 0x10> header;
@@ -47,7 +52,7 @@ void NES::InitializeCartridge(std::string const romPath)
             cartridge = std::make_unique<NROM>(rom, header);
             break;
         case 1:
-            cartridge = std::make_unique<MMC1>(rom, header);
+            cartridge = std::make_unique<MMC1>(rom, savePath, header);
             break;
         default:
             cartridge = nullptr;

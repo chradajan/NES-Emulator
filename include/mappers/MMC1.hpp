@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
+#include <string>
 #include <vector>
 
 constexpr uint8_t MIRRORING_MASK = 0x03;
@@ -16,7 +17,7 @@ constexpr uint16_t ADDR_MASK = 0x6000;
 class MMC1 : public virtual Cartridge
 {
 public:
-    MMC1(std::ifstream& rom, std::array<uint8_t, 16> const& header);
+    MMC1(std::ifstream& rom, std::string savePath, std::array<uint8_t, 16> const& header);
 
     uint8_t ReadPRG(uint16_t addr) override;
     void WritePRG(uint16_t addr, uint8_t data) override;
@@ -25,10 +26,12 @@ public:
     void WriteCHR(uint16_t addr, uint8_t data) override;
 
     uint16_t NameTableAddress(uint16_t addr) override;
+
+    void SaveRAM() override;
 private:
-    std::array<std::array<uint8_t, 0x2000>, 4> PRG_RAM_BANKS;
-    std::vector<std::array<uint8_t, 0x4000>> PRG_ROM_BANKS;
-    std::vector<std::array<uint8_t, 0x1000>> CHR_ROM_BANKS;
+    std::array<std::array<uint8_t, 0x2000>, 4> PRG_RAM_BANKS_;
+    std::vector<std::array<uint8_t, 0x4000>> PRG_ROM_BANKS_;
+    std::vector<std::array<uint8_t, 0x1000>> CHR_ROM_BANKS_;
 
     struct
     {
@@ -37,7 +40,7 @@ private:
         uint8_t chrBank0;
         uint8_t chrBank1;
         uint8_t prgBank;
-    } Reg;
+    } Reg_;
 
     struct
     {
@@ -46,11 +49,12 @@ private:
         size_t prg0;
         size_t prg1;
         size_t prgRam;
-    } Index;
+    } Index_;
 
-    bool batteryBackedRam;
-    bool chrRamMode;
-    uint8_t writeCounter;
+    bool batteryBackedRam_;
+    bool chrRamMode_;
+    uint8_t writeCounter_;
+    std::string savePath_;
 
     void LoadROM(std::ifstream& rom, uint8_t prgRomBanks, uint8_t chrRomBanks) override;
     void SetRegisters(uint16_t addr);

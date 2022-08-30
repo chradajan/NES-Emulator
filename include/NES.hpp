@@ -14,8 +14,8 @@ class PPU;
 class NES
 {
 public:
-    NES(std::string romPath, char* frameBuffer);
-    ~NES() = default;
+    NES(std::string romPath, std::string savePath, char* frameBuffer);
+    ~NES();
 
     void Run();
 
@@ -26,7 +26,7 @@ private:
     std::unique_ptr<PPU> ppu;
     std::unique_ptr<CPU> cpu;
 
-    void InitializeCartridge(std::string romPath);
+    void InitializeCartridge(std::string romPath, std::string savePath);
 };
 
 #endif

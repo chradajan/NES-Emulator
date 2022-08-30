@@ -40,6 +40,8 @@ public:
 
     virtual uint16_t NameTableAddress(uint16_t addr) = 0;
 
+    virtual void SaveRAM() = 0;
+
 protected:
     enum class MirrorType {HORIZONTAL, VERTICAL, SINGLE_LOW, SINGLE_HIGH, QUAD};
 

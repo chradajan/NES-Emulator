@@ -113,6 +113,11 @@ uint16_t NROM::NameTableAddress(uint16_t addr)
     return addr;
 }
 
+void NROM::SaveRAM()
+{
+
+}
+
 void NROM::LoadROM(std::ifstream& rom, uint8_t prgRomBanks, uint8_t chrRomBanks)
 {
     (void)prgRomBanks;

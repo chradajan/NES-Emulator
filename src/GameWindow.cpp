@@ -5,15 +5,25 @@
 #include "../include/Controller.hpp"
 #include "../include/NES.hpp"
 #include "../include/PPU.hpp"
+#include <fstream>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <SDL2/SDL.h>
+#include "../MD5/md5.hpp"
 #include <iostream>
 
 GameWindow::GameWindow(std::string const romPath)
 {
     screenSurface = SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, CHANNELS * 8, 0x0000FF, 0x00FF00, 0xFF0000, 0);
-    nes = std::make_unique<NES>(romPath, static_cast<char*>(screenSurface->pixels));
+
+    std::ifstream rom(romPath);
+    std::stringstream buffer;
+    buffer << rom.rdbuf();
+    std::string hash = md5(buffer.str());
+    std::string savePath = "../saves/" + hash + ".sav";
+
+    nes = std::make_unique<NES>(romPath, savePath, static_cast<char*>(screenSurface->pixels));
     SDL_Init(SDL_INIT_VIDEO);
     window = SDL_CreateWindow("NES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     windowSurface = SDL_GetWindowSurface(window);
