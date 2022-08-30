@@ -17,7 +17,7 @@ GameWindow::GameWindow(std::string const romPath, std::string const romName)
     std::string savePath = "../saves/" + romName + ".sav";
     nes = std::make_unique<NES>(romPath, savePath, static_cast<char*>(screenSurface->pixels));
     SDL_Init(SDL_INIT_VIDEO);
-    window = SDL_CreateWindow("NES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow("NES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH * 2, SCREEN_HEIGHT * 2, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     windowSurface = SDL_GetWindowSurface(window);
 }
 
