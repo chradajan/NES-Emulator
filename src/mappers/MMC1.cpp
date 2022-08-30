@@ -20,16 +20,6 @@ MMC1::MMC1(std::ifstream& rom, std::string const savePath, std::array<uint8_t, 1
         ramBank.fill(0x00);
     }
 
-    for (auto& romBank : PRG_ROM_BANKS_)
-    {
-        romBank.fill(0x00);
-    }
-    
-    for (auto& romBank : CHR_ROM_BANKS_)
-    {
-        romBank.fill(0x00);
-    }
-
     if (batteryBackedRam_)
     {
         std::ifstream save(savePath, std::ios::binary);
@@ -99,6 +89,8 @@ void MMC1::WritePRG(uint16_t addr, uint8_t data)
         {
             writeCounter_ = 0;
             Reg_.load = 0x00;
+            Reg_.control |= 0x0C;
+            UpdateIndices();
         }
         else
         {
@@ -110,7 +102,7 @@ void MMC1::WritePRG(uint16_t addr, uint8_t data)
             {
                 writeCounter_ = 0;
                 SetRegisters(addr);
-                Reg_.load = 0;
+                Reg_.load = 0x00;
             }
         }
     }
@@ -208,20 +200,20 @@ void MMC1::LoadROM(std::ifstream& rom, uint8_t prgRomBanks, uint8_t chrRomBanks)
     }
     else
     {
-        CHR_ROM_BANKS_.resize(chrRomBanks);
+        CHR_ROM_BANKS_.resize(chrRomBanks * 2);
     }
 
-    for (uint8_t bankIndex = 0; bankIndex < prgRomBanks; bankIndex++)
+    for (size_t bankIndex = 0; bankIndex < prgRomBanks; ++bankIndex)
     {
-        for (uint16_t prgAddr = 0x0000; prgAddr < 0x4000; ++prgAddr)
+        for (size_t prgAddr = 0x0000; prgAddr < 0x4000; ++prgAddr)
         {
             rom >> std::noskipws >> std::hex >> PRG_ROM_BANKS_[bankIndex][prgAddr];
         }
     }
 
-    for (uint8_t bankIndex = 0; bankIndex < chrRomBanks; bankIndex++)
+    for (size_t bankIndex = 0; bankIndex < chrRomBanks * 2; ++bankIndex)
     {
-        for (uint16_t chrAddr = 0x0000; chrAddr < 0x1000; ++chrAddr)
+        for (size_t chrAddr = 0x0000; chrAddr < 0x1000; ++chrAddr)
         {
             rom >> std::noskipws >> std::hex >> CHR_ROM_BANKS_[bankIndex][chrAddr];
         }
@@ -281,8 +273,8 @@ void MMC1::UpdateIndices()
     {
         case 0:
         case 1:
-            Index_.prg0 = Reg_.prgBank & 0xFE;
-            Index_.prg1 = Index_.prg0 + 1;
+            Index_.prg0 = Reg_.prgBank & 0x0E;
+            Index_.prg1 = Index_.prg0 | 0x01;
             break;
         case 2:
             Index_.prg0 = 0;
@@ -299,8 +291,8 @@ void MMC1::UpdateIndices()
     switch (chrMode)
     {
         case 0:
-            Index_.chr0 = Reg_.chrBank0 & 0xFE;
-            Index_.chr1 = Index_.chr0 + 1;
+            Index_.chr0 = Reg_.chrBank0 & 0x1E;
+            Index_.chr1 = Index_.chr0 | 0x01;
             break;
         case 1:
             Index_.chr0 = Reg_.chrBank0;

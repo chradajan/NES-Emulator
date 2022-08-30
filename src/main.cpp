@@ -17,7 +17,7 @@ int main(int, char**)
 
     std::cin >> game;
 
-    GameWindow window(path + game + extension);
+    GameWindow window(path + game + extension, game);
     window.StartEmulator();
     return 0;
 }

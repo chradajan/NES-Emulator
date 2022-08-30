@@ -10,19 +10,11 @@
 #include <sstream>
 #include <string>
 #include <SDL2/SDL.h>
-#include "../MD5/md5.hpp"
-#include <iostream>
 
-GameWindow::GameWindow(std::string const romPath)
+GameWindow::GameWindow(std::string const romPath, std::string const romName)
 {
     screenSurface = SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, CHANNELS * 8, 0x0000FF, 0x00FF00, 0xFF0000, 0);
-
-    std::ifstream rom(romPath);
-    std::stringstream buffer;
-    buffer << rom.rdbuf();
-    std::string hash = md5(buffer.str());
-    std::string savePath = "../saves/" + hash + ".sav";
-
+    std::string savePath = "../saves/" + romName + ".sav";
     nes = std::make_unique<NES>(romPath, savePath, static_cast<char*>(screenSurface->pixels));
     SDL_Init(SDL_INIT_VIDEO);
     window = SDL_CreateWindow("NES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
@@ -73,6 +65,5 @@ void GameWindow::StartEmulator()
 void GameWindow::UpdateScreen()
 {
     SDL_BlitScaled(screenSurface, NULL, windowSurface, NULL);
-    // SDL_BlitSurface(screenSurface, NULL, windowSurface, NULL);
     SDL_UpdateWindowSurface(window);
 }

@@ -16,7 +16,7 @@ constexpr int SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS;
 class GameWindow
 {
 public:
-    GameWindow(std::string romPath);
+    GameWindow(std::string romPath, std::string romName);
     ~GameWindow();
     void StartEmulator();
 
