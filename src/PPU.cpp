@@ -747,21 +747,19 @@ void PPU::SpriteFetch()
 
                 if ((Sprites_[spriteIndex_].attributes & FLIP_VERTICAL_MASK) == FLIP_VERTICAL_MASK)
                 {
-                    yOffset = (yOffset - 15) * -1;
+                    yOffset ^= 0x0F;
                 }
 
-                if (yOffset < 8)
+                uint8_t tile = Sprites_[spriteIndex_].tile & LARGE_SPRITE_TILE_MASK;
+
+                if (yOffset >= 8)
                 {
-                    patternTableAddress_ = ((Sprites_[spriteIndex_].tile & BANK_SELECTION_MASK) << 12) |
-                                           ((Sprites_[spriteIndex_].tile & LARGE_SPRITE_TILE_MASK) << 4) |
-                                           yOffset;
+                    ++tile;
                 }
-                else
-                {
-                    patternTableAddress_ = ((Sprites_[spriteIndex_].tile & BANK_SELECTION_MASK) << 12) |
-                                           ((Sprites_[spriteIndex_].tile & LARGE_SPRITE_TILE_MASK) << 4) |
-                                           yOffset | 0x10;
-                }
+
+                yOffset %= 0x08;
+
+                patternTableAddress_ = ((Sprites_[spriteIndex_].tile & BANK_SELECTION_MASK) << 12) | (tile << 4) | yOffset;
             }
             else
             {
@@ -769,7 +767,7 @@ void PPU::SpriteFetch()
 
                 if ((Sprites_[spriteIndex_].attributes & FLIP_VERTICAL_MASK) == FLIP_VERTICAL_MASK)
                 {
-                    yOffset = (yOffset - 7) * -1;
+                    yOffset ^= 0x07;
                 }
 
                 patternTableAddress_ = ((MemMappedRegisters_.PPUCTRL & SPRITE_PT_ADDRESS_MASK) << 9) |
