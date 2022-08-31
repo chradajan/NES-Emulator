@@ -13,17 +13,16 @@
 
 GameWindow::GameWindow(std::string const romPath, std::string const romName)
 {
-    screenSurface = SDL_CreateRGBSurface(0, SCREEN_WIDTH, SCREEN_HEIGHT, CHANNELS * 8, 0x0000FF, 0x00FF00, 0xFF0000, 0);
     std::string savePath = "../saves/" + romName + ".sav";
-    nes = std::make_unique<NES>(romPath, savePath, static_cast<char*>(screenSurface->pixels));
+    nes = std::make_unique<NES>(romPath, savePath, frameBuffer.data());
     SDL_Init(SDL_INIT_VIDEO);
     window = SDL_CreateWindow("NES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH * 2, SCREEN_HEIGHT * 2, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
-    windowSurface = SDL_GetWindowSurface(window);
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 }
 
 GameWindow::~GameWindow()
 {
-    SDL_FreeSurface(screenSurface);
     SDL_DestroyWindow(window);
 }
 
@@ -44,10 +43,6 @@ void GameWindow::StartEmulator()
             {
                 quit = true;
             }
-            else if (e.type == SDL_WINDOWEVENT)
-            {
-                windowSurface = SDL_GetWindowSurface(window);
-            }
         }
 
         nes->Run();
@@ -64,6 +59,10 @@ void GameWindow::StartEmulator()
 
 void GameWindow::UpdateScreen()
 {
-    SDL_BlitScaled(screenSurface, NULL, windowSurface, NULL);
-    SDL_UpdateWindowSurface(window);
+    SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(frameBuffer.data(), SCREEN_WIDTH, SCREEN_HEIGHT, DEPTH, PITCH, 0x0000FF, 0x00FF00, 0xFF0000, 0);
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_FreeSurface(surface);
+    SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+    SDL_RenderPresent(renderer);
+    SDL_DestroyTexture(texture);
 }
