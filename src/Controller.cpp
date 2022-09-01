@@ -29,7 +29,16 @@ uint8_t Controller::ReadReg(uint16_t addr)
     }
     else if (addr == JOY2_ADDR)
     {
-        // TODO: Implement controller 2 inputs.
+        if (strobeLatch_)
+        {
+            controllerReading = 0x00;
+        }
+        else
+        {
+            controllerReading |= (controller2_ & 0x01);
+            controller2_ >>= 1;
+            controller2_ |= 0x80;
+        }
     }
 
     controllerReading |= ((busData_ & BUS_MASK) >> 8);
