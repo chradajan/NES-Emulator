@@ -150,11 +150,19 @@ void PPU::WriteReg(uint16_t addr, uint8_t data)
     switch (addr)
     {
         case PPUCTRL_ADDR:
+        {
+            bool nmiDisabled = (MemMappedRegisters_.PPUCTRL & GENERATE_NMI_MASK) == 0x00;
             MemMappedRegisters_.PPUCTRL = data;
             InternalRegisters_.t &= 0x73FF;
             InternalRegisters_.t |= ((data & 0x03) << 10);
-            SetNMI();
+
+            if (nmiDisabled)
+            {
+                SetNMI();
+            }
+
             break;
+        }
         case PPUMASK_ADDR:
             MemMappedRegisters_.PPUMASK = data;
             break;
