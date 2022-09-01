@@ -4,8 +4,8 @@
 #include "NES.hpp"
 #include <SDL2/SDL.h>
 #include <array>
-#include <memory>
 #include <string>
+#include <utility>
 
 constexpr int SCREEN_WIDTH = 256;
 constexpr int SCREEN_HEIGHT = 240;
@@ -18,17 +18,13 @@ constexpr int SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS;
 class GameWindow
 {
 public:
-    GameWindow(std::string romPath, std::string romName);
-    ~GameWindow();
-    void StartEmulator();
+    GameWindow(NES& nes, char* frameBuffer);
+    ~GameWindow() = default;
+    void Run();
 
 private:
-    std::unique_ptr<NES> nes;
-    SDL_Window* window;
-    SDL_Renderer* renderer;
-    std::array<char, SCREEN_WIDTH * SCREEN_HEIGHT * CHANNELS> frameBuffer;
-
-    void UpdateScreen();
+    NES& nes_;
+    char* frameBuffer_;
 };
 
 #endif

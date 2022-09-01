@@ -7,62 +7,76 @@
 #include "../include/PPU.hpp"
 #include <fstream>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <SDL2/SDL.h>
 
-GameWindow::GameWindow(std::string const romPath, std::string const romName)
+GameWindow::GameWindow(NES& nes, char* frameBuffer) :
+    nes_(nes),
+    frameBuffer_(frameBuffer)
 {
-    std::string savePath = "../saves/" + romName + ".sav";
-    nes = std::make_unique<NES>(romPath, savePath, frameBuffer.data());
+}
+
+void GameWindow::Run()
+{
     SDL_Init(SDL_INIT_VIDEO);
-    window = SDL_CreateWindow("NES", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH * 2, SCREEN_HEIGHT * 2, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+
+    SDL_Window* window = SDL_CreateWindow("NES",
+                                          SDL_WINDOWPOS_UNDEFINED,
+                                          SDL_WINDOWPOS_UNDEFINED,
+                                          SCREEN_WIDTH * 2,
+                                          SCREEN_HEIGHT * 2,
+                                          SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+
+    SDL_SetWindowMinimumSize(window, SCREEN_WIDTH, SCREEN_HEIGHT);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-}
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-GameWindow::~GameWindow()
-{
-    SDL_DestroyWindow(window);
-}
+    bool exit = false;
 
-void GameWindow::StartEmulator()
-{
-    uint64_t startTime;
-    uint64_t frameTicks;
-    bool quit = false;
-    SDL_Event e;
-
-    while (!quit)
+    while (!exit)
     {
-        startTime = SDL_GetTicks();
+        uint32_t startTime = SDL_GetTicks();
+        SDL_Event event;
 
-        while (SDL_PollEvent(&e) != 0)
+        while (SDL_PollEvent(&event))
         {
-            if (e.type == SDL_QUIT)
+            if (event.type == SDL_QUIT)
             {
-                quit = true;
+                exit = true;
+            }
+            else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
+            {
+                exit = true;
             }
         }
 
-        nes->Run();
-        frameTicks = SDL_GetTicks() - startTime;
+        nes_.Run();
+
+        SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(frameBuffer_,
+                                                        SCREEN_WIDTH,
+                                                        SCREEN_HEIGHT,
+                                                        DEPTH,
+                                                        PITCH,
+                                                        0x0000FF,
+                                                        0x00FF00,
+                                                        0xFF0000,
+                                                        0);
+        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+        SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+
+        SDL_RenderPresent(renderer);
+        SDL_FreeSurface(surface);
+        SDL_DestroyTexture(texture);
+
+        uint32_t frameTicks = SDL_GetTicks() - startTime;
 
         if (frameTicks < SCREEN_TICKS_PER_FRAME)
         {
             SDL_Delay(SCREEN_TICKS_PER_FRAME - frameTicks);
         }
-
-        UpdateScreen();
     }
-}
 
-void GameWindow::UpdateScreen()
-{
-    SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(frameBuffer.data(), SCREEN_WIDTH, SCREEN_HEIGHT, DEPTH, PITCH, 0x0000FF, 0x00FF00, 0xFF0000, 0);
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-    SDL_FreeSurface(surface);
-    SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-    SDL_RenderPresent(renderer);
-    SDL_DestroyTexture(texture);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
 }

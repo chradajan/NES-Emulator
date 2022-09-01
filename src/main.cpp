@@ -5,19 +5,27 @@
 #include "../include/GameWindow.hpp"
 #include "../include/NES.hpp"
 #include "../include/PPU.hpp"
-#include <SDL2/SDL.h>
+#include <array>
 #include <iostream>
 #include <string>
 
 int main(int, char**)
 {
-    std::string path = "../roms/";
-    std::string extension = ".nes";
-    std::string game;
+    std::string rom_path = "../roms/";
+    std::string save_path = "../saves/";
+    std::string rom_extension = ".nes";
+    std::string save_extension = ".sav";
 
+    std::string game;
     std::cin >> game;
 
-    GameWindow window(path + game + extension, game);
-    window.StartEmulator();
+    std::array<char, 256 * 240 * 3> frameBuffer;
+
+    NES nes(rom_path + game + rom_extension,
+            save_path + game + save_extension,
+            frameBuffer.data());
+
+    GameWindow gameWindow(nes, frameBuffer.data());
+    gameWindow.Run();
     return 0;
 }
