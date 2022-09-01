@@ -173,9 +173,37 @@ void CPU::ResetVector()
     }
 }
 
-void CPU::IrqBrqVector()
+void CPU::IRQ()
 {
-    // TODO
+    switch (cycle)
+    {
+        case 1:
+            // Dummy Read
+            Read(Registers.programCounter);
+            break;
+        case 2:
+            // Dummy Read
+            Read(Registers.programCounter);
+            break;
+        case 3:
+            Push(Registers.programCounter >> 8);
+            break;
+        case 4:
+            Push(Registers.programCounter & 0xFF);
+            break;
+        case 5:
+            Push((Registers.status | 0x20) & 0xEF);
+            break;
+        case 6:
+            iAddr = Read(BRK_VECTOR_LO);
+            break;
+        case 7:
+            iAddr |= (Read(BRK_VECTOR_HI) << 8);
+            break;
+        case 8:
+            Registers.programCounter = iAddr;
+            SetNextOpCode();
+    }
 }
 
 void CPU::NMI()

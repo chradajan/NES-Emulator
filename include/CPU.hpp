@@ -61,10 +61,10 @@ private:
 // Interrupt Vectors
 private:
     void ResetVector();
-    void IrqBrqVector();
 
 // Interrupt Handling
 private:
+    void IRQ();
     void NMI();
 
 // State variables
