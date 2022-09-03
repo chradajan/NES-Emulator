@@ -325,13 +325,21 @@ void MMC3::ClockIRQ()
         reloadIrqCounter_ = false;
         irqCounter_ = irqLatch_;
     }
-    else if (irqCounter_ == 0)
-    {
-        irqCounter_ = irqLatch_;
-        sendInterrupt_ = irqEnable_;
-    }
     else
     {
-        --irqCounter_;
+        if (irqCounter_ != 0)
+        {
+            --irqCounter_;
+        }
+
+        if (irqCounter_ == 0)
+        {
+            irqCounter_ = irqLatch_;
+
+            if (irqEnable_)
+            {
+                sendInterrupt_ = true;
+            }
+        }
     }
 }
