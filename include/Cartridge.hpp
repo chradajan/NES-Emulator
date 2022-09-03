@@ -42,11 +42,13 @@ public:
 
     virtual void SaveRAM() = 0;
 
+    virtual bool IRQ() = 0;
+
 protected:
     enum class MirrorType {HORIZONTAL, VERTICAL, SINGLE_LOW, SINGLE_HIGH, QUAD};
 
 protected:
-    MirrorType mirrorType;
+    MirrorType mirrorType_;
     virtual void LoadROM(std::ifstream& rom, uint8_t prgRomBanks, uint8_t chrRomBanks) = 0;
 };
 

@@ -23,8 +23,8 @@ void GameWindow::Run()
     SDL_Window* window = SDL_CreateWindow("NES",
                                           SDL_WINDOWPOS_UNDEFINED,
                                           SDL_WINDOWPOS_UNDEFINED,
-                                          SCREEN_WIDTH * 2,
-                                          SCREEN_HEIGHT * 2,
+                                          SCREEN_WIDTH * 4,
+                                          SCREEN_HEIGHT * 4,
                                           SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 
     SDL_SetWindowMinimumSize(window, SCREEN_WIDTH, SCREEN_HEIGHT);

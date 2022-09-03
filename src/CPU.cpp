@@ -142,6 +142,12 @@ void CPU::SetNextOpCode()
         tickFunction = std::bind(&CPU::NMI, this);
         tickFunction();
     }
+    else if (!IsInterruptDisable() && cartridge.IRQ())
+    {
+        cycle = 1;
+        tickFunction = std::bind(&CPU::IRQ, this);
+        tickFunction();
+    }
     else
     {
         opCode = static_cast<OpCode>(ReadAndIncrementPC());
@@ -201,6 +207,7 @@ void CPU::IRQ()
             iAddr |= (Read(BRK_VECTOR_HI) << 8);
             break;
         case 8:
+            SetInterruptDisable(true);
             Registers.programCounter = iAddr;
             SetNextOpCode();
     }

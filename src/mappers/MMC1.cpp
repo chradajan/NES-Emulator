@@ -4,10 +4,10 @@
 #include <fstream>
 #include <iomanip>
 
-MMC1::MMC1(std::ifstream& rom, std::string const savePath, std::array<uint8_t, 16> const& header)
+MMC1::MMC1(std::ifstream& rom, std::string const savePath, std::array<uint8_t, 16> const& header) :
+    savePath_(savePath)
 {
     batteryBackedRam_ = ((header[6] & BATTERY_BACKED_PRG_RAM) == BATTERY_BACKED_PRG_RAM);
-    savePath_ = savePath;
 
     Index_.prgRam = 0;
     Reg_.control = 0x0C;
@@ -149,7 +149,7 @@ uint16_t MMC1::NameTableAddress(uint16_t addr)
         addr -= 0x1000;
     }
 
-    switch (mirrorType)
+    switch (mirrorType_)
     {
         case MirrorType::SINGLE_LOW:
             addr %= 0x0400;
@@ -187,6 +187,11 @@ void MMC1::SaveRAM()
             }
         }
     }
+}
+
+bool MMC1::IRQ()
+{
+    return false;
 }
 
 void MMC1::LoadROM(std::ifstream& rom, uint8_t prgRomBanks, uint8_t chrRomBanks)
@@ -254,16 +259,16 @@ void MMC1::UpdateIndices()
     switch (mirroring)
     {
         case 0:
-            mirrorType = MirrorType::SINGLE_LOW;
+            mirrorType_ = MirrorType::SINGLE_LOW;
             break;
         case 1:
-            mirrorType = MirrorType::SINGLE_HIGH;
+            mirrorType_ = MirrorType::SINGLE_HIGH;
             break;
         case 2:
-            mirrorType = MirrorType::VERTICAL;
+            mirrorType_ = MirrorType::VERTICAL;
             break;
         case 3:
-            mirrorType = MirrorType::HORIZONTAL;
+            mirrorType_ = MirrorType::HORIZONTAL;
             break;
         default:
             break;

@@ -28,6 +28,9 @@ public:
     uint16_t NameTableAddress(uint16_t addr) override;
 
     void SaveRAM() override;
+
+    bool IRQ() override;
+
 private:
     std::array<std::array<uint8_t, 0x2000>, 4> PRG_RAM_BANKS_;
     std::vector<std::array<uint8_t, 0x4000>> PRG_ROM_BANKS_;

@@ -35,11 +35,11 @@ NROM::NROM(std::ifstream& rom, std::array<uint8_t, 16> const& header)
     // Check if ROM uses vertical or horizontal nametable mirroring.
     if ((header[6] & VERTICAL_MIRRORING_FLAG) == VERTICAL_MIRRORING_FLAG)
     {
-        mirrorType = MirrorType::VERTICAL;
+        mirrorType_ = MirrorType::VERTICAL;
     }
     else
     {
-        mirrorType = MirrorType::HORIZONTAL;
+        mirrorType_ = MirrorType::HORIZONTAL;
     }
 
     LoadROM(rom, 1, 1);
@@ -98,7 +98,7 @@ uint16_t NROM::NameTableAddress(uint16_t addr)
         addr -= 0x1000;
     }
 
-    switch (mirrorType)
+    switch (mirrorType_)
     {
         case MirrorType::HORIZONTAL:
             addr = (addr - 0x2000) - (addr / 0x2400 * 0x0400) - (addr / 0x2C00 * 0x0400);
@@ -116,6 +116,11 @@ uint16_t NROM::NameTableAddress(uint16_t addr)
 void NROM::SaveRAM()
 {
 
+}
+
+bool NROM::IRQ()
+{
+    return false;
 }
 
 void NROM::LoadROM(std::ifstream& rom, uint8_t prgRomBanks, uint8_t chrRomBanks)

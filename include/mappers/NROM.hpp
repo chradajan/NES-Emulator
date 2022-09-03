@@ -22,6 +22,8 @@ public:
 
     void SaveRAM() override;
 
+    bool IRQ() override;
+
 private:
     std::array<uint8_t, 0x2000> PRG_RAM;
     std::vector<uint8_t> PRG_ROM;

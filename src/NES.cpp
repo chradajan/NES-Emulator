@@ -4,6 +4,7 @@
 #include "../include/CPU.hpp"
 #include "../include/Controller.hpp"
 #include "../include/mappers/MMC1.hpp"
+#include "../include/mappers/MMC3.hpp"
 #include "../include/mappers/NROM.hpp"
 #include "../include/PPU.hpp"
 #include <cstdint>
@@ -53,6 +54,9 @@ void NES::InitializeCartridge(std::string const romPath, std::string const saveP
             break;
         case 1:
             cartridge = std::make_unique<MMC1>(rom, savePath, header);
+            break;
+        case 4:
+            cartridge = std::make_unique<MMC3>(rom, savePath, header);
             break;
         default:
             cartridge = nullptr;

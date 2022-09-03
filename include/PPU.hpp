@@ -73,7 +73,7 @@ private:
 private:
     std::array<uint8_t, 0x0100> OAM_;
     std::array<uint8_t, 0x0020> OAM_Secondary_;
-    std::array<uint8_t, 0x0800> VRAM_;
+    std::array<uint8_t, 0x1000> VRAM_;  // Double the size of actual PPU VRAM. Upper half ignored unless 4-screen mirroring is used.
     std::array<uint8_t, 0x0020> PaletteRAM_;
 
     struct RGB
