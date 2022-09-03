@@ -47,7 +47,7 @@ public:
     bool IRQ() override;
 
 private:
-    void LoadROM(std::ifstream& rom, uint8_t prgRomBanks, uint8_t chrRomBanks) override;
+    void LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks) override;
 
 private:
     std::array<uint8_t, 0x2000> PRG_RAM_;

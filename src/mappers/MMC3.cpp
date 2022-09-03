@@ -22,8 +22,8 @@ MMC3::MMC3(std::ifstream& rom, std::string savePath, std::array<uint8_t, 16> con
         mirrorType_ = MirrorType::HORIZONTAL;
     }
 
-    uint8_t prgRomBanksCount = header[4] * 2;
-    uint8_t chrRomBanksCount = header[5] * 8;
+    size_t prgRomBanksCount = header[4] * 2;
+    size_t chrRomBanksCount = header[5] * 8;
 
     LoadROM(rom, prgRomBanksCount, chrRomBanksCount);
 }
@@ -191,6 +191,9 @@ uint16_t MMC3::NameTableAddress(uint16_t addr)
         case MirrorType::VERTICAL:
             addr = (addr - 0x2000) - (addr / 0x2800 * 0x0800);
             break;
+        case MirrorType::QUAD:
+            addr -= 0x2000;
+            break;
         default:
             break;
     }
@@ -224,7 +227,7 @@ bool MMC3::IRQ()
     return false;
 }
 
-void MMC3::LoadROM(std::ifstream& rom, uint8_t prgRomBanks, uint8_t chrRomBanks)
+void MMC3::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 {
     PRG_ROM_BANKS_.resize(prgRomBanks);
     CHR_ROM_BANKS_.resize(chrRomBanks);

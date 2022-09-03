@@ -59,7 +59,7 @@ private:
     uint8_t writeCounter_;
     std::string savePath_;
 
-    void LoadROM(std::ifstream& rom, uint8_t prgRomBanks, uint8_t chrRomBanks) override;
+    void LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks) override;
     void SetRegisters(uint16_t addr);
     void UpdateIndices();
 };

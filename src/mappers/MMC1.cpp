@@ -194,7 +194,7 @@ bool MMC1::IRQ()
     return false;
 }
 
-void MMC1::LoadROM(std::ifstream& rom, uint8_t prgRomBanks, uint8_t chrRomBanks)
+void MMC1::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 {
     PRG_ROM_BANKS_.resize(prgRomBanks);
 

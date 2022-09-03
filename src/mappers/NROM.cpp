@@ -123,7 +123,7 @@ bool NROM::IRQ()
     return false;
 }
 
-void NROM::LoadROM(std::ifstream& rom, uint8_t prgRomBanks, uint8_t chrRomBanks)
+void NROM::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 {
     (void)prgRomBanks;
     (void)chrRomBanks;
