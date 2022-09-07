@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iomanip>
 #include <vector>
+#include <iostream>
 
 NROM::NROM(std::ifstream& rom, std::array<uint8_t, 16> const& header)
 {
@@ -42,7 +43,7 @@ NROM::NROM(std::ifstream& rom, std::array<uint8_t, 16> const& header)
         mirrorType_ = MirrorType::HORIZONTAL;
     }
 
-    LoadROM(rom, 1, 1);
+    LoadROM(rom, 1, header[5]);
 }
 
 uint8_t NROM::ReadPRG(uint16_t addr)
@@ -85,8 +86,10 @@ uint8_t NROM::ReadCHR(uint16_t addr)
 
 void NROM::WriteCHR(uint16_t addr, uint8_t data)
 {
-    (void)addr;
-    (void)data;
+    if (chrRamMode_)
+    {
+        CHR_ROM[addr] = data;
+    }
 }
 
 uint16_t NROM::NameTableAddress(uint16_t addr)
@@ -126,7 +129,7 @@ bool NROM::IRQ()
 void NROM::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 {
     (void)prgRomBanks;
-    (void)chrRomBanks;
+    chrRamMode_ = (chrRomBanks == 0);
 
     // Load PRG ROM data.
     uint16_t maxPrgAddr = PRG_Mirroring ? 0x4000 : 0x8000;
@@ -136,9 +139,12 @@ void NROM::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
         rom >> std::noskipws >> std::hex >> PRG_ROM[prgAddr];
     }
 
-    // Load CHR ROM data.
-    for (uint16_t chrAddr = 0x0000; chrAddr < 0x2000; ++chrAddr)
+    if (!chrRamMode_)
     {
-        rom >> std::noskipws >> std::hex >> CHR_ROM[chrAddr];
+        // Load CHR ROM data.
+        for (uint16_t chrAddr = 0x0000; chrAddr < 0x2000; ++chrAddr)
+        {
+            rom >> std::noskipws >> std::hex >> CHR_ROM[chrAddr];
+        }
     }
 }

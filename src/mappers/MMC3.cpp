@@ -74,7 +74,7 @@ void MMC3::WritePRG(uint16_t addr, uint8_t data)
         if (evenAddr)
         {
             // Bank select
-            bankRegToUpdate_ = data & BANK_SELECT_MASK;
+            bankRegToUpdate_ = data & MMC3_BANK_SELECT_MASK;
             prgBankMode_ = ((data & PRG_ROM_BANK_MODE_MASK) == PRG_ROM_BANK_MODE_MASK);
             chrBankMode_ = ((data & CHR_ROM_BANK_MODE_MASK) == CHR_ROM_BANK_MODE_MASK);
             SetBanks();

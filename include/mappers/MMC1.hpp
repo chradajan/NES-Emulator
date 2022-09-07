@@ -55,7 +55,6 @@ private:
     } Index_;
 
     bool batteryBackedRam_;
-    bool chrRamMode_;
     uint8_t writeCounter_;
     std::string savePath_;
 

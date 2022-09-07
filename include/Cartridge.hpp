@@ -49,6 +49,7 @@ protected:
 
 protected:
     MirrorType mirrorType_;
+    bool chrRamMode_;
     virtual void LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks) = 0;
 };
 

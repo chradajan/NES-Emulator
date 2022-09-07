@@ -13,7 +13,7 @@ constexpr size_t PRG_BANK_SIZE = 0x2000;
 constexpr size_t CHR_BANK_SIZE = 0x0400;
 
 // $8000-$9FFE, even
-constexpr uint8_t BANK_SELECT_MASK = 0x07;
+constexpr uint8_t MMC3_BANK_SELECT_MASK = 0x07;
 constexpr uint8_t PRG_ROM_BANK_MODE_MASK = 0x40;
 constexpr uint8_t CHR_ROM_BANK_MODE_MASK = 0x80;
 constexpr uint8_t PRG_BANK_MASK = 0x3F;
@@ -78,7 +78,6 @@ private:
     bool ramEnabled_;
     bool ramWritesDisabled_;
     std::string savePath_;
-    bool chrRamMode_;
 
 // IRQ
 private:
