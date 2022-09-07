@@ -2,6 +2,7 @@
 #include "../include/Cartridge.hpp"
 #include "../include/RegisterAddresses.hpp"
 #include <cstdint>
+#include <utility>
 
 PPU::PPU(Cartridge& cartridge, char* frameBuffer) :
     cartridge_(cartridge),
@@ -30,6 +31,7 @@ PPU::PPU(Cartridge& cartridge, char* frameBuffer) :
     }
 
     oddFrame_ = false;
+    suppressVblFlag_ = false;
     scanline_ = 0;
     dot_ = 0;
     VRAM_.fill(0x00);
@@ -44,34 +46,42 @@ void PPU::Reset()
 
 }
 
-void PPU::Tick()
+void PPU::Clock()
 {
+    if (cyclesAhead_ != 0)
+    {
+        --cyclesAhead_;
+        return;
+    }
+
     renderingEnabled_ = RenderingEnabled();
 
-    for (size_t i = 0; i < 3; ++i)
+    if (scanline_ < 240)
     {
-        if (scanline_ < 240)
-        {
-            VisibleLine();
+        VisibleLine();
 
-            if ((scanline_ == 239) && (dot_ == 256))
-            {
-                frameReady_ = true;
-                framePointer_ = 0;
-            }
+        if ((scanline_ == 239) && (dot_ == 256))
+        {
+            frameReady_ = true;
+            framePointer_ = 0;
         }
-        else if ((scanline_ == 241) && (dot_ == 1))
+    }
+    else if ((scanline_ == 241) && (dot_ == 0))
+    {
+        if (!suppressVblFlag_)
         {
             MemMappedRegisters_.PPUSTATUS |= VBLANK_STARTED_MASK;
             SetNMI();
         }
-        else if (scanline_ == 261)
-        {
-            PreRenderLine();
-        }
 
-        DotIncrement();
+        suppressVblFlag_ = false;
     }
+    else if (scanline_ == 261)
+    {
+        PreRenderLine();
+    }
+
+    DotIncrement();
 }
 
 bool PPU::FrameReady()
@@ -97,11 +107,25 @@ uint8_t PPU::ReadReg(uint16_t addr)
     switch (addr)
     {
         case PPUSTATUS_ADDR:
+            RunAhead();
             InternalRegisters_.w = false;
             returnData = MemMappedRegisters_.PPUSTATUS;
             MemMappedRegisters_.PPUSTATUS &= ~VBLANK_STARTED_MASK;
             returnData |= (openBus_ & 0x1F);
             openBus_ = returnData;
+
+            if (scanline_ == 241)
+            {
+                if (dot_ == 0)
+                {
+                    suppressVblFlag_ = true;
+                }
+                else if ((dot_ == 1) || (dot_ == 2))
+                {
+                    nmiCpuCheck_ = false;
+                }
+            }
+
             break;
         case OAMDATA_ADDR:
             returnData = OAM_[MemMappedRegisters_.OAMADDR];
@@ -151,14 +175,28 @@ void PPU::WriteReg(uint16_t addr, uint8_t data)
     {
         case PPUCTRL_ADDR:
         {
-            bool nmiDisabled = (MemMappedRegisters_.PPUCTRL & GENERATE_NMI_MASK) == 0x00;
+            RunAhead();
+            bool nmiEnabledBefore = ((MemMappedRegisters_.PPUCTRL & GENERATE_NMI_MASK) == GENERATE_NMI_MASK);
             MemMappedRegisters_.PPUCTRL = data;
+            bool nmiEnabledAfter = ((MemMappedRegisters_.PPUCTRL & GENERATE_NMI_MASK) == GENERATE_NMI_MASK);
             InternalRegisters_.t &= 0x73FF;
             InternalRegisters_.t |= ((data & 0x03) << 10);
 
-            if (nmiDisabled)
+            if (nmiEnabledBefore != nmiEnabledAfter)
             {
-                SetNMI();
+                if (nmiEnabledAfter)
+                {
+                    // 0 -> 1
+                    SetNMI();
+                }
+                else
+                {
+                    // 1-> 0
+                    if ((scanline_ == 241) && ((dot_ == 1) || (dot_ == 2)))
+                    {
+                        nmiCpuCheck_ = false;
+                    }
+                }
             }
 
             break;
@@ -223,6 +261,11 @@ bool PPU::NMI()
     return false;
 }
 
+std::pair<uint16_t, uint16_t> PPU::GetState()
+{
+    return std::make_pair(scanline_, dot_);
+}
+
 uint8_t PPU::Read(uint16_t addr)
 {
     if (addr < 0x2000)
@@ -266,15 +309,26 @@ void PPU::SetNMI()
                    ((MemMappedRegisters_.PPUSTATUS & VBLANK_STARTED_MASK) == VBLANK_STARTED_MASK);
 }
 
+void PPU::RunAhead()
+{
+    for (size_t i = 0; i < 3; ++i)
+    {
+        Clock();
+    }
+
+    cyclesAhead_ = 3;
+}
+
 void PPU::PreRenderLine()
 {
     switch (dot_)
     {
         case 0:
             ResetSpriteEvaluation();
+            MemMappedRegisters_.PPUSTATUS &= ~(VBLANK_STARTED_MASK | SPRITE_0_HIT_MASK);
+            suppressVblFlag_ = false;
             break;
         case 1:
-            MemMappedRegisters_.PPUSTATUS &= ~(VBLANK_STARTED_MASK | SPRITE_0_HIT_MASK);
             BackgroundFetch();
             break;
         case 2 ... 256:

@@ -31,7 +31,9 @@ void NES::Run()
 {
     while (!ppu->FrameReady())
     {
-        ppu->Tick();
+        ppu->Clock();
+        ppu->Clock();
+        ppu->Clock();
         cpu->Tick();
     }
 }

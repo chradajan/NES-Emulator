@@ -4,6 +4,7 @@
 #include <array>
 #include <cstdint>
 #include <memory>
+#include <utility>
 
 // PPUCTRL $2000
 
@@ -53,7 +54,7 @@ public:
     ~PPU() = default;
     void Reset();
 
-    void Tick();
+    void Clock();
     bool FrameReady();
     char* GetFrameBuffer();
 
@@ -61,6 +62,7 @@ public:
     void WriteReg(uint16_t addr, uint8_t data);
 
     bool NMI();
+    std::pair<uint16_t, uint16_t> GetState();
 
 private:
     uint8_t Read(uint16_t addr);
@@ -68,6 +70,7 @@ private:
 
     bool RenderingEnabled();
     void SetNMI();
+    void RunAhead();
 
 // Memory
 private:
@@ -206,6 +209,8 @@ private:
     bool nmiCpuCheck_;
     uint8_t openBus_;
     bool renderingEnabled_;
+    bool suppressVblFlag_;
+    uint8_t cyclesAhead_;
 
 // Frame buffer
 private:
