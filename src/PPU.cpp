@@ -154,7 +154,7 @@ void PPU::Clock()
     }
     else if ((scanline_ == 260) && (dot_ == 340))
     {
-        MemMappedRegisters_.PPUSTATUS &= ~SPRITE_0_HIT_MASK;
+        MemMappedRegisters_.PPUSTATUS &= ~(SPRITE_0_HIT_MASK | SPRITE_OVERFLOW_MASK);
     }
     else if (scanline_ == 261)
     {
@@ -418,7 +418,7 @@ void PPU::PreRenderLine()
     {
         case 0:
             ResetSpriteEvaluation();
-            MemMappedRegisters_.PPUSTATUS &= ~(VBLANK_STARTED_MASK | SPRITE_OVERFLOW_MASK);
+            MemMappedRegisters_.PPUSTATUS &= ~(VBLANK_STARTED_MASK);
             suppressVblFlag_ = false;
             break;
         case 1:
@@ -474,13 +474,13 @@ void PPU::VisibleLine()
             CreateSpritePixel();
             RenderPixel();
             break;
-        case 1 ... 64:
+        case 1 ... 63:
             BackgroundFetch();
             CreateBackgroundPixel();
             CreateSpritePixel();
             RenderPixel();
             break;
-        case 65 ... 255:
+        case 64 ... 255:
             BackgroundFetch();
             SpriteEvaluation();
             CreateBackgroundPixel();
@@ -489,7 +489,6 @@ void PPU::VisibleLine()
             break;
         case 256:
             BackgroundFetch();
-            SpriteEvaluation();
             break;
         case 257:
             if (renderingEnabled_)
@@ -844,7 +843,11 @@ void PPU::SpriteEvaluation()
 
             if ((yOffset >= 0) && (yOffset < spriteHeight))
             {
-                MemMappedRegisters_.PPUSTATUS |= SPRITE_OVERFLOW_MASK;
+                if (renderingEnabled_)
+                {
+                    MemMappedRegisters_.PPUSTATUS |= SPRITE_OVERFLOW_MASK;
+                }
+
                 spriteState_ = SpriteEvalState::FINISHED;
             }
             else
