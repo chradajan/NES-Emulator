@@ -32,6 +32,7 @@ PPU::PPU(Cartridge& cartridge, char* frameBuffer) :
 
     oddFrame_ = false;
     suppressVblFlag_ = false;
+    ignoreNextNmiCheck_ = false;
     scanline_ = 0;
     dot_ = 0;
     VRAM_.fill(0x00);
@@ -187,7 +188,11 @@ void PPU::WriteReg(uint16_t addr, uint8_t data)
                 if (nmiEnabledAfter)
                 {
                     // 0 -> 1
-                    SetNMI();
+                    if ((MemMappedRegisters_.PPUSTATUS & VBLANK_STARTED_MASK) == VBLANK_STARTED_MASK)
+                    {
+                        ignoreNextNmiCheck_ = true;
+                        nmiCpuCheck_ = true;
+                    }
                 }
                 else
                 {
@@ -252,7 +257,16 @@ void PPU::WriteReg(uint16_t addr, uint8_t data)
 
 bool PPU::NMI()
 {
-    if (nmiCpuCheck_)
+    if (ignoreNextNmiCheck_)
+    {
+        ignoreNextNmiCheck_ = false;
+        return false;
+    }
+    else if ((scanline_ == 241) && ((dot_ == 1) || (dot_ == 2)))
+    {
+        return false;
+    }
+    else if (nmiCpuCheck_)
     {
         nmiCpuCheck_ = false;
         return true;
@@ -960,7 +974,7 @@ PPU::RGB PPU::PixelMultiplexer()
         {
             colorAddr = backgroundPriority_ ? backgroundPixelAddr_ : spritePixelAddr_;
 
-            if (checkSprite0Hit_ && (dot_ > 1) && (dot_ != 255))
+            if (checkSprite0Hit_ && (dot_ > 1) && (dot_ < 255))
             {
                 MemMappedRegisters_.PPUSTATUS |= SPRITE_0_HIT_MASK;
             }

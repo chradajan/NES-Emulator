@@ -206,11 +206,15 @@ private:
     uint16_t scanline_;
     uint16_t dot_;
     bool oddFrame_;
-    bool nmiCpuCheck_;
     uint8_t openBus_;
     bool renderingEnabled_;
-    bool suppressVblFlag_;
     uint8_t cyclesAhead_;
+
+// NMI
+private:
+    bool nmiCpuCheck_;
+    bool suppressVblFlag_;
+    bool ignoreNextNmiCheck_;
 
 // Frame buffer
 private:
