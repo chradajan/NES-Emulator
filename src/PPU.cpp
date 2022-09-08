@@ -40,6 +40,7 @@ PPU::PPU(Cartridge& cartridge, char* frameBuffer) :
     OAM_Secondary_.fill(0xFF);
     PaletteRAM_.fill(0xFF);
     openBus_ = 0x00;
+    cyclesAhead_ = 0;
 }
 
 void PPU::Reset()
@@ -76,6 +77,10 @@ void PPU::Clock()
         }
 
         suppressVblFlag_ = false;
+    }
+    else if ((scanline_ == 260) && (dot_ == 340))
+    {
+        MemMappedRegisters_.PPUSTATUS &= ~SPRITE_0_HIT_MASK;
     }
     else if (scanline_ == 261)
     {
@@ -339,7 +344,7 @@ void PPU::PreRenderLine()
     {
         case 0:
             ResetSpriteEvaluation();
-            MemMappedRegisters_.PPUSTATUS &= ~(VBLANK_STARTED_MASK | SPRITE_0_HIT_MASK);
+            MemMappedRegisters_.PPUSTATUS &= ~(VBLANK_STARTED_MASK | SPRITE_OVERFLOW_MASK);
             suppressVblFlag_ = false;
             break;
         case 1:
@@ -391,17 +396,24 @@ void PPU::VisibleLine()
             {
                 Read(0x2000 | (InternalRegisters_.v & 0x0FFF));
             }
+            CreateBackgroundPixel();
+            CreateSpritePixel();
+            RenderPixel();
             break;
         case 1 ... 64:
-            CreateBackgroundPixel();
-            CreateSpritePixel();
-            RenderPixel();
             BackgroundFetch();
-            break;
-        case 65 ... 256:
             CreateBackgroundPixel();
             CreateSpritePixel();
             RenderPixel();
+            break;
+        case 65 ... 255:
+            BackgroundFetch();
+            SpriteEvaluation();
+            CreateBackgroundPixel();
+            CreateSpritePixel();
+            RenderPixel();
+            break;
+        case 256:
             BackgroundFetch();
             SpriteEvaluation();
             break;
@@ -949,7 +961,7 @@ PPU::RGB PPU::PixelMultiplexer()
     bool opaqueBackground = ((backgroundPixelAddr_ & 0x03) != 0x00);
     bool opaqueSprite = ((spritePixelAddr_ & 0x03) != 0x00);
 
-    if ((leftBackgroundHidden || leftSpritesHidden) && (dot_ < 9))
+    if ((leftBackgroundHidden || leftSpritesHidden) && (dot_ < 8))
     {
         if (leftBackgroundHidden && !leftSpritesHidden && showSprites)
         {
@@ -974,7 +986,7 @@ PPU::RGB PPU::PixelMultiplexer()
         {
             colorAddr = backgroundPriority_ ? backgroundPixelAddr_ : spritePixelAddr_;
 
-            if (checkSprite0Hit_ && (dot_ > 1) && (dot_ < 255))
+            if (checkSprite0Hit_ && (dot_ != 255))
             {
                 MemMappedRegisters_.PPUSTATUS |= SPRITE_0_HIT_MASK;
             }
