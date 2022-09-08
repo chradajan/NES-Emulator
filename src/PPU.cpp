@@ -30,22 +30,96 @@ PPU::PPU(Cartridge& cartridge, char* frameBuffer) :
         ++colorIndex;
     }
 
-    oddFrame_ = false;
-    suppressVblFlag_ = false;
-    ignoreNextNmiCheck_ = false;
-    scanline_ = 0;
-    dot_ = 0;
-    VRAM_.fill(0x00);
-    OAM_.fill(0xFF);
-    OAM_Secondary_.fill(0xFF);
-    PaletteRAM_.fill(0xFF);
-    openBus_ = 0x00;
-    cyclesAhead_ = 0;
+    Initialize();
 }
 
 void PPU::Reset()
 {
 
+}
+
+void PPU::Initialize()
+{
+    // Background fetch
+    backgroundFetchCycle_ = 0x00;
+    nametableByte_ = 0x00;
+    attributeTableByte_ = 0x00;
+    patternTableAddress_ = 0x00;
+    patternTableLowByte_ = 0x00;
+    patternTableHighByte_ = 0x00;
+    patternTableShifterHigh_ = 0x00;
+    patternTableShifterLow_ = 0x00;
+    attributeTableShifterHigh_ = 0x00;
+    attributeTableShifterLow_ = 0x00;
+    attributeTableLatchHigh_ = false;
+    attributeTableLatchLow_ = false;
+
+    // Sprite evaluation
+    oamIndex_ = 0;
+    oamOffset_ = 0;
+    oamSecondaryIndex_ = 0;
+    oamByte_ = 0x00;
+    spritesFound_ = 0;
+    sprite0Loaded_ = false;
+    spriteState_ = SpriteEvalState::READ;
+
+    // Sprite fetch
+    spriteFetchCycle_ = 0x00;
+    spriteIndex_ = 0;
+    checkSprite0Hit_ = false;
+
+    for (Sprite& sprite: Sprites_)
+    {
+        sprite.y = 0xFF;
+        sprite.tile = 0x00;
+        sprite.attributes = 0x00;
+        sprite.x = 0;
+        sprite.sprite0 = false;
+        sprite.valid = false;
+        sprite.patternTableLowByte = 0x00;
+        sprite.patternTableHighByte = 0x00;
+    }
+
+    // Pixel retrieval
+    backgroundPixelAddr_ = 0x3F00;
+    spritePixelAddr_ = 0x3F00;
+    backgroundPriority_ = true;
+
+    // Registers
+    InternalRegisters_.v = 0x0000;
+    InternalRegisters_.t = 0x0000;
+    InternalRegisters_.x = 0x00;
+    InternalRegisters_.w = false;
+
+    MemMappedRegisters_.PPUCTRL = 0x00;
+    MemMappedRegisters_.PPUMASK = 0x00;
+    MemMappedRegisters_.PPUSTATUS = 0x00;
+    MemMappedRegisters_.OAMADDR = 0x00;
+
+    readBuffer_ = 0x00;
+
+    // Frame state
+    scanline_ = 0;
+    dot_ = 0;
+    oddFrame_ = false;
+    openBus_ = 0x00;
+    renderingEnabled_ = false;
+    cyclesAhead_ = 0;
+
+    // NMI
+    nmiCpuCheck_ = false;
+    suppressVblFlag_ = false;
+    ignoreNextNmiCheck_ = false;
+
+    // Frame buffer
+    frameReady_ = false;
+    framePointer_ = 0;
+
+    // Initialize memory
+    OAM_.fill(0xFF);
+    OAM_Secondary_.fill(0xFF);
+    VRAM_.fill(0x00);
+    PaletteRAM_.fill(0x00);
 }
 
 void PPU::Clock()

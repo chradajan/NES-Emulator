@@ -42,7 +42,7 @@ constexpr uint8_t FLIP_HORIZONTAL_MASK = 0x40;
 constexpr uint8_t FLIP_VERTICAL_MASK = 0x80;
 constexpr uint8_t LARGE_SPRITE_TILE_MASK = 0xFE;
 
-// Other Masks
+// Other masks
 constexpr uint16_t VRAM_ADDR_MASK = 0x3FFF;
 
 class Cartridge;
@@ -63,6 +63,9 @@ public:
 
     bool NMI();
     std::pair<uint16_t, uint16_t> GetState();
+
+private:
+    void Initialize();
 
 private:
     uint8_t Read(uint16_t addr);
@@ -92,7 +95,7 @@ private:
     void PreRenderLine();
     void VisibleLine();
 
-// Pointer Increments
+// Pointer increments
 private:
     void IncrementVRAMAddr();
     void CoarseXIncrement();
@@ -103,7 +106,7 @@ private:
 
     uint8_t PaletteAddress(uint16_t addr);
 
-// Background Fetch
+// Background fetch
 private:
     uint8_t backgroundFetchCycle_;
     uint8_t nametableByte_;
@@ -123,13 +126,13 @@ private:
     void LoadShiftRegisters();
     void ShiftRegisters();
 
-// Sprite Evaluation
+// Sprite evaluation
 private:
     size_t oamIndex_;
     size_t oamOffset_;
     size_t oamSecondaryIndex_;
     uint8_t oamByte_;
-    uint8_t spritesFound_;
+    size_t spritesFound_;
     bool sprite0Loaded_;
 
     enum class SpriteEvalState
@@ -145,7 +148,7 @@ private:
     void ResetSpriteEvaluation();
     void SpriteEvaluation();
 
-// Sprite Fetch
+// Sprite fetch
 private:
     uint8_t spriteFetchCycle_;
     size_t spriteIndex_;
@@ -203,12 +206,12 @@ private:
 
 // Frame state
 private:
-    uint16_t scanline_;
-    uint16_t dot_;
+    size_t scanline_;
+    size_t dot_;
     bool oddFrame_;
     uint8_t openBus_;
     bool renderingEnabled_;
-    uint8_t cyclesAhead_;
+    size_t cyclesAhead_;
 
 // NMI
 private:

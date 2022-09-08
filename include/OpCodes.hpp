@@ -155,7 +155,8 @@ enum class OpCode : uint8_t
     Implied_TSX     = 0xBA,
     Implied_TXA     = 0x8A,
     Implied_TXS     = 0x9A,
-    Implied_TYA     = 0x98
+    Implied_TYA     = 0x98,
+    INVALID_CODE    = 0xFF
 };
 
 #endif

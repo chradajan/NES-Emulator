@@ -3,68 +3,68 @@
 
 void CPU::ADC()
 {
-    uint16_t temp = iData + Registers.accumulator + (IsCarry() ? 1 : 0);
+    uint16_t temp = iData_ + Registers_.accumulator + (IsCarry() ? 1 : 0);
     SetZero((temp & 0x00FF) == 0x0000);
     SetNegative((temp & MSB) == MSB);
-    SetOverflow((((Registers.accumulator ^ iData) & 0x80) != 0x80) && (((Registers.accumulator ^ temp) & 0x80) == 0x80));
+    SetOverflow((((Registers_.accumulator ^ iData_) & 0x80) != 0x80) && (((Registers_.accumulator ^ temp) & 0x80) == 0x80));
     SetCarry(temp > 0xFF);
-    Registers.accumulator = temp & 0xFF;
+    Registers_.accumulator = temp & 0xFF;
 }
 
 void CPU::AND()
 {
-    iData &= Registers.accumulator;
-    SetNegative((iData & MSB) == MSB);
-    SetZero(iData == 0x00);
-    Registers.accumulator = iData;
+    iData_ &= Registers_.accumulator;
+    SetNegative((iData_ & MSB) == MSB);
+    SetZero(iData_ == 0x00);
+    Registers_.accumulator = iData_;
 }
 
 void CPU::ASL()
 {
-    SetCarry((iData & MSB) == MSB);
-    iData <<= 1;
-    SetNegative((iData & MSB) == MSB);
-    SetZero(iData == 0x00);
+    SetCarry((iData_ & MSB) == MSB);
+    iData_ <<= 1;
+    SetNegative((iData_ & MSB) == MSB);
+    SetZero(iData_ == 0x00);
 }
 
 void CPU::BIT()
 {
-    SetNegative((iData & NEGATIVE_FLAG) == NEGATIVE_FLAG);
-    SetOverflow((iData & OVERFLOW_FLAG) == OVERFLOW_FLAG);
-    SetZero((iData & Registers.accumulator) == 0);
+    SetNegative((iData_ & NEGATIVE_FLAG) == NEGATIVE_FLAG);
+    SetOverflow((iData_ & OVERFLOW_FLAG) == OVERFLOW_FLAG);
+    SetZero((iData_ & Registers_.accumulator) == 0);
 }
 
 void CPU::BRK()
 {
-    switch(cycle)
+    switch(cycle_)
     {
         case 1:
             ReadAndIncrementPC();
             break;
         case 2:
-            Push(Registers.programCounter >> 8);
+            Push(Registers_.programCounter >> 8);
             break;
         case 3:
-            Push(Registers.programCounter & ZERO_PAGE_MASK);
+            Push(Registers_.programCounter & ZERO_PAGE_MASK);
             break;
         case 4:
-            Push(Registers.status | 0x30);
+            Push(Registers_.status | 0x30);
             break;
         case 5:
-            iAddr = Read(BRK_VECTOR_LO);
+            iAddr_ = Read(BRK_VECTOR_LO);
             break;
         case 6:
-            iAddr = (Read(BRK_VECTOR_HI) << 8) | iAddr;
+            iAddr_ = (Read(BRK_VECTOR_HI) << 8) | iAddr_;
             break;
         case 7:
-            Registers.programCounter = iAddr;
+            Registers_.programCounter = iAddr_;
             SetNextOpCode();
     }
 }
 
 void CPU::CMP()
 {
-    uint16_t temp = regData - iData;
+    uint16_t temp = regData_ - iData_;
     SetCarry(temp < 0x0100);
     SetNegative((temp & MSB) == MSB);
     SetZero((temp & 0xFF) == 0x0000);
@@ -72,125 +72,125 @@ void CPU::CMP()
 
 void CPU::DEC()
 {
-    --iData;
-    SetNegative((iData & MSB) == MSB);
-    SetZero(iData == 0x00);
+    --iData_;
+    SetNegative((iData_ & MSB) == MSB);
+    SetZero(iData_ == 0x00);
 }
 
 void CPU::DEX()
 {
-    --Registers.x;
-    SetNegative((Registers.x & MSB) == MSB);
-    SetZero(Registers.x == 0x00);
+    --Registers_.x;
+    SetNegative((Registers_.x & MSB) == MSB);
+    SetZero(Registers_.x == 0x00);
 }
 
 void CPU::DEY()
 {
-    --Registers.y;
-    SetNegative((Registers.y & MSB) == MSB);
-    SetZero(Registers.y == 0x00);
+    --Registers_.y;
+    SetNegative((Registers_.y & MSB) == MSB);
+    SetZero(Registers_.y == 0x00);
 }
 
 void CPU::EOR()
 {
-    Registers.accumulator ^= iData;
-    SetNegative((Registers.accumulator & MSB) == MSB);
-    SetZero(Registers.accumulator == 0x00);
+    Registers_.accumulator ^= iData_;
+    SetNegative((Registers_.accumulator & MSB) == MSB);
+    SetZero(Registers_.accumulator == 0x00);
 }
 
 void CPU::INC()
 {
-    ++iData;
-    SetNegative((iData & MSB) == MSB);
-    SetZero(iData == 0x00);
+    ++iData_;
+    SetNegative((iData_ & MSB) == MSB);
+    SetZero(iData_ == 0x00);
 }
 
 void CPU::INX()
 {
-    ++Registers.x;
-    SetNegative((Registers.x & MSB) == MSB);
-    SetZero(Registers.x == 0x00);
+    ++Registers_.x;
+    SetNegative((Registers_.x & MSB) == MSB);
+    SetZero(Registers_.x == 0x00);
 }
 
 void CPU::INY()
 {
-    ++Registers.y;
-    SetNegative((Registers.y & MSB) == MSB);
-    SetZero(Registers.y == 0x00);
+    ++Registers_.y;
+    SetNegative((Registers_.y & MSB) == MSB);
+    SetZero(Registers_.y == 0x00);
 }
 
 void CPU::JSR()
 {
-    switch(cycle)
+    switch(cycle_)
     {
         case 1:
-            iAddr = ReadAndIncrementPC();
+            iAddr_ = ReadAndIncrementPC();
             break;
         case 2:
             // Dummy Read
-            Read(STACK_PAGE | Registers.stackPointer);
+            Read(STACK_PAGE | Registers_.stackPointer);
             break;
         case 3:
-            Push(Registers.programCounter >> 8);
+            Push(Registers_.programCounter >> 8);
             break;
         case 4:
-            Push(Registers.programCounter & ZERO_PAGE_MASK);
+            Push(Registers_.programCounter & ZERO_PAGE_MASK);
             break;
         case 5:
-            iAddr = (ReadAndIncrementPC() << 8) | iAddr;
+            iAddr_ = (ReadAndIncrementPC() << 8) | iAddr_;
             break;
         case 6:
-            Registers.programCounter = iAddr;
+            Registers_.programCounter = iAddr_;
             SetNextOpCode();
     }
 }
 
 void CPU::LDA()
 {
-    Registers.accumulator = iData;
-    SetNegative((Registers.accumulator & MSB) == MSB);
-    SetZero(Registers.accumulator == 0x00);
+    Registers_.accumulator = iData_;
+    SetNegative((Registers_.accumulator & MSB) == MSB);
+    SetZero(Registers_.accumulator == 0x00);
 }
 
 void CPU::LDX()
 {
-    Registers.x = iData;
-    SetNegative((Registers.x & MSB) == MSB);
-    SetZero(Registers.x == 0x00);
+    Registers_.x = iData_;
+    SetNegative((Registers_.x & MSB) == MSB);
+    SetZero(Registers_.x == 0x00);
 }
 
 void CPU::LDY()
 {
-    Registers.y = iData;
-    SetNegative((Registers.y & MSB) == MSB);
-    SetZero(Registers.y == 0x00);
+    Registers_.y = iData_;
+    SetNegative((Registers_.y & MSB) == MSB);
+    SetZero(Registers_.y == 0x00);
 }
 
 void CPU::LSR()
 {
-    SetCarry((iData & LSB) == LSB);
-    iData >>= 1;
+    SetCarry((iData_ & LSB) == LSB);
+    iData_ >>= 1;
     SetNegative(false);
-    SetZero(iData == 0x00);
+    SetZero(iData_ == 0x00);
 }
 
 void CPU::ORA()
 {
-    Registers.accumulator |= iData;
-    SetNegative((Registers.accumulator & MSB) == MSB);
-    SetZero(Registers.accumulator == 0x00);
+    Registers_.accumulator |= iData_;
+    SetNegative((Registers_.accumulator & MSB) == MSB);
+    SetZero(Registers_.accumulator == 0x00);
 }
 
 void CPU::PHA()
 {
-    switch(cycle)
+    switch(cycle_)
     {
         case 1:
             // Dummy Read
-            Read(Registers.programCounter);
+            Read(Registers_.programCounter);
             break;
         case 2:
-            Push(Registers.accumulator);
+            Push(Registers_.accumulator);
             break;
         case 3:
             SetNextOpCode();
@@ -199,14 +199,14 @@ void CPU::PHA()
 
 void CPU::PHP()
 {
-    switch(cycle)
+    switch(cycle_)
     {
         case 1:
             // Dummy Read
-            Read(Registers.programCounter);
+            Read(Registers_.programCounter);
             break;
         case 2:
-            Push(Registers.status | 0x30);
+            Push(Registers_.status | 0x30);
             break;
         case 3:
             SetNextOpCode();
@@ -215,20 +215,20 @@ void CPU::PHP()
 
 void CPU::PLA()
 {
-    switch(cycle)
+    switch(cycle_)
     {
         case 1:
             // Dummy Read
-            Read(Registers.programCounter);
+            Read(Registers_.programCounter);
             break;
         case 2:
             // Dummy Read
-            Read(STACK_PAGE | Registers.stackPointer);
+            Read(STACK_PAGE | Registers_.stackPointer);
             break;
         case 3:
-            Registers.accumulator = Pop();
-            SetNegative((Registers.accumulator & MSB) == MSB);
-            SetZero(Registers.accumulator == 0x00);
+            Registers_.accumulator = Pop();
+            SetNegative((Registers_.accumulator & MSB) == MSB);
+            SetZero(Registers_.accumulator == 0x00);
             break;
         case 4:
             SetNextOpCode();
@@ -237,19 +237,19 @@ void CPU::PLA()
 
 void CPU::PLP()
 {
-    switch(cycle)
+    switch(cycle_)
     {
         case 1:
             // Dummy Read
-            Read(Registers.programCounter);
+            Read(Registers_.programCounter);
             break;
         case 2:
             // Dummy Read
-            Read(STACK_PAGE | Registers.stackPointer);
+            Read(STACK_PAGE | Registers_.stackPointer);
             break;
         case 3:
-            Registers.status = Pop() & 0xCF;
-            Registers.status |= 0x20;
+            Registers_.status = Pop() & 0xCF;
+            Registers_.status |= 0x20;
             break;
         case 4:
             SetNextOpCode();
@@ -259,88 +259,88 @@ void CPU::PLP()
 void CPU::ROL()
 {
     bool setLSB = IsCarry();
-    SetCarry((iData & MSB) == MSB);
-    iData <<= 1;
+    SetCarry((iData_ & MSB) == MSB);
+    iData_ <<= 1;
     if (setLSB)
     {
-        iData |= LSB;
+        iData_ |= LSB;
     }
-    SetNegative((iData & MSB) == MSB);
-    SetZero(iData == 0x00);
+    SetNegative((iData_ & MSB) == MSB);
+    SetZero(iData_ == 0x00);
 }
 
 void CPU::ROR()
 {
     bool setMSB = IsCarry();
-    SetCarry((iData & LSB) == LSB);
-    iData >>= 1;
+    SetCarry((iData_ & LSB) == LSB);
+    iData_ >>= 1;
     if (setMSB)
     {
-        iData |= MSB;
+        iData_ |= MSB;
     }
-    SetNegative((iData & MSB) == MSB);
-    SetZero(iData == 0x00);
+    SetNegative((iData_ & MSB) == MSB);
+    SetZero(iData_ == 0x00);
 }
 
 void CPU::RTI()
 {
-    switch(cycle)
+    switch(cycle_)
     {
         case 1:
             // Dummy Read
-            Read(Registers.programCounter);
+            Read(Registers_.programCounter);
             break;
         case 2:
             // Dummy Read
-            Read(STACK_PAGE | Registers.stackPointer);
+            Read(STACK_PAGE | Registers_.stackPointer);
             break;
         case 3:
-            Registers.status = Pop() & 0xCF;
-            Registers.status |= 0x20;
+            Registers_.status = Pop() & 0xCF;
+            Registers_.status |= 0x20;
             break;
         case 4:
-            iAddr = Pop();
+            iAddr_ = Pop();
             break;
         case 5:
-            iAddr = (Pop() << 8) | iAddr;
+            iAddr_ = (Pop() << 8) | iAddr_;
             break;
         case 6:
-            Registers.programCounter = iAddr;
+            Registers_.programCounter = iAddr_;
             SetNextOpCode();
     }
 }
 
 void CPU::RTS()
 {
-    switch(cycle)
+    switch(cycle_)
     {
         case 1:
             // Dummy Read
-            Read(Registers.programCounter);
+            Read(Registers_.programCounter);
             break;
         case 2:
             // Dummy Read
-            Read(STACK_PAGE | Registers.stackPointer);
+            Read(STACK_PAGE | Registers_.stackPointer);
             break;
         case 3:
-            iAddr = Pop();
+            iAddr_ = Pop();
             break;
         case 4:
-            iAddr = (Pop() << 8) | iAddr;
+            iAddr_ = (Pop() << 8) | iAddr_;
             break;
         case 5:
             // Dummy Read
-            Read(iAddr);
+            Read(iAddr_);
             break;
         case 6:
-            Registers.programCounter = iAddr + 0x0001;
+            Registers_.programCounter = iAddr_ + 0x0001;
             SetNextOpCode();
     }
 }
 
 void CPU::SBC()
 {
-    uint16_t temp = Registers.accumulator - iData;
+    uint16_t temp = Registers_.accumulator - iData_;
 
     if (!IsCarry())
     {
@@ -349,86 +349,86 @@ void CPU::SBC()
 
     SetNegative((temp & MSB) == MSB);
     SetZero((temp & 0x00FF) == 0x0000);
-    SetOverflow((((Registers.accumulator ^ temp) & 0x0080) == 0x0080) && (((Registers.accumulator ^ iData) & 0x0080) == 0x0080));
+    SetOverflow((((Registers_.accumulator ^ temp) & 0x0080) == 0x0080) && (((Registers_.accumulator ^ iData_) & 0x0080) == 0x0080));
     SetCarry(temp < 0x0100);
-    Registers.accumulator = temp & 0x00FF;
+    Registers_.accumulator = temp & 0x00FF;
 }
 
 void CPU::TAX()
 {
-    Registers.x = Registers.accumulator;
-    SetNegative((Registers.x & MSB) == MSB);
-    SetZero(Registers.x == 0x00);
+    Registers_.x = Registers_.accumulator;
+    SetNegative((Registers_.x & MSB) == MSB);
+    SetZero(Registers_.x == 0x00);
 }
 
 void CPU::TAY()
 {
-    Registers.y = Registers.accumulator;
-    SetNegative((Registers.y & MSB) == MSB);
-    SetZero(Registers.y == 0x00);
+    Registers_.y = Registers_.accumulator;
+    SetNegative((Registers_.y & MSB) == MSB);
+    SetZero(Registers_.y == 0x00);
 }
 
 void CPU::TSX()
 {
-    Registers.x = Registers.stackPointer;
-    SetNegative((Registers.x & MSB) == MSB);
-    SetZero(Registers.x == 0x00);
+    Registers_.x = Registers_.stackPointer;
+    SetNegative((Registers_.x & MSB) == MSB);
+    SetZero(Registers_.x == 0x00);
 }
 
 void CPU::TXA()
 {
-    Registers.accumulator = Registers.x;
-    SetNegative((Registers.accumulator & MSB) == MSB);
-    SetZero(Registers.accumulator == 0x00);
+    Registers_.accumulator = Registers_.x;
+    SetNegative((Registers_.accumulator & MSB) == MSB);
+    SetZero(Registers_.accumulator == 0x00);
 }
 
 void CPU::TXS()
 {
-    Registers.stackPointer = Registers.x;
+    Registers_.stackPointer = Registers_.x;
 }
 
 void CPU::TYA()
 {
-    Registers.accumulator = Registers.y;
-    SetNegative((Registers.accumulator & MSB) == MSB);
-    SetZero(Registers.accumulator == 0x00);
+    Registers_.accumulator = Registers_.y;
+    SetNegative((Registers_.accumulator & MSB) == MSB);
+    SetZero(Registers_.accumulator == 0x00);
 }
 
 void CPU::AbsoluteJMP()
 {
-    switch(cycle)
+    switch(cycle_)
     {
         case 1:
-            iAddr = ReadAndIncrementPC();
+            iAddr_ = ReadAndIncrementPC();
             break;
         case 2:
-            iAddr = (ReadAndIncrementPC() << 8) | iAddr;
+            iAddr_ = (ReadAndIncrementPC() << 8) | iAddr_;
             break;
         case 3:
-            Registers.programCounter = iAddr;
+            Registers_.programCounter = iAddr_;
             SetNextOpCode();
     }
 }
 
 void CPU::IndirectJMP()
 {
-    switch(cycle)
+    switch(cycle_)
     {
         case 1:
-            iAddr = ReadAndIncrementPC();
+            iAddr_ = ReadAndIncrementPC();
             break;
         case 2:
-            iAddr = (ReadAndIncrementPC() << 8) | iAddr;
+            iAddr_ = (ReadAndIncrementPC() << 8) | iAddr_;
             break;
         case 3:
-            iData = Read(iAddr);
-            iAddr = (iAddr & PAGE_MASK) | ((iAddr + 0x0001) & ZERO_PAGE_MASK);
+            iData_ = Read(iAddr_);
+            iAddr_ = (iAddr_ & PAGE_MASK) | ((iAddr_ + 0x0001) & ZERO_PAGE_MASK);
             break;
         case 4:
-            iAddr = (Read(iAddr) << 8) | iData;
+            iAddr_ = (Read(iAddr_) << 8) | iData_;
             break;
         case 5:
-            Registers.programCounter = iAddr;
+            Registers_.programCounter = iAddr_;
             SetNextOpCode();
     }
 }

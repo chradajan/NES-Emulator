@@ -41,6 +41,9 @@ public:
     void Clock();
     void Reset();
 
+private:
+    void Initialize();
+
 // Other components
 private:
     APU& apu;
@@ -68,16 +71,16 @@ private:
     void IRQ();
     void NMI();
 
-// State variables
+// Current state
 private:
-    OpCode opCode;
-    uint8_t cycle;
-    bool oddCycle;
+    OpCode opCode_;
+    size_t cycle_;
+    bool oddCycle_;
 
 // Logging
 private:
-    std::ofstream log;
-    uint64_t totalCycles;
+    std::ofstream log_;
+    uint64_t totalCycles_;
 
 // Registers and memory
 private:
@@ -89,9 +92,9 @@ private:
         uint8_t x;                  // X
         uint8_t y;                  // Y
         uint16_t programCounter;    // PC
-    } Registers;
+    } Registers_;
 
-    std::array<uint8_t, 0x0800> RAM;
+    std::array<uint8_t, 0x0800> RAM_;
 
     bool IsCarry() const;
     void SetCarry(bool val);
@@ -116,22 +119,22 @@ private:
     void InitiateOamDmaTransfer(uint8_t sourcePage);
     void ExecuteOamDmaTransfer();
 
-    bool isOamDmaTransfer;
-    uint8_t OamDmaData;
-    uint16_t OamDmaAddr;
-    uint16_t OamDmaCycle;
-    uint8_t postOamDmaReturnCycle;
+    bool isOamDmaTransfer_;
+    uint8_t oamDmaData_;
+    uint16_t oamDmaAddr_;
+    size_t oamDmaCycle_;
+    size_t postOamDmaReturnCycle_;
 
 // Instruction Data
 private:
-    uint8_t iData;
-    uint16_t iAddr;
-    uint8_t index;
-    uint8_t regData;
-    bool isStoreOp;
-    bool branchCondition;
-    std::function<void()> instruction;
-    std::function<void()> tickFunction;
+    uint8_t iData_;
+    uint16_t iAddr_;
+    uint8_t instructionIndex_;
+    uint8_t regData_;
+    bool isStoreOp_;
+    bool branchCondition_;
+    std::function<void()> instruction_;
+    std::function<void()> tickFunction_;
 
 // Addressing Modes
 private:

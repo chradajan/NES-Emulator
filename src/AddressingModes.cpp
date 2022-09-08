@@ -3,240 +3,240 @@
 
 void CPU::Immediate()
 {
-    switch (cycle)
+    switch (cycle_)
     {
         case 1:
-            iData = ReadAndIncrementPC();
+            iData_ = ReadAndIncrementPC();
             break;
         case 2:
-            instruction();
+            instruction_();
             SetNextOpCode();
     }
 }
 
 void CPU::Absolute()
 {
-    switch (cycle)
+    switch (cycle_)
     {
         case 1:
-            iData = ReadAndIncrementPC();
+            iData_ = ReadAndIncrementPC();
             break;
         case 2:
-            iAddr = (ReadAndIncrementPC() << 8) | iData;
+            iAddr_ = (ReadAndIncrementPC() << 8) | iData_;
             break;
         case 3:
-            if (isStoreOp)
+            if (isStoreOp_)
             {
-                Write(iAddr, regData);
+                Write(iAddr_, regData_);
             }
             else
             {
-                iData = Read(iAddr);
+                iData_ = Read(iAddr_);
             }
             break;
         case 4:
-            instruction();
+            instruction_();
             SetNextOpCode();
     }
 }
 
 void CPU::ZeroPage()
 {
-    switch (cycle)
+    switch (cycle_)
     {
         case 1:
-            iAddr = ReadAndIncrementPC();
+            iAddr_ = ReadAndIncrementPC();
             break;
         case 2:
-            if (isStoreOp)
+            if (isStoreOp_)
             {
-                Write(iAddr, regData);
+                Write(iAddr_, regData_);
             }
             else
             {
-                iData = Read(iAddr);
+                iData_ = Read(iAddr_);
             }
             break;
         case 3:
-            instruction();
+            instruction_();
             SetNextOpCode();
     }
 }
 
 void CPU::Implied()
 {
-    switch (cycle)
+    switch (cycle_)
     {
         case 1:
             // Dummy Read
-            Read(Registers.programCounter);
+            Read(Registers_.programCounter);
             break;
         case 2:
-            instruction();
+            instruction_();
             SetNextOpCode();
     }
 }
 
 void CPU::AbsoluteIndexed()
 {
-    switch (cycle)
+    switch (cycle_)
     {
         case 1:
-            iData = ReadAndIncrementPC();
+            iData_ = ReadAndIncrementPC();
             break;
         case 2:
-            iAddr = (ReadAndIncrementPC() << 8) | iData;
+            iAddr_ = (ReadAndIncrementPC() << 8) | iData_;
             break;
         case 3:
-            if (isStoreOp || (((iAddr + index) & PAGE_MASK) != (iAddr & PAGE_MASK)))
+            if (isStoreOp_ || (((iAddr_ + instructionIndex_) & PAGE_MASK) != (iAddr_ & PAGE_MASK)))
             {
                 // Dummy Read
-                Read((iAddr & PAGE_MASK) | ((iAddr + index) & ZERO_PAGE_MASK));
-                iAddr += index;
+                Read((iAddr_ & PAGE_MASK) | ((iAddr_ + instructionIndex_) & ZERO_PAGE_MASK));
+                iAddr_ += instructionIndex_;
             }
             else
             {
-                iAddr += index;
-                iData = Read(iAddr);
-                ++cycle;
+                iAddr_ += instructionIndex_;
+                iData_ = Read(iAddr_);
+                ++cycle_;
             }
             break;
         case 4:
-            if (isStoreOp)
+            if (isStoreOp_)
             {
-                Write(iAddr, regData);
+                Write(iAddr_, regData_);
             }
             else
             {
-                iData = Read(iAddr);
+                iData_ = Read(iAddr_);
             }
             break;
         case 5:
-            instruction();
+            instruction_();
             SetNextOpCode();
     }
 }
 
 void CPU::ZeroPageIndexed()
 {
-    switch (cycle)
+    switch (cycle_)
     {
         case 1:
-            iAddr = ReadAndIncrementPC();
+            iAddr_ = ReadAndIncrementPC();
             break;
         case 2:
             // Dummy Read
-            Read(iAddr);
-            iAddr = (iAddr + index) & ZERO_PAGE_MASK;
+            Read(iAddr_);
+            iAddr_ = (iAddr_ + instructionIndex_) & ZERO_PAGE_MASK;
             break;
         case 3:
-            if (isStoreOp)
+            if (isStoreOp_)
             {
-                Write(iAddr, regData);
+                Write(iAddr_, regData_);
             }
             else
             {
-                iData = Read(iAddr);
+                iData_ = Read(iAddr_);
             }
             break;
         case 4:
-            instruction();
+            instruction_();
             SetNextOpCode();
     }
 }
 
 void CPU::IndirectX()
 {
-    switch (cycle)
+    switch (cycle_)
     {
         case 1:
-            iData = ReadAndIncrementPC();
+            iData_ = ReadAndIncrementPC();
             break;
         case 2:
             // Dummy Read
-            Read(iData);
-            iData = (iData + Registers.x) & ZERO_PAGE_MASK;
+            Read(iData_);
+            iData_ = (iData_ + Registers_.x) & ZERO_PAGE_MASK;
             break;
         case 3:
-            iAddr = Read(iData);
-            iData = (iData + 0x01) & ZERO_PAGE_MASK;
+            iAddr_ = Read(iData_);
+            iData_ = (iData_ + 0x01) & ZERO_PAGE_MASK;
             break;
         case 4:
-            iAddr = (Read(iData) << 8) | iAddr;
+            iAddr_ = (Read(iData_) << 8) | iAddr_;
             break;
         case 5:
-            if (isStoreOp)
+            if (isStoreOp_)
             {
-                Write(iAddr, regData);
+                Write(iAddr_, regData_);
             }
             else
             {
-                iData = Read(iAddr);
+                iData_ = Read(iAddr_);
             }
             break;
         case 6:
-            instruction();
+            instruction_();
             SetNextOpCode();
     }
 }
 
 void CPU::IndirectY()
 {
-    switch (cycle)
+    switch (cycle_)
     {
         case 1:
-            iData = ReadAndIncrementPC();
+            iData_ = ReadAndIncrementPC();
             break;
         case 2:
-            iAddr = Read(iData);
-            ++iData;
+            iAddr_ = Read(iData_);
+            ++iData_;
             break;
         case 3:
-            iAddr |= (Read(iData) << 8);
+            iAddr_ |= (Read(iData_) << 8);
             break;
         case 4:
-            if (isStoreOp || (((iAddr + Registers.y) & PAGE_MASK) != (iAddr & PAGE_MASK)))
+            if (isStoreOp_ || (((iAddr_ + Registers_.y) & PAGE_MASK) != (iAddr_ & PAGE_MASK)))
             {
                 // Dummy Read
-                Read((iAddr & PAGE_MASK) | ((iAddr + Registers.y) & ZERO_PAGE_MASK));
-                iAddr += Registers.y;
+                Read((iAddr_ & PAGE_MASK) | ((iAddr_ + Registers_.y) & ZERO_PAGE_MASK));
+                iAddr_ += Registers_.y;
             }
             else
             {
-                iAddr += Registers.y;
-                iData = Read(iAddr);
-                ++cycle;
+                iAddr_ += Registers_.y;
+                iData_ = Read(iAddr_);
+                ++cycle_;
             }
             break;
         case 5:
-            if (isStoreOp)
+            if (isStoreOp_)
             {
-                Write(iAddr, regData);
+                Write(iAddr_, regData_);
             }
             else
             {
-                iData = Read(iAddr);
+                iData_ = Read(iAddr_);
             }
             break;
         case 6:
-            instruction();
+            instruction_();
             SetNextOpCode();
     }
 }
 
 void CPU::Relative()
 {
-    switch (cycle)
+    switch (cycle_)
     {
         case 1:
-            iData = ReadAndIncrementPC();
-            iAddr = Registers.programCounter + (int8_t)iData;
+            iData_ = ReadAndIncrementPC();
+            iAddr_ = Registers_.programCounter + (int8_t)iData_;
             break;
         case 2:
-            if (branchCondition)
+            if (branchCondition_)
             {
                 // Dummy Read when branch condition is true
-                Read((Registers.programCounter & PAGE_MASK) + (iAddr & ZERO_PAGE_MASK));
+                Read((Registers_.programCounter & PAGE_MASK) + (iAddr_ & ZERO_PAGE_MASK));
             }
             else
             {
@@ -244,56 +244,56 @@ void CPU::Relative()
             }
             break;
         case 3:
-            if ((Registers.programCounter & PAGE_MASK) != (iAddr & PAGE_MASK))
+            if ((Registers_.programCounter & PAGE_MASK) != (iAddr_ & PAGE_MASK))
             {
                 // Dummy Read when page boundary crossed on branch
-                Read(iAddr);
+                Read(iAddr_);
             }
             else
             {
-                Registers.programCounter = iAddr;
+                Registers_.programCounter = iAddr_;
                 SetNextOpCode();
             }
             break;
         case 4:
-            Registers.programCounter = iAddr;
+            Registers_.programCounter = iAddr_;
             SetNextOpCode();
     }
 }
 
 void CPU::Accumulator()
 {
-    switch (cycle)
+    switch (cycle_)
     {
         case 1:
             // Dummy Read
-            Read(Registers.programCounter);
-            iData = Registers.accumulator;
+            Read(Registers_.programCounter);
+            iData_ = Registers_.accumulator;
             break;
         case 2:
-            instruction();
-            Registers.accumulator = iData;
+            instruction_();
+            Registers_.accumulator = iData_;
             SetNextOpCode();
     }
 }
 
 void CPU::ZeroPageRMW()
 {
-    switch (cycle)
+    switch (cycle_)
     {
         case 1:
-            iAddr = ReadAndIncrementPC();
+            iAddr_ = ReadAndIncrementPC();
             break;
         case 2:
-            iData = Read(iAddr);
+            iData_ = Read(iAddr_);
             break;
         case 3:
             // Dummy Write
-            Write(iAddr, 0xFF);
+            Write(iAddr_, 0xFF);
             break;
         case 4:
-            instruction();
-            Write(iAddr, iData);
+            instruction_();
+            Write(iAddr_, iData_);
             break;
         case 5:
             SetNextOpCode();
@@ -302,26 +302,26 @@ void CPU::ZeroPageRMW()
 
 void CPU::ZeroPageIndexedRMW()
 {
-    switch (cycle)
+    switch (cycle_)
     {
         case 1:
-            iAddr = ReadAndIncrementPC();
+            iAddr_ = ReadAndIncrementPC();
             break;
         case 2:
             // Dummy Read
-            Read(iAddr);
-            iAddr = (iAddr + index) % ZERO_PAGE_MASK;
+            Read(iAddr_);
+            iAddr_ = (iAddr_ + instructionIndex_) % ZERO_PAGE_MASK;
             break;
         case 3:
-            iData = Read(iAddr);
+            iData_ = Read(iAddr_);
             break;
         case 4:
             // Dummy Write
-            Write(iAddr, 0xFF);
+            Write(iAddr_, 0xFF);
             break;
         case 5:
-            instruction();
-            Write(iAddr, iData);
+            instruction_();
+            Write(iAddr_, iData_);
             break;
         case 6:
             SetNextOpCode();
@@ -330,24 +330,24 @@ void CPU::ZeroPageIndexedRMW()
 
 void CPU::AbsoluteRWM()
 {
-    switch (cycle)
+    switch (cycle_)
     {
         case 1:
-            iAddr = ReadAndIncrementPC();
+            iAddr_ = ReadAndIncrementPC();
             break;
         case 2:
-            iAddr = (ReadAndIncrementPC() << 8) | iAddr;
+            iAddr_ = (ReadAndIncrementPC() << 8) | iAddr_;
             break;
         case 3:
-            iData = Read(iAddr);
+            iData_ = Read(iAddr_);
             break;
         case 4:
             // Dummy Write
-            Write(iAddr, 0xFF);
+            Write(iAddr_, 0xFF);
             break;
         case 5:
-            instruction();
-            Write(iAddr, iData);
+            instruction_();
+            Write(iAddr_, iData_);
             break;
         case 6:
             SetNextOpCode();
@@ -356,29 +356,29 @@ void CPU::AbsoluteRWM()
 
 void CPU::AbsoluteIndexedRMW()
 {
-    switch (cycle)
+    switch (cycle_)
     {
         case 1:
-            iData = ReadAndIncrementPC();
+            iData_ = ReadAndIncrementPC();
             break;
         case 2:
-            iAddr = ReadAndIncrementPC();
+            iAddr_ = ReadAndIncrementPC();
             break;
         case 3:
             // Dummy Read
-            Read((iAddr << 8) | ((iData + index) & ZERO_PAGE_MASK));
-            iAddr = (((iAddr << 8) | iData) + index) & 0xFFFF;
+            Read((iAddr_ << 8) | ((iData_ + instructionIndex_) & ZERO_PAGE_MASK));
+            iAddr_ = (((iAddr_ << 8) | iData_) + instructionIndex_) & 0xFFFF;
             break;
         case 4:
-            iData = Read(iAddr);
+            iData_ = Read(iAddr_);
             break;
         case 5:
             // Dummy Write
-            Write(iAddr, 0xFF);
+            Write(iAddr_, 0xFF);
             break;
         case 6:
-            instruction();
-            Write(iAddr, iData);
+            instruction_();
+            Write(iAddr_, iData_);
             break;
         case 7:
             SetNextOpCode();
