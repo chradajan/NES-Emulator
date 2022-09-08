@@ -29,7 +29,7 @@ void CPU::ASL()
 
 void CPU::BIT()
 {
-    SetNegative((iData & MSB) == MSB);
+    SetNegative((iData & NEGATIVE_FLAG) == NEGATIVE_FLAG);
     SetOverflow((iData & OVERFLOW_FLAG) == OVERFLOW_FLAG);
     SetZero((iData & Registers.accumulator) == 0);
 }

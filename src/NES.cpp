@@ -34,7 +34,7 @@ void NES::Run()
         ppu->Clock();
         ppu->Clock();
         ppu->Clock();
-        cpu->Tick();
+        cpu->Clock();
     }
 }
 

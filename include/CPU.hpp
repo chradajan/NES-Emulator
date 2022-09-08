@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdint>
 #include <functional>
+#include <fstream>
 #include <memory>
 
 constexpr uint8_t CARRY_FLAG = 0x01;
@@ -37,7 +38,7 @@ class CPU
 public:
     CPU(APU& apu, Cartridge& cartridge, Controller& controller, PPU& ppu);
     ~CPU() = default;
-    void Tick();
+    void Clock();
     void Reset();
 
 // Other components
@@ -72,6 +73,11 @@ private:
     OpCode opCode;
     uint8_t cycle;
     bool oddCycle;
+
+// Logging
+private:
+    std::ofstream log;
+    uint64_t totalCycles;
 
 // Registers and memory
 private:

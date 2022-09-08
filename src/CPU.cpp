@@ -8,6 +8,11 @@
 #include <functional>
 #include <iostream>
 
+#ifdef LOGGING
+#include <iomanip>
+#include <fstream>
+#endif
+
 CPU::CPU(APU& apu, Cartridge& cartridge, Controller& controller, PPU& ppu) :
     apu(apu),
     cartridge(cartridge),
@@ -15,7 +20,7 @@ CPU::CPU(APU& apu, Cartridge& cartridge, Controller& controller, PPU& ppu) :
     ppu(ppu)
 {
     Registers.accumulator = 0x00;
-    Registers.status = 0x34;
+    Registers.status = 0x24;
     Registers.stackPointer = 0xFD;
     Registers.x = 0x00;
     Registers.y = 0x00;
@@ -31,15 +36,21 @@ CPU::CPU(APU& apu, Cartridge& cartridge, Controller& controller, PPU& ppu) :
     branchCondition = false;
     instruction = [](){};
     tickFunction = [](){};
+    totalCycles = 0;
+
+    #ifdef LOGGING
+    log.open("../Logs/log.log");
+    #endif
 
     RAM.fill(0x00);
     tickFunction = std::bind(&CPU::ResetVector, this);
 }
 
-void CPU::Tick()
+void CPU::Clock()
 {
     oddCycle = !oddCycle;
     ++cycle;
+    ++totalCycles;
 
     if (isOamDmaTransfer)
     {
@@ -136,6 +147,38 @@ void CPU::Push(uint8_t data)
 
 void CPU::SetNextOpCode()
 {
+    #ifdef LOGGING
+
+    uint16_t current_pc = Registers.programCounter;
+    opCode = static_cast<OpCode>(ReadAndIncrementPC());
+    cycle = 0;
+    auto [scanline, dot] = ppu.GetState();
+
+    log << std::hex << std::uppercase << std::setfill('0') << std::setw(4) << current_pc << "  " << std::setfill('0') << std::setw(2) << static_cast<unsigned int>(opCode) << "  ";
+    log << "A:" << std::setfill('0') << std::setw(2) << static_cast<unsigned int>(Registers.accumulator) << " X:" << std::setfill('0') << std::setw(2) << static_cast<unsigned int>(Registers.x) << " Y:";
+    log << std::setfill('0') << std::setw(2) << static_cast<unsigned int>(Registers.y) << " P:" << std::setfill('0') << std::setw(2) << static_cast<unsigned int>(Registers.status) << " SP:";
+    log << std::setfill('0') << std::setw(2) << static_cast<unsigned int>(Registers.stackPointer) << " ";
+    log << "PPU:" << std::dec << std::setw(3) << std::setfill(' ') << (unsigned int)scanline << ",";
+    log << std::setw(3) << std::setfill(' ') << (unsigned int)dot << " ";
+    log << "CYC:" << std::dec << static_cast<unsigned int>(totalCycles) << "\n";
+
+    if (ppu.NMI())
+    {
+        cycle = 1;
+        --Registers.programCounter;
+        tickFunction = std::bind(&CPU::NMI, this);
+        tickFunction();
+    }
+    else if (!IsInterruptDisable() && cartridge.IRQ())
+    {
+        cycle = 1;
+        --Registers.programCounter;
+        tickFunction = std::bind(&CPU::IRQ, this);
+        tickFunction();
+    }
+
+    #else
+
     if (ppu.NMI())
     {
         cycle = 1;
@@ -153,6 +196,8 @@ void CPU::SetNextOpCode()
         opCode = static_cast<OpCode>(ReadAndIncrementPC());
         cycle = 0;
     }
+
+    #endif
 }
 
 uint8_t CPU::ReadAndIncrementPC()
