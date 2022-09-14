@@ -5,7 +5,6 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
-#include <vector>
 
 class NROM : public virtual Cartridge
 {
@@ -25,10 +24,8 @@ public:
     bool IRQ() override;
 
 private:
-    std::array<uint8_t, 0x2000> PRG_RAM;
-    std::vector<uint8_t> PRG_ROM;
-    std::array<uint8_t, 0x2000> CHR_ROM;
-    bool PRG_Mirroring;
+    std::array<uint8_t, 0x8000> PRG_ROM_;
+    std::array<uint8_t, 0x2000> CHR_ROM_;
 
     void LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks) override;
 };
