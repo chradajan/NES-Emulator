@@ -1,6 +1,7 @@
 #include "../include/PPU.hpp"
 #include "../include/Cartridge.hpp"
 #include "../include/RegisterAddresses.hpp"
+#include "../include/mappers/MMC3.hpp"
 #include <cstdint>
 #include <utility>
 
@@ -317,6 +318,11 @@ void PPU::WriteReg(uint16_t addr, uint8_t data)
                 InternalRegisters_.t |= data;
                 InternalRegisters_.v = InternalRegisters_.t;
                 InternalRegisters_.w = false;
+
+                if (MMC3* mmc3Cart = dynamic_cast<MMC3*>(&cartridge_); mmc3Cart != nullptr)
+                {
+                    mmc3Cart->ReadCHR(InternalRegisters_.v);
+                }
             }
             else
             {

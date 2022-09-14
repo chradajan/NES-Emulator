@@ -141,35 +141,24 @@ void MMC3::WritePRG(uint16_t addr, uint8_t data)
 
 uint8_t MMC3::ReadCHR(uint16_t addr)
 {
-    bool currA12State = ((addr & PPU_A12_MASK) == PPU_A12_MASK);
+    CheckA12(addr);
 
-    if (!prevA12State && currA12State)
+    if (addr >= 0x2000)
     {
-        // Rising edge detected
-        ClockIRQ();
+        return 0x00;
     }
 
-    prevA12State = currA12State;
-
-    uint8_t bank = ((addr & 0x1C00) >> 10);
+    size_t bank = ((addr & 0x1C00) >> 10);
     return CHR_ROM_BANKS_[chrIndex_[bank]][addr % CHR_BANK_SIZE];
 }
 
 void MMC3::WriteCHR(uint16_t addr, uint8_t data)
 {
-    bool currA12State = ((addr & PPU_A12_MASK) == PPU_A12_MASK);
-
-    if (!prevA12State && currA12State)
-    {
-        // Rising edge detected
-        ClockIRQ();
-    }
-
-    prevA12State = currA12State;
+    CheckA12(addr);
 
     if (chrRamMode_)
     {
-        uint8_t bank = ((addr & 0x1C00) >> 10);
+        size_t bank = ((addr & 0x1C00) >> 10);
         CHR_ROM_BANKS_[chrIndex_[bank]][addr % CHR_BANK_SIZE] = data;
     }
 }
@@ -318,28 +307,41 @@ void MMC3::SetBanks()
     }
 }
 
+void MMC3::CheckA12(uint16_t addr)
+{
+    bool currA12State = ((addr & PPU_A12_MASK) == PPU_A12_MASK);
+
+    if (!prevA12State && currA12State && (a12LowCounter > 12))
+    {
+        // Rising edge detected
+        ClockIRQ();
+    }
+    else if (!prevA12State && !currA12State)
+    {
+        ++a12LowCounter;
+    }
+    else if (currA12State)
+    {
+        a12LowCounter = 0;
+    }
+
+    prevA12State = currA12State;
+}
+
 void MMC3::ClockIRQ()
 {
-    if (reloadIrqCounter_)
+    if (reloadIrqCounter_ || (irqCounter_ == 0))
     {
         reloadIrqCounter_ = false;
         irqCounter_ = irqLatch_;
     }
     else
     {
-        if (irqCounter_ != 0)
-        {
-            --irqCounter_;
-        }
+        --irqCounter_;
 
         if (irqCounter_ == 0)
         {
-            irqCounter_ = irqLatch_;
-
-            if (irqEnable_)
-            {
-                sendInterrupt_ = true;
-            }
+            sendInterrupt_ = irqEnable_;
         }
     }
 }

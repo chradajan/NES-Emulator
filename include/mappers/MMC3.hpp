@@ -60,7 +60,7 @@ private:
 // Bank data
 private:
     uint8_t bankRegToUpdate_;
-    std::array<uint8_t, 8> bankRegister_;
+    std::array<size_t, 8> bankRegister_;
 
     // True:  $C000-$DFFF swappable, $8000-$9FFF fixed to second-to-last bank
     // False: $8000-$9FFF swappable, $C000-$DFFF fixed to second-to-last bank
@@ -87,7 +87,9 @@ private:
     bool reloadIrqCounter_;
     bool prevA12State;
     bool sendInterrupt_;
+    size_t a12LowCounter;
 
+    void CheckA12(uint16_t addr);
     void ClockIRQ();
 };
 
