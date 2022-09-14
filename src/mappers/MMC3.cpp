@@ -8,6 +8,21 @@ MMC3::MMC3(std::ifstream& rom, std::string savePath, std::array<uint8_t, 16> con
     savePath_(savePath)
 {
     batteryBackedRam_ = ((header[6] & BATTERY_BACKED_PRG_RAM) == BATTERY_BACKED_PRG_RAM);
+    PRG_RAM_.fill(0x00);
+    bankRegToUpdate_ = 0;
+    bankRegister_.fill(0);
+    prgBankMode_ = false;
+    chrBankMode_ = false;
+
+    ramEnabled_ = false;
+    ramWritesDisabled_ = false;
+    irqLatch_ = 0;
+    irqEnable_ = false;
+    irqCounter_ = 0;
+    reloadIrqCounter_ = false;
+    prevA12State = false;
+    sendInterrupt_ = false;
+    a12LowCounter = 0;
 
     if ((header[6] & IGNORE_MIRRORING_CONTROL) == IGNORE_MIRRORING_CONTROL)
     {
@@ -26,6 +41,7 @@ MMC3::MMC3(std::ifstream& rom, std::string savePath, std::array<uint8_t, 16> con
     size_t chrRomBanksCount = header[5] * 8;
 
     LoadROM(rom, prgRomBanksCount, chrRomBanksCount);
+    SetBanks();
 }
 
 uint8_t MMC3::ReadPRG(uint16_t addr)
