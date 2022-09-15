@@ -224,6 +224,14 @@ uint8_t PPU::ReadReg(uint16_t addr)
                 readBuffer_ = Read(InternalRegisters_.v - 0x1000);
             }
 
+            if (InternalRegisters_.v >= 0x2000)
+            {
+                if (MMC3* mmc3Cart = dynamic_cast<MMC3*>(&cartridge_); mmc3Cart != nullptr)
+                {
+                    mmc3Cart->ReadCHR(InternalRegisters_.v);
+                }
+            }
+
             if (RenderingEnabled() && scanline_ < 240)
             {
                 CoarseXIncrement();
