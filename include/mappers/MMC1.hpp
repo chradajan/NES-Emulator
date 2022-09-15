@@ -12,7 +12,7 @@ constexpr uint8_t MIRRORING_MASK = 0x03;
 constexpr uint8_t PRG_ROM_BANK_MODE = 0x0C;
 constexpr uint8_t CHR_ROM_BANK_MODE = 0x10;
 constexpr uint8_t SHIFT_RESET_MASK = 0x80;
-constexpr uint16_t ADDR_MASK = 0x6000;
+constexpr uint16_t MMC1_ADDR_MASK = 0x6000;
 
 class MMC1 : public virtual Cartridge
 {

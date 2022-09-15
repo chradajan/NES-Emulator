@@ -62,7 +62,7 @@ uint8_t MMC3::ReadPRG(uint16_t addr)
     else
     {
         uint8_t bank = ((addr & 0x6000) >> 13);
-        return PRG_ROM_BANKS_[prgIndex_[bank]][addr % PRG_BANK_SIZE];
+        return PRG_ROM_BANKS_[prgIndex_[bank]][addr % MMC3_PRG_BANK_SIZE];
     }
 }
 
@@ -164,7 +164,7 @@ uint8_t MMC3::ReadCHR(uint16_t addr)
     }
 
     size_t bank = ((addr & 0x1C00) >> 10);
-    return CHR_ROM_BANKS_[chrIndex_[bank]][addr % CHR_BANK_SIZE];
+    return CHR_ROM_BANKS_[chrIndex_[bank]][addr % MMC3_CHR_BANK_SIZE];
 }
 
 void MMC3::WriteCHR(uint16_t addr, uint8_t data)
@@ -174,7 +174,7 @@ void MMC3::WriteCHR(uint16_t addr, uint8_t data)
     if (chrRamMode_)
     {
         size_t bank = ((addr & 0x1C00) >> 10);
-        CHR_ROM_BANKS_[chrIndex_[bank]][addr % CHR_BANK_SIZE] = data;
+        CHR_ROM_BANKS_[chrIndex_[bank]][addr % MMC3_CHR_BANK_SIZE] = data;
     }
 }
 
@@ -246,7 +246,7 @@ void MMC3::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 
     for (size_t bankIndex = 0; bankIndex < prgRomBanks; ++bankIndex)
     {
-        for (size_t prgByte = 0; prgByte < PRG_BANK_SIZE; ++prgByte)
+        for (size_t prgByte = 0; prgByte < MMC3_PRG_BANK_SIZE; ++prgByte)
         {
             rom >> std::noskipws >> std::hex >> PRG_ROM_BANKS_[bankIndex][prgByte];
         }
@@ -254,7 +254,7 @@ void MMC3::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 
     for (size_t bankIndex = 0; bankIndex < chrRomBanks; ++bankIndex)
     {
-        for (size_t chrByte = 0; chrByte < CHR_BANK_SIZE; ++chrByte)
+        for (size_t chrByte = 0; chrByte < MMC3_CHR_BANK_SIZE; ++chrByte)
         {
             rom >> std::noskipws >> std::hex >> CHR_ROM_BANKS_[bankIndex][chrByte];
         }

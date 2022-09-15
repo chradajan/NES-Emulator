@@ -227,7 +227,7 @@ void MMC1::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 
 void MMC1::SetRegisters(uint16_t addr)
 {
-    uint8_t regSelection = ((addr & ADDR_MASK) >> 13);
+    uint8_t regSelection = ((addr & MMC1_ADDR_MASK) >> 13);
 
     switch (regSelection)
     {

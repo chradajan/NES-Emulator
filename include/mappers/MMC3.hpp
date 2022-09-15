@@ -9,8 +9,8 @@
 #include <vector>
 
 // BANK SIZES
-constexpr size_t PRG_BANK_SIZE = 0x2000;
-constexpr size_t CHR_BANK_SIZE = 0x0400;
+constexpr size_t MMC3_PRG_BANK_SIZE = 0x2000;
+constexpr size_t MMC3_CHR_BANK_SIZE = 0x0400;
 
 // $8000-$9FFE, even
 constexpr uint8_t MMC3_BANK_SELECT_MASK = 0x07;
@@ -51,8 +51,8 @@ private:
 
 private:
     std::array<uint8_t, 0x2000> PRG_RAM_;
-    std::vector<std::array<uint8_t, PRG_BANK_SIZE>> PRG_ROM_BANKS_;
-    std::vector<std::array<uint8_t, CHR_BANK_SIZE>> CHR_ROM_BANKS_;
+    std::vector<std::array<uint8_t, MMC3_PRG_BANK_SIZE>> PRG_ROM_BANKS_;
+    std::vector<std::array<uint8_t, MMC3_CHR_BANK_SIZE>> CHR_ROM_BANKS_;
 
     std::array<size_t, 4> prgIndex_;
     std::array<size_t, 8> chrIndex_;
