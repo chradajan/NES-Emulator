@@ -14,7 +14,7 @@ MMC3::MMC3(std::ifstream& rom, std::string savePath, std::array<uint8_t, 16> con
     prgBankMode_ = false;
     chrBankMode_ = false;
 
-    ramEnabled_ = false;
+    ramEnabled_ = true;
     ramWritesDisabled_ = false;
     irqLatch_ = 0;
     irqEnable_ = false;
@@ -22,7 +22,6 @@ MMC3::MMC3(std::ifstream& rom, std::string savePath, std::array<uint8_t, 16> con
     reloadIrqCounter_ = false;
     prevA12State = false;
     sendInterrupt_ = false;
-    a12LowCounter = 0;
 
     if ((header[6] & IGNORE_MIRRORING_CONTROL) == IGNORE_MIRRORING_CONTROL)
     {
@@ -327,18 +326,10 @@ void MMC3::CheckA12(uint16_t addr)
 {
     bool currA12State = ((addr & PPU_A12_MASK) == PPU_A12_MASK);
 
-    if (!prevA12State && currA12State && (a12LowCounter > 12))
+    if (!prevA12State && currA12State)
     {
         // Rising edge detected
         ClockIRQ();
-    }
-    else if (!prevA12State && !currA12State)
-    {
-        ++a12LowCounter;
-    }
-    else if (currA12State)
-    {
-        a12LowCounter = 0;
     }
 
     prevA12State = currA12State;
@@ -348,6 +339,11 @@ void MMC3::ClockIRQ()
 {
     if (reloadIrqCounter_ || (irqCounter_ == 0))
     {
+        if (irqLatch_ == 0)
+        {
+            sendInterrupt_ = irqEnable_;
+        }
+
         reloadIrqCounter_ = false;
         irqCounter_ = irqLatch_;
     }

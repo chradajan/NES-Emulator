@@ -87,7 +87,6 @@ private:
     bool reloadIrqCounter_;
     bool prevA12State;
     bool sendInterrupt_;
-    size_t a12LowCounter;
 
     void CheckA12(uint16_t addr);
     void ClockIRQ();
