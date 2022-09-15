@@ -284,41 +284,41 @@ void MMC3::SetBanks()
     //             +-------+-------+-------+-------+
 
     // Set PRG Banks
-    prgIndex_[1] = bankRegister_[7] & PRG_BANK_MASK;
+    prgIndex_[1] = (bankRegister_[7] & PRG_BANK_MASK) % PRG_ROM_BANKS_.size();
 
     if (prgBankMode_)
     {
         prgIndex_[0] = PRG_ROM_BANKS_.size() - 2;
-        prgIndex_[2] = bankRegister_[6] & PRG_BANK_MASK;
+        prgIndex_[2] = (bankRegister_[6] & PRG_BANK_MASK) % PRG_ROM_BANKS_.size();
     }
     else
     {
-        prgIndex_[0] = bankRegister_[6] & PRG_BANK_MASK;
+        prgIndex_[0] = (bankRegister_[6] & PRG_BANK_MASK) % PRG_ROM_BANKS_.size();
         prgIndex_[2] = PRG_ROM_BANKS_.size() - 2;
     }
 
     // Set CHR Banks
     if (chrBankMode_)
     {
-        chrIndex_[0] = bankRegister_[2];
-        chrIndex_[1] = bankRegister_[3];
-        chrIndex_[2] = bankRegister_[4];
-        chrIndex_[3] = bankRegister_[5];
-        chrIndex_[4] = bankRegister_[0] & CHR_2KB_BANK_MASK;
-        chrIndex_[5] = chrIndex_[4] | 0x01;
-        chrIndex_[6] = bankRegister_[1] & CHR_2KB_BANK_MASK;
-        chrIndex_[7] = chrIndex_[6] | 0x01;
+        chrIndex_[0] = bankRegister_[2] % CHR_ROM_BANKS_.size();
+        chrIndex_[1] = bankRegister_[3] % CHR_ROM_BANKS_.size();
+        chrIndex_[2] = bankRegister_[4] % CHR_ROM_BANKS_.size();
+        chrIndex_[3] = bankRegister_[5] % CHR_ROM_BANKS_.size();
+        chrIndex_[4] = (bankRegister_[0] & CHR_2KB_BANK_MASK) % CHR_ROM_BANKS_.size();
+        chrIndex_[5] = (chrIndex_[4] | 0x01) % CHR_ROM_BANKS_.size();
+        chrIndex_[6] = (bankRegister_[1] & CHR_2KB_BANK_MASK) % CHR_ROM_BANKS_.size();
+        chrIndex_[7] = (chrIndex_[6] | 0x01) % CHR_ROM_BANKS_.size();
     }
     else
     {
-        chrIndex_[0] = bankRegister_[0] & CHR_2KB_BANK_MASK;
-        chrIndex_[1] = chrIndex_[0] | 0x01;
-        chrIndex_[2] = bankRegister_[1] & CHR_2KB_BANK_MASK;
-        chrIndex_[3] = chrIndex_[2] | 0x01;
-        chrIndex_[4] = bankRegister_[2];
-        chrIndex_[5] = bankRegister_[3];
-        chrIndex_[6] = bankRegister_[4];
-        chrIndex_[7] = bankRegister_[5];
+        chrIndex_[0] = (bankRegister_[0] & CHR_2KB_BANK_MASK) % CHR_ROM_BANKS_.size();
+        chrIndex_[1] = (chrIndex_[0] | 0x01) % CHR_ROM_BANKS_.size();
+        chrIndex_[2] = (bankRegister_[1] & CHR_2KB_BANK_MASK) % CHR_ROM_BANKS_.size();
+        chrIndex_[3] = (chrIndex_[2] | 0x01) % CHR_ROM_BANKS_.size();
+        chrIndex_[4] = bankRegister_[2] % CHR_ROM_BANKS_.size();
+        chrIndex_[5] = bankRegister_[3] % CHR_ROM_BANKS_.size();
+        chrIndex_[6] = bankRegister_[4] % CHR_ROM_BANKS_.size();
+        chrIndex_[7] = bankRegister_[5] % CHR_ROM_BANKS_.size();
     }
 }
 
