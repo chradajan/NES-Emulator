@@ -34,6 +34,8 @@ class Cartridge
 public:
     virtual ~Cartridge() {}
 
+    virtual void Reset() = 0;
+
     virtual uint8_t ReadPRG(uint16_t addr) = 0;
     virtual void WritePRG(uint16_t addr, uint8_t data) = 0;
 

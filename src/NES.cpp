@@ -19,26 +19,42 @@
 NES::NES(std::string const romPath, std::string const savePath, char* frameBuffer)
 {
     InitializeCartridge(romPath, savePath);
-    apu = std::make_unique<APU>();
-    controller = std::make_unique<Controller>();
-    ppu = std::make_unique<PPU>(*cartridge, frameBuffer);
-    cpu = std::make_unique<CPU>(*apu, *cartridge, *controller, *ppu);
+
+    if (cartLoaded_)
+    {
+        apu_ = std::make_unique<APU>();
+        controller_ = std::make_unique<Controller>();
+        ppu_ = std::make_unique<PPU>(*cartridge_, frameBuffer);
+        cpu_ = std::make_unique<CPU>(*apu_, *cartridge_, *controller_, *ppu_);
+    }
 }
 
 NES::~NES()
 {
-    cartridge->SaveRAM();
+    cartridge_->SaveRAM();
 }
 
 void NES::Run()
 {
-    while (!ppu->FrameReady())
+    while (!ppu_->FrameReady())
     {
-        ppu->Clock();
-        ppu->Clock();
-        ppu->Clock();
-        cpu->Clock();
+        ppu_->Clock();
+        ppu_->Clock();
+        ppu_->Clock();
+        cpu_->Clock();
     }
+}
+
+void NES::Reset()
+{
+    cpu_->Reset();
+    ppu_->Reset();
+    cartridge_->Reset();
+}
+
+bool NES::Ready()
+{
+    return cartLoaded_;
 }
 
 void NES::InitializeCartridge(std::string const romPath, std::string const savePath)
@@ -56,27 +72,30 @@ void NES::InitializeCartridge(std::string const romPath, std::string const saveP
     switch (mapper)
     {
         case 0:
-            cartridge = std::make_unique<NROM>(rom, header);
+            cartridge_ = std::make_unique<NROM>(rom, header);
             break;
         case 1:
-            cartridge = std::make_unique<MMC1>(rom, savePath, header);
+            cartridge_ = std::make_unique<MMC1>(rom, savePath, header);
             break;
         case 2:
-            cartridge = std::make_unique<UxROM>(rom, header);
+            cartridge_ = std::make_unique<UxROM>(rom, header);
             break;
         case 3:
-            cartridge = std::make_unique<CNROM>(rom, header);
+            cartridge_ = std::make_unique<CNROM>(rom, header);
             break;
         case 4:
-            cartridge = std::make_unique<MMC3>(rom, savePath, header);
+            cartridge_ = std::make_unique<MMC3>(rom, savePath, header);
             break;
         case 7:
-            cartridge = std::make_unique<AxROM>(rom, header);
+            cartridge_ = std::make_unique<AxROM>(rom, header);
             break;
         case 9:
-            cartridge = std::make_unique<MMC2>(rom, header);
+            cartridge_ = std::make_unique<MMC2>(rom, header);
             break;
         default:
-            cartridge = nullptr;
+            cartLoaded_ = false;
+            return;
     }
+
+    cartLoaded_ = true;
 }

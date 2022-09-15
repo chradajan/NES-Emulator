@@ -36,20 +36,17 @@ MMC1::MMC1(std::ifstream& rom, std::string const savePath, std::array<uint8_t, 1
         }
     }
 
-    // Check for trainer data.
-    if ((header[6] & TRAINER_DATA) == TRAINER_DATA)
-    {
-        // Load 0x0200 bytes of trainer data into PRG RAM at $7000.
-        uint16_t trainerAddr = 0x1000;
-
-        while (trainerAddr < 0x1200)
-        {
-            rom >> std::noskipws >> std::hex >> PRG_RAM_BANKS_[Index_.prgRam][trainerAddr];
-            ++trainerAddr;
-        }
-    }
-
     LoadROM(rom, header[4], header[5]);
+    UpdateIndices();
+}
+
+void MMC1::Reset()
+{
+    Index_.prgRam = 0;
+    Reg_.control = 0x0C;
+    Reg_.chrBank0 = 0x00;
+    Reg_.chrBank1 = 0x00;
+    Reg_.prgBank = 0x00;
     UpdateIndices();
 }
 

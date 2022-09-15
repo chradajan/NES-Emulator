@@ -11,6 +11,12 @@ AxROM::AxROM(std::ifstream& rom, std::array<uint8_t, 16> const& header)
     mirrorType_ = MirrorType::SINGLE_LOW;
 }
 
+void AxROM::Reset()
+{
+    prgIndex_ = 0;
+    mirrorType_ = MirrorType::SINGLE_LOW;
+}
+
 uint8_t AxROM::ReadPRG(uint16_t addr)
 {
     if (addr < 0x8000)

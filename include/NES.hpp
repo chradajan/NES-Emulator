@@ -18,13 +18,17 @@ public:
     ~NES();
 
     void Run();
+    void Reset();
+    bool Ready();
 
 private:
-    std::unique_ptr<APU> apu;
-    std::unique_ptr<Cartridge> cartridge;
-    std::unique_ptr<Controller> controller;
-    std::unique_ptr<PPU> ppu;
-    std::unique_ptr<CPU> cpu;
+    std::unique_ptr<APU> apu_;
+    std::unique_ptr<Cartridge> cartridge_;
+    std::unique_ptr<Controller> controller_;
+    std::unique_ptr<PPU> ppu_;
+    std::unique_ptr<CPU> cpu_;
+
+    bool cartLoaded_;
 
     void InitializeCartridge(std::string romPath, std::string savePath);
 };

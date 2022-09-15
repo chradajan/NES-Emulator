@@ -13,7 +13,7 @@ int main(int argc, char** argv)
 {
     if (argc <= 1)
     {
-        std::cout << "Failed to specify path to ROM." << std::endl;
+        std::cout << "Failed to specify path to ROM.\n";
         return 0;
     }
 
@@ -28,7 +28,15 @@ int main(int argc, char** argv)
             savePath,
             frameBuffer.data());
 
-    GameWindow gameWindow(nes, frameBuffer.data());
-    gameWindow.Run();
+    if (nes.Ready())
+    {
+        GameWindow gameWindow(nes, frameBuffer.data());
+        gameWindow.Run();
+    }
+    else
+    {
+        std::cout << "Could not load selected ROM.\n";
+    }
+
     return 0;
 }

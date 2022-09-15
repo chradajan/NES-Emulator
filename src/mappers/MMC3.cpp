@@ -43,6 +43,25 @@ MMC3::MMC3(std::ifstream& rom, std::string savePath, std::array<uint8_t, 16> con
     SetBanks();
 }
 
+void MMC3::Reset()
+{
+    bankRegToUpdate_ = 0;
+    bankRegister_.fill(0);
+    prgBankMode_ = false;
+    chrBankMode_ = false;
+
+    ramEnabled_ = true;
+    ramWritesDisabled_ = false;
+    irqLatch_ = 0;
+    irqEnable_ = false;
+    irqCounter_ = 0;
+    reloadIrqCounter_ = false;
+    prevA12State = false;
+    sendInterrupt_ = false;
+
+    SetBanks();
+}
+
 uint8_t MMC3::ReadPRG(uint16_t addr)
 {
     if (addr < 0x6000)

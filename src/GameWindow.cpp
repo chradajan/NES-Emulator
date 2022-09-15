@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 #include <SDL2/SDL.h>
+#include <iostream>
 
 GameWindow::GameWindow(NES& nes, char* frameBuffer) :
     nes_(nes),
@@ -32,6 +33,8 @@ void GameWindow::Run()
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     bool exit = false;
+    bool resetNES = false;
+    bool capFramerate = true;
 
     while (!exit)
     {
@@ -43,6 +46,20 @@ void GameWindow::Run()
             if (event.type == SDL_QUIT)
             {
                 exit = true;
+            }
+            else if (event.type == SDL_KEYUP)
+            {
+                switch (event.key.keysym.scancode)
+                {
+                    case SDL_SCANCODE_R:
+                        resetNES = true;
+                        break;
+                    case SDL_SCANCODE_T:
+                        capFramerate = !capFramerate;
+                        break;
+                    default:
+                        break;
+                }
             }
             else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
             {
@@ -68,9 +85,15 @@ void GameWindow::Run()
         SDL_FreeSurface(surface);
         SDL_DestroyTexture(texture);
 
+        if (resetNES)
+        {
+            nes_.Reset();
+            resetNES = false;
+        }
+
         uint32_t frameTicks = SDL_GetTicks() - startTime;
 
-        if (frameTicks < SCREEN_TICKS_PER_FRAME)
+        if (capFramerate && (frameTicks < SCREEN_TICKS_PER_FRAME))
         {
             SDL_Delay(SCREEN_TICKS_PER_FRAME - frameTicks);
         }

@@ -21,6 +21,11 @@ UxROM::UxROM(std::ifstream& rom, std::array<uint8_t, 16> const& header)
     prgIndex1 = (PRG_ROM_BANKS_.size() - 1);
 }
 
+void UxROM::Reset()
+{
+    prgIndex0 = 0;
+}
+
 uint8_t UxROM::ReadPRG(uint16_t addr)
 {
     if (addr < 0x8000)

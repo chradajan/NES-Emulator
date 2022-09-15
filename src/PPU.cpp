@@ -36,7 +36,66 @@ PPU::PPU(Cartridge& cartridge, char* frameBuffer) :
 
 void PPU::Reset()
 {
+    // Background fetch
+    backgroundFetchCycle_ = 0x00;
+    nametableByte_ = 0x00;
+    attributeTableByte_ = 0x00;
+    patternTableAddress_ = 0x00;
+    patternTableLowByte_ = 0x00;
+    patternTableHighByte_ = 0x00;
+    patternTableShifterHigh_ = 0x00;
+    patternTableShifterLow_ = 0x00;
+    attributeTableShifterHigh_ = 0x00;
+    attributeTableShifterLow_ = 0x00;
+    attributeTableLatchHigh_ = false;
+    attributeTableLatchLow_ = false;
 
+    // Sprite evaluation
+    oamIndex_ = 0;
+    oamOffset_ = 0;
+    oamSecondaryIndex_ = 0;
+    oamByte_ = 0x00;
+    spritesFound_ = 0;
+    sprite0Loaded_ = false;
+    spriteState_ = SpriteEvalState::READ;
+
+    // Sprite fetch
+    spriteFetchCycle_ = 0x00;
+    spriteIndex_ = 0;
+    checkSprite0Hit_ = false;
+
+    // Pixel retrieval
+    backgroundPixelAddr_ = 0x3F00;
+    spritePixelAddr_ = 0x3F00;
+    backgroundPriority_ = true;
+
+    // Registers
+    InternalRegisters_.v = 0x0000;
+    InternalRegisters_.t = 0x0000;
+    InternalRegisters_.x = 0x00;
+    InternalRegisters_.w = false;
+
+    MemMappedRegisters_.PPUCTRL = 0x00;
+    MemMappedRegisters_.PPUMASK = 0x00;
+
+    readBuffer_ = 0x00;
+
+    // Frame state
+    scanline_ = 0;
+    dot_ = 0;
+    oddFrame_ = false;
+    openBus_ = 0x00;
+    renderingEnabled_ = false;
+    cyclesAhead_ = 0;
+
+    // NMI
+    nmiCpuCheck_ = false;
+    suppressVblFlag_ = false;
+    ignoreNextNmiCheck_ = false;
+
+    // Frame buffer
+    frameReady_ = false;
+    framePointer_ = 0;
 }
 
 void PPU::Initialize()

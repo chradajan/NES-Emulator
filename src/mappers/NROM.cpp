@@ -19,6 +19,11 @@ NROM::NROM(std::ifstream& rom, std::array<uint8_t, 16> const& header)
     LoadROM(rom, header[4], header[5]);
 }
 
+void NROM::Reset()
+{
+
+}
+
 uint8_t NROM::ReadPRG(uint16_t addr)
 {
     if (addr < 0x8000)

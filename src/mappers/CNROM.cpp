@@ -21,6 +21,11 @@ CNROM::CNROM(std::ifstream& rom, std::array<uint8_t, 16> const& header)
     chrIndex_ = 0;
 }
 
+void CNROM::Reset()
+{
+    chrIndex_ = 0;
+}
+
 uint8_t CNROM::ReadPRG(uint16_t addr)
 {
     if (addr < 0x8000)

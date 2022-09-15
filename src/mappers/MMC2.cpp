@@ -32,6 +32,13 @@ MMC2::MMC2(std::ifstream& rom, std::array<uint8_t, 16> const& header)
     chrIndex1_ = 1;
 }
 
+void MMC2::Reset()
+{
+    prgIndex_[0] = 0;
+    chrIndex0_ = 0;
+    chrIndex1_ = 1;
+}
+
 uint8_t MMC2::ReadPRG(uint16_t addr)
 {
     size_t prgBank = (addr & MMC2_PRG_READ_BANK_SELECT_MASK) >> 13;

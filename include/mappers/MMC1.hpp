@@ -19,6 +19,8 @@ class MMC1 : public virtual Cartridge
 public:
     MMC1(std::ifstream& rom, std::string savePath, std::array<uint8_t, 16> const& header);
 
+    void Reset() override;
+
     uint8_t ReadPRG(uint16_t addr) override;
     void WritePRG(uint16_t addr, uint8_t data) override;
 

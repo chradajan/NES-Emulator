@@ -45,7 +45,31 @@ void CPU::Clock()
 
 void CPU::Reset()
 {
+    // Current state
+    opCode_ = OpCode::INVALID_CODE;
+    cycle_ = 1;
+    oddCycle_ = false;
 
+    // Registers
+    Registers_.stackPointer -= 3;
+    SetInterruptDisable(true);
+
+    // OAM DMA
+    isOamDmaTransfer_ = false;
+    oamDmaData_ = 0x00;
+    oamDmaAddr_ = 0x0000;
+    oamDmaCycle_ = 0;
+    postOamDmaReturnCycle_ = 0;
+
+    // Instruction data
+    iData_ = 0x00;
+    iAddr_ = 0x0000;
+    instructionIndex_ = 0x00;
+    regData_ = 0x00;
+    isStoreOp_ = false;
+    branchCondition_ = false;
+    instruction_ = [](){};
+    tickFunction_ = std::bind(&CPU::ResetVector, this);
 }
 
 void CPU::Initialize()
