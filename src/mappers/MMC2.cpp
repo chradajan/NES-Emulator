@@ -122,30 +122,6 @@ void MMC2::WriteCHR(uint16_t addr, uint8_t data)
     (void)data;
 }
 
-uint16_t MMC2::NameTableAddress(uint16_t addr)
-{
-    addr &= 0x3FFF;
-
-    if (addr > 0x2FFF)
-    {
-        addr -= 0x1000;
-    }
-
-    switch (mirrorType_)
-    {
-        case MirrorType::HORIZONTAL:
-            addr = (addr - 0x2000) - (addr / 0x2400 * 0x0400) - (addr / 0x2C00 * 0x0400);
-            break;
-        case MirrorType::VERTICAL:
-            addr = (addr - 0x2000) - (addr / 0x2800 * 0x0800);
-            break;
-        default:
-            break;
-    }
-
-    return addr;
-}
-
 void MMC2::SaveRAM()
 {
 

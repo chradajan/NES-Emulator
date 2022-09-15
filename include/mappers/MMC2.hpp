@@ -29,10 +29,7 @@ public:
     uint8_t ReadCHR(uint16_t addr) override;
     void WriteCHR(uint16_t addr, uint8_t data) override;
 
-    uint16_t NameTableAddress(uint16_t addr) override;
-
     void SaveRAM() override;
-
     bool IRQ() override;
 
 private:

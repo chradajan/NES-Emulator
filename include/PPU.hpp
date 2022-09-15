@@ -125,6 +125,7 @@ private:
     void BackgroundFetch();
     void LoadShiftRegisters();
     void ShiftRegisters();
+    uint16_t NameTableAddress(uint16_t addr);
 
 // Sprite evaluation
 private:

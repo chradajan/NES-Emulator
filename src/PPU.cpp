@@ -381,7 +381,7 @@ uint8_t PPU::Read(uint16_t addr)
     }
     else if (addr < 0x3F00)
     {
-        return VRAM_[cartridge_.NameTableAddress(addr)];
+        return VRAM_[NameTableAddress(addr)];
     }
     else
     {
@@ -397,7 +397,7 @@ void PPU::Write(uint16_t addr, uint8_t data)
     }
     else if (addr < 0x3F00)
     {
-        VRAM_[cartridge_.NameTableAddress(addr)] = data;
+        VRAM_[NameTableAddress(addr)] = data;
     }
     else
     {
@@ -755,6 +755,37 @@ void PPU::ShiftRegisters()
 
     attributeTableShifterLow_ <<= 1;
     attributeTableShifterLow_ |= (attributeTableLatchLow_ ? 0x01 : 0x00);
+}
+
+uint16_t PPU::NameTableAddress(uint16_t addr)
+{
+    addr &= 0x3FFF;
+
+    if (addr > 0x2FFF)
+    {
+        addr -= 0x1000;
+    }
+
+    switch (cartridge_.GetMirrorType())
+    {
+        case MirrorType::HORIZONTAL:
+            addr = (addr - 0x2000) - (addr / 0x2400 * 0x0400) - (addr / 0x2C00 * 0x0400);
+            break;
+        case MirrorType::VERTICAL:
+            addr = (addr - 0x2000) - (addr / 0x2800 * 0x0800);
+            break;
+        case MirrorType::SINGLE_LOW:
+            addr %= 0x0400;
+            break;
+        case MirrorType::SINGLE_HIGH:
+            addr = 0x0400 | (addr % 0x0400);
+            break;
+        case MirrorType::QUAD:
+            addr -= 0x2000;
+            break;
+    }
+
+    return addr;
 }
 
 void PPU::ResetSpriteEvaluation()

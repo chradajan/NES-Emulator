@@ -51,30 +51,6 @@ void AxROM::WriteCHR(uint16_t addr, uint8_t data)
     }
 }
 
-uint16_t AxROM::NameTableAddress(uint16_t addr)
-{
-    addr &= 0x3FFF;
-
-    if (addr > 0x2FFF)
-    {
-        addr -= 0x1000;
-    }
-
-    switch (mirrorType_)
-    {
-        case MirrorType::SINGLE_LOW:
-            addr %= 0x0400;
-            break;
-        case MirrorType::SINGLE_HIGH:
-            addr = 0x0400 | (addr % 0x0400);
-            break;
-        default:
-            break;
-    }
-
-    return addr;
-}
-
 void AxROM::SaveRAM()
 {
 
