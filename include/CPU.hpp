@@ -41,6 +41,11 @@ public:
     void Clock();
     void Reset();
 
+public:
+    bool Serializable();
+    void Serialize(std::ofstream& saveState);
+    void Deserialize(std::ifstream& saveState);
+
 private:
     void Initialize();
 

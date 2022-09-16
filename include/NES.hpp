@@ -21,6 +21,10 @@ public:
     void Reset();
     bool Ready();
 
+    void RunUntilSerializable();
+    void Serialize(std::ofstream& saveState);
+    void Deserialize(std::ifstream& saveState);
+
 private:
     std::unique_ptr<APU> apu_;
     std::unique_ptr<Cartridge> cartridge_;

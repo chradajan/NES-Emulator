@@ -57,6 +57,31 @@ bool NES::Ready()
     return cartLoaded_;
 }
 
+void NES::RunUntilSerializable()
+{
+    while (!(cpu_->Serializable() && ppu_->Serializable()))
+    {
+        ppu_->Clock();
+        ppu_->Clock();
+        ppu_->Clock();
+        cpu_->Clock();
+    }
+}
+
+void NES::Serialize(std::ofstream& saveState)
+{
+    cpu_->Serialize(saveState);
+    ppu_->Serialize(saveState);
+    cartridge_->Serialize(saveState);
+}
+
+void NES::Deserialize(std::ifstream& saveState)
+{
+    cpu_->Deserialize(saveState);
+    ppu_->Deserialize(saveState);
+    cartridge_->Deserialize(saveState);
+}
+
 void NES::InitializeCartridge(std::string const romPath, std::string const savePath)
 {
     std::ifstream rom(romPath, std::ios::binary);

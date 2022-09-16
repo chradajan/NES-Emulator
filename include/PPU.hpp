@@ -64,6 +64,11 @@ public:
     bool NMI();
     std::pair<uint16_t, uint16_t> GetState();
 
+public:
+    bool Serializable();
+    void Serialize(std::ofstream& saveState);
+    void Deserialize(std::ifstream& saveState);
+
 private:
     void Initialize();
 
@@ -108,7 +113,7 @@ private:
 
 // Background fetch
 private:
-    uint8_t backgroundFetchCycle_;
+    size_t backgroundFetchCycle_;
     uint8_t nametableByte_;
     uint8_t attributeTableByte_;
     uint16_t patternTableAddress_;
@@ -151,7 +156,7 @@ private:
 
 // Sprite fetch
 private:
-    uint8_t spriteFetchCycle_;
+    size_t spriteFetchCycle_;
     size_t spriteIndex_;
     bool checkSprite0Hit_;
 

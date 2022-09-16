@@ -17,11 +17,21 @@ MMC3::MMC3(std::ifstream& rom, std::string savePath, std::array<uint8_t, 16> con
     ramEnabled_ = true;
     ramWritesDisabled_ = false;
     irqLatch_ = 0;
-    irqEnable_ = false;
     irqCounter_ = 0;
+    irqEnable_ = false;
     reloadIrqCounter_ = false;
     prevA12State = false;
     sendInterrupt_ = false;
+
+    if (batteryBackedRam_)
+    {
+        std::ifstream save(savePath, std::ios::binary);
+
+        if (!save.fail())
+        {
+            save.read((char*)PRG_RAM_.data(), 0x2000);
+        }
+    }
 
     if ((header[6] & IGNORE_MIRRORING_CONTROL) == IGNORE_MIRRORING_CONTROL)
     {
@@ -205,10 +215,7 @@ void MMC3::SaveRAM()
 
         if (!save.fail())
         {
-            for (size_t i = 0; i < PRG_RAM_.size(); ++i)
-            {
-                save << std::noskipws << std::hex << PRG_RAM_[i];
-            }
+            save.write((char*)PRG_RAM_.data(), 0x2000);
         }
     }
 }
@@ -221,6 +228,74 @@ bool MMC3::IRQ()
     }
 
     return false;
+}
+
+void MMC3::Serialize(std::ofstream& saveState)
+{
+    saveState.write((char*)PRG_RAM_.data(), 0x2000);
+
+    if (chrRamMode_)
+    {
+        for (auto& chrRomBank : CHR_ROM_BANKS_)
+        {
+            saveState.write((char*)chrRomBank.data(), MMC3_CHR_BANK_SIZE);
+        }
+    }
+
+    saveState.write((char*)prgIndex_.data(), 4 * sizeof(prgIndex_[0]));
+    saveState.write((char*)chrIndex_.data(), 8 * sizeof(chrIndex_[0]));
+
+    uint16_t byteExpander = bankRegToUpdate_;
+    saveState.write((char*)&byteExpander, sizeof(bankRegToUpdate_));
+
+    saveState.write((char*)bankRegister_.data(), 8 * sizeof(bankRegister_[0]));
+    saveState.write((char*)&prgBankMode_, sizeof(prgBankMode_));
+    saveState.write((char*)&chrBankMode_, sizeof(chrBankMode_));
+    saveState.write((char*)&ramEnabled_, sizeof(ramEnabled_));
+    saveState.write((char*)&ramWritesDisabled_, sizeof(ramWritesDisabled_));
+
+    byteExpander = irqLatch_;
+    saveState.write((char*)&byteExpander, sizeof(irqLatch_));
+
+    byteExpander = irqCounter_;
+    saveState.write((char*)&byteExpander, sizeof(irqCounter_));
+
+    saveState.write((char*)&irqEnable_, sizeof(irqEnable_));
+    saveState.write((char*)&reloadIrqCounter_, sizeof(reloadIrqCounter_));
+    saveState.write((char*)&prevA12State, sizeof(prevA12State));
+    saveState.write((char*)&sendInterrupt_, sizeof(sendInterrupt_));
+
+    byteExpander = static_cast<uint16_t>(mirrorType_);
+    saveState.write((char*)&byteExpander, sizeof(mirrorType_));
+}
+
+void MMC3::Deserialize(std::ifstream& saveState)
+{
+    saveState.read((char*)PRG_RAM_.data(), 0x2000);
+
+    if (chrRamMode_)
+    {
+        for (auto& chrRomBank : CHR_ROM_BANKS_)
+        {
+            saveState.read((char*)chrRomBank.data(), MMC3_CHR_BANK_SIZE);
+        }
+    }
+
+    saveState.read((char*)prgIndex_.data(), 4 * sizeof(prgIndex_[0]));
+    saveState.read((char*)chrIndex_.data(), 8 * sizeof(chrIndex_[0]));
+    saveState.read((char*)&bankRegToUpdate_, sizeof(bankRegToUpdate_));
+    saveState.read((char*)bankRegister_.data(), 8 * sizeof(bankRegister_[0]));
+    saveState.read((char*)&prgBankMode_, sizeof(prgBankMode_));
+    saveState.read((char*)&chrBankMode_, sizeof(chrBankMode_));
+    saveState.read((char*)&ramEnabled_, sizeof(ramEnabled_));
+    saveState.read((char*)&ramWritesDisabled_, sizeof(ramWritesDisabled_));
+    saveState.read((char*)&irqLatch_, sizeof(irqLatch_));
+    saveState.read((char*)&irqCounter_, sizeof(irqCounter_));
+    saveState.read((char*)&irqEnable_, sizeof(irqEnable_));
+    saveState.read((char*)&reloadIrqCounter_, sizeof(reloadIrqCounter_));
+    saveState.read((char*)&prevA12State, sizeof(prevA12State));
+    saveState.read((char*)&sendInterrupt_, sizeof(sendInterrupt_));
+    saveState.read((char*)&mirrorType_, sizeof(mirrorType_));
 }
 
 void MMC3::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)

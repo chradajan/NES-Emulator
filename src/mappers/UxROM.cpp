@@ -71,6 +71,28 @@ bool UxROM::IRQ()
     return false;
 }
 
+void UxROM::Serialize(std::ofstream& saveState)
+{
+    if (chrRamMode_)
+    {
+        saveState.write((char*)CHR_ROM_.data(), 0x2000);
+    }
+
+    saveState.write((char*)&prgIndex0, sizeof(prgIndex0));
+    saveState.write((char*)&prgIndex1, sizeof(prgIndex1));
+}
+
+void UxROM::Deserialize(std::ifstream& saveState)
+{
+    if (chrRamMode_)
+    {
+        saveState.read((char*)CHR_ROM_.data(), 0x2000);
+    }
+
+    saveState.read((char*)&prgIndex0, sizeof(prgIndex0));
+    saveState.read((char*)&prgIndex1, sizeof(prgIndex1));
+}
+
 void UxROM::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 {
     PRG_ROM_BANKS_.resize(prgRomBanks);

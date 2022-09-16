@@ -60,7 +60,7 @@ void PPU::Reset()
     spriteState_ = SpriteEvalState::READ;
 
     // Sprite fetch
-    spriteFetchCycle_ = 0x00;
+    spriteFetchCycle_ = 0;
     spriteIndex_ = 0;
     checkSprite0Hit_ = false;
 
@@ -101,7 +101,7 @@ void PPU::Reset()
 void PPU::Initialize()
 {
     // Background fetch
-    backgroundFetchCycle_ = 0x00;
+    backgroundFetchCycle_ = 0;
     nametableByte_ = 0x00;
     attributeTableByte_ = 0x00;
     patternTableAddress_ = 0x00;
@@ -124,7 +124,7 @@ void PPU::Initialize()
     spriteState_ = SpriteEvalState::READ;
 
     // Sprite fetch
-    spriteFetchCycle_ = 0x00;
+    spriteFetchCycle_ = 0;
     spriteIndex_ = 0;
     checkSprite0Hit_ = false;
 
@@ -1192,4 +1192,58 @@ void PPU::RenderPixel()
     frameBuffer_[framePointer_++] = rgb.R;
     frameBuffer_[framePointer_++] = rgb.G;
     frameBuffer_[framePointer_++] = rgb.B;
+}
+
+bool PPU::Serializable()
+{
+    return (scanline_ == 240);
+}
+
+void PPU::Serialize(std::ofstream& saveState)
+{
+    saveState.write((char*)OAM_.data(), 0x0100);
+    saveState.write((char*)OAM_Secondary_.data(), 0x0020);
+    saveState.write((char*)VRAM_.data(), 0x1000);
+    saveState.write((char*)PaletteRAM_.data(), 0x0020);
+
+    saveState.write((char*)&InternalRegisters_, sizeof(InternalRegisters_));
+    saveState.write((char*)&MemMappedRegisters_, sizeof(MemMappedRegisters_));
+
+    uint16_t byteExpander = readBuffer_;
+    saveState.write((char*)&byteExpander, sizeof(readBuffer_));
+
+    saveState.write((char*)&scanline_, sizeof(scanline_));
+    saveState.write((char*)&dot_, sizeof(dot_));
+    saveState.write((char*)&oddFrame_, sizeof(oddFrame_));
+
+    byteExpander = openBus_;
+    saveState.write((char*)&byteExpander, sizeof(openBus_));
+    saveState.write((char*)&nmiCpuCheck_, sizeof(nmiCpuCheck_));
+    saveState.write((char*)&suppressVblFlag_, sizeof(suppressVblFlag_));
+    saveState.write((char*)&ignoreNextNmiCheck_, sizeof(ignoreNextNmiCheck_));
+}
+
+void PPU::Deserialize(std::ifstream& saveState)
+{
+    saveState.read((char*)OAM_.data(), 0x0100);
+    saveState.read((char*)OAM_Secondary_.data(), 0x0020);
+    saveState.read((char*)VRAM_.data(), 0x1000);
+    saveState.read((char*)PaletteRAM_.data(), 0x0020);
+
+    saveState.read((char*)&InternalRegisters_, sizeof(InternalRegisters_));
+    saveState.read((char*)&MemMappedRegisters_, sizeof(MemMappedRegisters_));
+    saveState.read((char*)&readBuffer_, sizeof(readBuffer_));
+    saveState.read((char*)&scanline_, sizeof(scanline_));
+    saveState.read((char*)&dot_, sizeof(dot_));
+    saveState.read((char*)&oddFrame_, sizeof(oddFrame_));
+
+    saveState.read((char*)&openBus_, sizeof(openBus_));
+    saveState.read((char*)&nmiCpuCheck_, sizeof(nmiCpuCheck_));
+    saveState.read((char*)&suppressVblFlag_, sizeof(suppressVblFlag_));
+    saveState.read((char*)&ignoreNextNmiCheck_, sizeof(ignoreNextNmiCheck_));
+
+    backgroundFetchCycle_ = 0;
+    spriteFetchCycle_ = 0;
+    frameReady_ = false;
+    framePointer_ = 0;
 }

@@ -30,7 +30,7 @@ int main(int argc, char** argv)
 
     if (nes.Ready())
     {
-        GameWindow gameWindow(nes, frameBuffer.data());
+        GameWindow gameWindow(nes, frameBuffer.data(), fileName);
         gameWindow.Run();
     }
     else

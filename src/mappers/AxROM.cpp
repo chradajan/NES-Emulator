@@ -67,6 +67,30 @@ bool AxROM::IRQ()
     return false;
 }
 
+void AxROM::Serialize(std::ofstream& saveState)
+{
+    saveState.write((char*)&prgIndex_, sizeof(prgIndex_));
+
+    uint16_t byteExpander = static_cast<uint16_t>(mirrorType_);
+    saveState.write((char*)&byteExpander, sizeof(mirrorType_));
+
+    if (chrRamMode_)
+    {
+        saveState.write((char*)CHR_ROM_.data(), 0x2000);
+    }
+}
+
+void AxROM::Deserialize(std::ifstream& saveState)
+{
+    saveState.read((char*)&prgIndex_, sizeof(prgIndex_));
+    saveState.read((char*)&mirrorType_, sizeof(mirrorType_));
+
+    if (chrRamMode_)
+    {
+        saveState.read((char*)CHR_ROM_.data(), 0x2000);
+    }
+}
+
 void AxROM::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 {
     prgRomBanks *= 2;

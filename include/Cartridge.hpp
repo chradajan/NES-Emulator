@@ -27,7 +27,7 @@ constexpr uint8_t TV_SYSTEM_UNOFFICIAL = 0x03;
 constexpr uint8_t PRG_RAM_PRESENT = 0x10;
 constexpr uint8_t BUS_CONFLICT = 0x20;
 
-enum class MirrorType {HORIZONTAL, VERTICAL, SINGLE_LOW, SINGLE_HIGH, QUAD};
+enum class MirrorType : uint8_t {HORIZONTAL, VERTICAL, SINGLE_LOW, SINGLE_HIGH, QUAD};
 
 class Cartridge
 {
@@ -45,6 +45,9 @@ public:
     MirrorType GetMirrorType() { return mirrorType_; };
     virtual void SaveRAM() = 0;
     virtual bool IRQ() = 0;
+
+    virtual void Serialize(std::ofstream& saveState) = 0;
+    virtual void Deserialize(std::ifstream& saveState) = 0;
 
 protected:
     MirrorType mirrorType_;

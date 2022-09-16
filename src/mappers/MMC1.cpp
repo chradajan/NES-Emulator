@@ -9,16 +9,12 @@ MMC1::MMC1(std::ifstream& rom, std::string const savePath, std::array<uint8_t, 1
 {
     batteryBackedRam_ = ((header[6] & BATTERY_BACKED_PRG_RAM) == BATTERY_BACKED_PRG_RAM);
 
-    Index_.prgRam = 0;
     Reg_.control = 0x0C;
     Reg_.chrBank0 = 0x00;
     Reg_.chrBank1 = 0x00;
     Reg_.prgBank = 0x00;
 
-    for (auto& ramBank : PRG_RAM_BANKS_)
-    {
-        ramBank.fill(0x00);
-    }
+    PRG_RAM_.fill(0x00);
 
     if (batteryBackedRam_)
     {
@@ -26,13 +22,7 @@ MMC1::MMC1(std::ifstream& rom, std::string const savePath, std::array<uint8_t, 1
 
         if (!save.fail())
         {
-            for (size_t ramBankIndex = 0; ramBankIndex < 4; ++ramBankIndex)
-            {
-                for (size_t index = 0; index < 0x2000; ++index)
-                {
-                    save >> std::noskipws >> std::hex >> PRG_RAM_BANKS_[ramBankIndex][index];
-                }
-            }
+            save.read((char*)PRG_RAM_.data(), 0x2000);
         }
     }
 
@@ -42,7 +32,6 @@ MMC1::MMC1(std::ifstream& rom, std::string const savePath, std::array<uint8_t, 1
 
 void MMC1::Reset()
 {
-    Index_.prgRam = 0;
     Reg_.control = 0x0C;
     Reg_.chrBank0 = 0x00;
     Reg_.chrBank1 = 0x00;
@@ -58,7 +47,7 @@ uint8_t MMC1::ReadPRG(uint16_t addr)
     }
     else if (addr < 0x8000)
     {
-        return PRG_RAM_BANKS_[Index_.prgRam][addr - 0x6000];
+        return PRG_RAM_[addr - 0x6000];
     }
     else if (addr < 0xC000)
     {
@@ -78,7 +67,7 @@ void MMC1::WritePRG(uint16_t addr, uint8_t data)
     }
     if (addr < 0x8000)
     {
-        PRG_RAM_BANKS_[Index_.prgRam][addr - 0x6000] = data;
+        PRG_RAM_[addr - 0x6000] = data;
     }
     else
     {
@@ -145,13 +134,7 @@ void MMC1::SaveRAM()
 
         if (!save.fail())
         {
-            for (size_t ramBankIndex = 0; ramBankIndex < 4; ++ramBankIndex)
-            {
-                for (size_t index = 0; index < 0x2000; ++index)
-                {
-                    save << std::noskipws << std::hex << PRG_RAM_BANKS_[ramBankIndex][index];
-                }
-            }
+            save.write((char*)PRG_RAM_.data(), 0x2000);
         }
     }
 }
@@ -159,6 +142,44 @@ void MMC1::SaveRAM()
 bool MMC1::IRQ()
 {
     return false;
+}
+
+void MMC1::Serialize(std::ofstream& saveState)
+{
+    saveState.write((char*)PRG_RAM_.data(), 0x2000);
+    saveState.write((char*)&Reg_, sizeof(Reg_));
+    saveState.write((char*)&Index_, sizeof(Index_));
+
+    uint16_t byteExpander = writeCounter_;
+    saveState.write((char*)&byteExpander, sizeof(writeCounter_));
+
+    byteExpander = static_cast<uint16_t>(mirrorType_);
+    saveState.write((char*)&byteExpander, sizeof(mirrorType_));
+
+    if (chrRamMode_)
+    {
+        for (auto& chrRomBank : CHR_ROM_BANKS_)
+        {
+            saveState.write((char*)chrRomBank.data(), 0x1000);
+        }
+    }
+}
+
+void MMC1::Deserialize(std::ifstream& saveState)
+{
+    saveState.read((char*)PRG_RAM_.data(), 0x2000);
+    saveState.read((char*)&Reg_, sizeof(Reg_));
+    saveState.read((char*)&Index_, sizeof(Index_));
+    saveState.read((char*)&writeCounter_, sizeof(writeCounter_));
+    saveState.read((char*)&mirrorType_, sizeof(mirrorType_));
+
+    if (chrRamMode_)
+    {
+        for (auto& chrRomBank : CHR_ROM_BANKS_)
+        {
+            saveState.read((char*)chrRomBank.data(), 0x1000);
+        }
+    }
 }
 
 void MMC1::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)

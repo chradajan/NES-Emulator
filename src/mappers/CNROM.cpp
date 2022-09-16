@@ -63,6 +63,16 @@ bool CNROM::IRQ()
     return false;
 }
 
+void CNROM::Serialize(std::ofstream& saveState)
+{
+    saveState.write((char*)&chrIndex_, sizeof(chrIndex_));
+}
+
+void CNROM::Deserialize(std::ifstream& saveState)
+{
+    saveState.read((char*)&chrIndex_, sizeof(chrIndex_));
+}
+
 void CNROM::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 {
     for (size_t prgIndex = 0x0000; prgIndex < 0x4000; ++prgIndex)

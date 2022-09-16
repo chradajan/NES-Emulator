@@ -139,6 +139,51 @@ bool MMC2::IRQ()
     return false;
 }
 
+void MMC2::Serialize(std::ofstream& saveState)
+{
+    saveState.write((char*)PRG_RAM_.data(), 0x2000);
+    saveState.write((char*)prgIndex_.data(), 4 * sizeof(prgIndex_[0]));
+    saveState.write((char*)&chrIndex0_, sizeof(chrIndex0_));
+    saveState.write((char*)&chrIndex1_, sizeof(chrIndex1_));
+
+    uint16_t byteExpander = latch0_;
+    saveState.write((char*)&byteExpander, sizeof(latch0_));
+
+    byteExpander = latch1_;
+    saveState.write((char*)&byteExpander, sizeof(latch1_));
+
+    byteExpander = leftBankFD_;
+    saveState.write((char*)&byteExpander, sizeof(leftBankFD_));
+
+    byteExpander = leftBankFE_;
+    saveState.write((char*)&byteExpander, sizeof(leftBankFE_));
+
+    byteExpander = rightBankFD_;
+    saveState.write((char*)&byteExpander, sizeof(rightBankFD_));
+
+    byteExpander = rightBankFE_;
+    saveState.write((char*)&byteExpander, sizeof(rightBankFE_));
+
+    byteExpander = static_cast<uint16_t>(mirrorType_);
+    saveState.write((char*)&byteExpander, sizeof(mirrorType_));
+}
+
+void MMC2::Deserialize(std::ifstream& saveState)
+{
+    saveState.read((char*)PRG_RAM_.data(), 0x2000);
+    saveState.read((char*)prgIndex_.data(), 4 * sizeof(prgIndex_[0]));
+    saveState.read((char*)&chrIndex0_, sizeof(chrIndex0_));
+    saveState.read((char*)&chrIndex1_, sizeof(chrIndex1_));
+
+    saveState.read((char*)&latch0_, sizeof(latch0_));
+    saveState.read((char*)&latch1_, sizeof(latch1_));
+    saveState.read((char*)&leftBankFD_, sizeof(leftBankFD_));
+    saveState.read((char*)&leftBankFE_, sizeof(leftBankFE_));
+    saveState.read((char*)&rightBankFD_, sizeof(rightBankFD_));
+    saveState.read((char*)&rightBankFE_, sizeof(rightBankFE_));
+    saveState.read((char*)&mirrorType_, sizeof(mirrorType_));
+}
+
 void MMC2::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 {
     PRG_ROM_BANKS_.resize(prgRomBanks);

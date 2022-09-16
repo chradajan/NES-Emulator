@@ -63,6 +63,22 @@ bool NROM::IRQ()
     return false;
 }
 
+void NROM::Serialize(std::ofstream& saveState)
+{
+    if (chrRamMode_)
+    {
+        saveState.write((char*)CHR_ROM_.data(), 0x2000);
+    }
+}
+
+void NROM::Deserialize(std::ifstream& saveState)
+{
+    if (chrRamMode_)
+    {
+        saveState.read((char*)CHR_ROM_.data(), 0x2000);
+    }
+}
+
 void NROM::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 {
     chrRamMode_ = (chrRomBanks == 0);

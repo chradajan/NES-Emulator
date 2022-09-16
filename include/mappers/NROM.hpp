@@ -22,6 +22,9 @@ public:
     void SaveRAM() override;
     bool IRQ() override;
 
+    void Serialize(std::ofstream& saveState) override;
+    void Deserialize(std::ifstream& saveState) override;
+
 private:
     std::array<uint8_t, 0x8000> PRG_ROM_;
     std::array<uint8_t, 0x2000> CHR_ROM_;

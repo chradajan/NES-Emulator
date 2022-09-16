@@ -45,6 +45,9 @@ public:
     void SaveRAM() override;
     bool IRQ() override;
 
+    void Serialize(std::ofstream& saveState) override;
+    void Deserialize(std::ifstream& saveState) override;
+
 private:
     void LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks) override;
 
@@ -81,8 +84,8 @@ private:
 // IRQ
 private:
     uint8_t irqLatch_;
-    bool irqEnable_;
     uint8_t irqCounter_;
+    bool irqEnable_;
     bool reloadIrqCounter_;
     bool prevA12State;
     bool sendInterrupt_;

@@ -1157,3 +1157,30 @@ void CPU::DecodeOpCode()
 
     tickFunction_();
 }
+
+bool CPU::Serializable()
+{
+    return (cycle_ == 0);
+}
+
+void CPU::Serialize(std::ofstream& saveState)
+{
+    uint16_t byteExpander = static_cast<uint16_t>(opCode_);
+    saveState.write((char*)&byteExpander, sizeof(opCode_));
+    saveState.write((char*)&oddCycle_, sizeof(oddCycle_));
+    saveState.write((char*)&Registers_, sizeof(Registers_));
+    saveState.write((char*)RAM_.data(), 0x0800);
+}
+
+void CPU::Deserialize(std::ifstream& saveState)
+{
+    saveState.read((char*)&opCode_, sizeof(opCode_));
+    saveState.read((char*)&oddCycle_, sizeof(oddCycle_));
+    saveState.read((char*)&Registers_, sizeof(Registers_));
+    saveState.read((char*)RAM_.data(), 0x0800);
+
+    cycle_ = 0;
+    isOamDmaTransfer_ = false;
+    isStoreOp_ = false;
+    branchCondition_ = false;
+}

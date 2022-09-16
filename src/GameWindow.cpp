@@ -11,9 +11,10 @@
 #include <SDL2/SDL.h>
 #include <iostream>
 
-GameWindow::GameWindow(NES& nes, char* frameBuffer) :
+GameWindow::GameWindow(NES& nes, char* frameBuffer, std::string fileName) :
     nes_(nes),
-    frameBuffer_(frameBuffer)
+    frameBuffer_(frameBuffer),
+    fileName_(fileName)
 {
 }
 
@@ -35,6 +36,9 @@ void GameWindow::Run()
     bool exit = false;
     bool resetNES = false;
     bool capFramerate = true;
+    int saveStateNum;
+    bool serialize = false;
+    bool deserialize = false;
 
     while (!exit)
     {
@@ -56,6 +60,30 @@ void GameWindow::Run()
                         break;
                     case SDL_SCANCODE_T:
                         capFramerate = !capFramerate;
+                        break;
+                    case SDL_SCANCODE_1 ... SDL_SCANCODE_0:
+                        if (event.key.keysym.scancode == SDL_SCANCODE_0)
+                        {
+                            saveStateNum = 0;
+                        }
+                        else
+                        {
+                            saveStateNum = (int)event.key.keysym.scancode - 29;
+                        }
+
+                        serialize = true;
+                        break;
+                    case SDL_SCANCODE_F1 ... SDL_SCANCODE_F10:
+                        if (event.key.keysym.scancode == SDL_SCANCODE_F10)
+                        {
+                            saveStateNum = 0;
+                        }
+                        else
+                        {
+                            saveStateNum = (int)event.key.keysym.scancode - 57;
+                        }
+
+                        deserialize = true;
                         break;
                     default:
                         break;
@@ -89,6 +117,31 @@ void GameWindow::Run()
         {
             nes_.Reset();
             resetNES = false;
+        }
+        else if (serialize)
+        {
+            nes_.RunUntilSerializable();
+            std::string path = "../savestates/" + fileName_ + std::to_string(saveStateNum) + ".sav";
+            std::ofstream saveState(path, std::ios::binary);
+
+            if (!saveState.fail())
+            {
+                nes_.Serialize(saveState);
+            }
+
+            serialize = false;
+        }
+        else if (deserialize)
+        {
+            std::string path = "../savestates/" + fileName_ + std::to_string(saveStateNum) + ".sav";
+            std::ifstream saveState(path, std::ios::binary);
+
+            if (!saveState.fail())
+            {
+                nes_.Deserialize(saveState);
+            }
+
+            deserialize = false;
         }
 
         uint32_t frameTicks = SDL_GetTicks() - startTime;

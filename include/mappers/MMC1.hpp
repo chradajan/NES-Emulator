@@ -30,8 +30,11 @@ public:
     void SaveRAM() override;
     bool IRQ() override;
 
+    void Serialize(std::ofstream& saveState) override;
+    void Deserialize(std::ifstream& saveState) override;
+
 private:
-    std::array<std::array<uint8_t, 0x2000>, 4> PRG_RAM_BANKS_;
+    std::array<uint8_t, 0x2000> PRG_RAM_;
     std::vector<std::array<uint8_t, 0x4000>> PRG_ROM_BANKS_;
     std::vector<std::array<uint8_t, 0x1000>> CHR_ROM_BANKS_;
 
@@ -50,7 +53,6 @@ private:
         size_t chr1;
         size_t prg0;
         size_t prg1;
-        size_t prgRam;
     } Index_;
 
     bool batteryBackedRam_;
