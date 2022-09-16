@@ -6,6 +6,7 @@
 #include "../include/NES.hpp"
 #include "../include/PPU.hpp"
 #include <array>
+#include <filesystem>
 #include <iostream>
 #include <string>
 
@@ -17,20 +18,38 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    std::string romPath = argv[1];
-    std::string fileNameWithExtension = romPath.substr(romPath.find_last_of("/\\") + 1);
-    std::string fileName = fileNameWithExtension.substr(0, fileNameWithExtension.find_last_of('.'));
-    std::string savePath = "../saves/" + fileName + ".sav";
+    std::filesystem::path romPath = argv[1];
+    std::filesystem::path savePath = std::filesystem::path("../saves/");
+    std::filesystem::path saveStatePath = std::filesystem::path("../savestates/");
+    std::filesystem::path logPath = std::filesystem::path("../logs/");
+
+    if (!std::filesystem::is_directory(savePath))
+    {
+        std::filesystem::create_directory(savePath);
+    }
+
+    if (!std::filesystem::is_directory(saveStatePath))
+    {
+        std::filesystem::create_directory(saveStatePath);
+    }
+
+    if (!std::filesystem::is_directory(logPath))
+    {
+        std::filesystem::create_directory(logPath);
+    }
+
+    savePath += romPath.filename();
+    savePath.replace_extension(".sav");
 
     std::array<char, 256 * 240 * 3> frameBuffer;
 
-    NES nes(romPath,
-            savePath,
+    NES nes(romPath.string(),
+            savePath.string(),
             frameBuffer.data());
 
     if (nes.Ready())
     {
-        GameWindow gameWindow(nes, frameBuffer.data(), fileName);
+        GameWindow gameWindow(nes, frameBuffer.data(), romPath.stem().string());
         gameWindow.Run();
     }
     else

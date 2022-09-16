@@ -9,7 +9,6 @@
 #include <memory>
 #include <string>
 #include <SDL2/SDL.h>
-#include <iostream>
 
 GameWindow::GameWindow(NES& nes, char* frameBuffer, std::string fileName) :
     nes_(nes),
