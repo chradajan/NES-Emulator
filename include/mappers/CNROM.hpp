@@ -29,7 +29,7 @@ public:
 
 private:
     std::array<uint8_t, 0x8000> PRG_ROM_;
-    std::vector<std::array<uint8_t, 0x2000>> CHR_ROM_;
+    std::vector<std::array<uint8_t, 0x2000>> CHR_ROM_BANKS_;
 
     size_t chrIndex_;
 

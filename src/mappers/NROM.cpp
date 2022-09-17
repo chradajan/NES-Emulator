@@ -3,7 +3,6 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
-#include <iomanip>
 
 NROM::NROM(std::ifstream& rom, std::array<uint8_t, 16> const& header)
 {
@@ -83,28 +82,18 @@ void NROM::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 {
     chrRamMode_ = (chrRomBanks == 0);
 
-    for (size_t prgIndex = 0x0000; prgIndex < 0x4000; ++prgIndex)
-    {
-        rom >> std::noskipws >> std::hex >> PRG_ROM_[prgIndex];
-    }
-
     if (prgRomBanks == 1)
     {
+        rom.read((char*)PRG_ROM_.data(), 0x4000);
         std::copy(PRG_ROM_.begin(), PRG_ROM_.begin() + 0x4000, PRG_ROM_.begin() + 0x4000);
     }
     else
     {
-        for (size_t prgIndex = 0x4000; prgIndex < 0x8000; ++prgIndex)
-        {
-            rom >> std::noskipws >> std::hex >> PRG_ROM_[prgIndex];
-        }
+        rom.read((char*)PRG_ROM_.data(), 0x8000);
     }
 
     if (!chrRamMode_)
     {
-        for (size_t chrIndex = 0x0000; chrIndex < 0x2000; ++chrIndex)
-        {
-            rom >> std::noskipws >> std::hex >> CHR_ROM_[chrIndex];
-        }
+        rom.read((char*)CHR_ROM_.data(), 0x2000);
     }
 }

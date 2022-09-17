@@ -2,7 +2,6 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
-#include <iomanip>
 
 MMC1::MMC1(std::ifstream& rom, std::string const savePath, std::array<uint8_t, 16> const& header) :
     savePath_(savePath)
@@ -26,7 +25,10 @@ MMC1::MMC1(std::ifstream& rom, std::string const savePath, std::array<uint8_t, 1
         }
     }
 
-    LoadROM(rom, header[4], header[5]);
+    size_t prgRomBanksCount = header[4];
+    size_t chrRomBanksCount = header[5] * 2;
+
+    LoadROM(rom, prgRomBanksCount, chrRomBanksCount);
     UpdateIndices();
 }
 
@@ -193,23 +195,17 @@ void MMC1::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
     }
     else
     {
-        CHR_ROM_BANKS_.resize(chrRomBanks * 2);
+        CHR_ROM_BANKS_.resize(chrRomBanks);
     }
 
     for (size_t bankIndex = 0; bankIndex < prgRomBanks; ++bankIndex)
     {
-        for (size_t prgAddr = 0x0000; prgAddr < 0x4000; ++prgAddr)
-        {
-            rom >> std::noskipws >> std::hex >> PRG_ROM_BANKS_[bankIndex][prgAddr];
-        }
+        rom.read((char*)PRG_ROM_BANKS_[bankIndex].data(), 0x4000);
     }
 
-    for (size_t bankIndex = 0; bankIndex < chrRomBanks * 2; ++bankIndex)
+    for (size_t bankIndex = 0; bankIndex < chrRomBanks; ++bankIndex)
     {
-        for (size_t chrAddr = 0x0000; chrAddr < 0x1000; ++chrAddr)
-        {
-            rom >> std::noskipws >> std::hex >> CHR_ROM_BANKS_[bankIndex][chrAddr];
-        }
+        rom.read((char*)CHR_ROM_BANKS_[bankIndex].data(), 0x1000);
     }
 }
 

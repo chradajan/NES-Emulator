@@ -2,7 +2,6 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
-#include <iomanip>
 
 AxROM::AxROM(std::ifstream& rom, std::array<uint8_t, 16> const& header)
 {
@@ -99,17 +98,11 @@ void AxROM::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 
     for (size_t bankIndex = 0; bankIndex < prgRomBanks; ++bankIndex)
     {
-        for (size_t prgAddr = 0x0000; prgAddr < 0x8000; ++prgAddr)
-        {
-            rom >> std::noskipws >> std::hex >> PRG_ROM_BANKS_[bankIndex][prgAddr];
-        }
+        rom.read((char*)PRG_ROM_BANKS_[bankIndex].data(), 0x8000);
     }
 
     if (!chrRamMode_)
     {
-        for (size_t chrAddr = 0x0000; chrAddr < 0x2000; ++chrAddr)
-        {
-            rom >> std::noskipws >> std::hex >> CHR_ROM_[chrAddr];
-        }
+        rom.read((char*)CHR_ROM_.data(), 0x2000);
     }
 }

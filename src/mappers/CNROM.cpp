@@ -4,7 +4,6 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
-#include <iomanip>
 
 CNROM::CNROM(std::ifstream& rom, std::array<uint8_t, 16> const& header)
 {
@@ -44,7 +43,7 @@ void CNROM::WritePRG(uint16_t addr, uint8_t data)
 
 uint8_t CNROM::ReadCHR(uint16_t addr)
 {
-    return CHR_ROM_[chrIndex_][addr];
+    return CHR_ROM_BANKS_[chrIndex_][addr];
 }
 
 void CNROM::WriteCHR(uint16_t addr, uint8_t data)
@@ -75,30 +74,20 @@ void CNROM::Deserialize(std::ifstream& saveState)
 
 void CNROM::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 {
-    for (size_t prgIndex = 0x0000; prgIndex < 0x4000; ++prgIndex)
-    {
-        rom >> std::noskipws >> std::hex >> PRG_ROM_[prgIndex];
-    }
-
     if (prgRomBanks == 1)
     {
+        rom.read((char*)PRG_ROM_.data(), 0x4000);
         std::copy(PRG_ROM_.begin(), PRG_ROM_.begin() + 0x4000, PRG_ROM_.begin() + 0x4000);
     }
     else
     {
-        for (size_t prgIndex = 0x4000; prgIndex < 0x8000; ++prgIndex)
-        {
-            rom >> std::noskipws >> std::hex >> PRG_ROM_[prgIndex];
-        }
+        rom.read((char*)PRG_ROM_.data(), 0x8000);
     }
 
-    CHR_ROM_.resize(chrRomBanks);
+    CHR_ROM_BANKS_.resize(chrRomBanks);
 
     for (size_t bankIndex = 0; bankIndex < chrRomBanks; ++bankIndex)
     {
-        for (size_t chrIndex = 0x0000; chrIndex < 0x2000; ++chrIndex)
-        {
-            rom >> std::noskipws >> std::hex >> CHR_ROM_[bankIndex][chrIndex];
-        }
+        rom.read((char*)CHR_ROM_BANKS_[bankIndex].data(), 0x2000);
     }
 }

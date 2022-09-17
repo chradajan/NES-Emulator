@@ -2,7 +2,6 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
-#include <iomanip>
 #include <vector>
 
 MMC2::MMC2(std::ifstream& rom, std::array<uint8_t, 16> const& header)
@@ -191,18 +190,12 @@ void MMC2::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 
     for (size_t bankIndex = 0; bankIndex < prgRomBanks; ++bankIndex)
     {
-        for (size_t prgByte = 0; prgByte < MMC2_PRG_BANK_SIZE; ++prgByte)
-        {
-            rom >> std::noskipws >> std::hex >> PRG_ROM_BANKS_[bankIndex][prgByte];
-        }
+        rom.read((char*)PRG_ROM_BANKS_[bankIndex].data(), MMC2_PRG_BANK_SIZE);
     }
 
     for (size_t bankIndex = 0; bankIndex < chrRomBanks; ++bankIndex)
     {
-        for (size_t chrByte = 0; chrByte < MMC2_CHR_BANK_SIZE; ++chrByte)
-        {
-            rom >> std::noskipws >> std::hex >> CHR_ROM_BANKS_[bankIndex][chrByte];
-        }
+        rom.read((char*)CHR_ROM_BANKS_[bankIndex].data(), MMC2_CHR_BANK_SIZE);
     }
 }
 

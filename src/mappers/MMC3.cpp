@@ -2,7 +2,6 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
-#include <iomanip>
 
 MMC3::MMC3(std::ifstream& rom, std::string savePath, std::array<uint8_t, 16> const& header) :
     savePath_(savePath)
@@ -313,18 +312,12 @@ void MMC3::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 
     for (size_t bankIndex = 0; bankIndex < prgRomBanks; ++bankIndex)
     {
-        for (size_t prgByte = 0; prgByte < MMC3_PRG_BANK_SIZE; ++prgByte)
-        {
-            rom >> std::noskipws >> std::hex >> PRG_ROM_BANKS_[bankIndex][prgByte];
-        }
+        rom.read((char*)PRG_ROM_BANKS_[bankIndex].data(), MMC3_PRG_BANK_SIZE);
     }
 
     for (size_t bankIndex = 0; bankIndex < chrRomBanks; ++bankIndex)
     {
-        for (size_t chrByte = 0; chrByte < MMC3_CHR_BANK_SIZE; ++chrByte)
-        {
-            rom >> std::noskipws >> std::hex >> CHR_ROM_BANKS_[bankIndex][chrByte];
-        }
+        rom.read((char*)CHR_ROM_BANKS_[bankIndex].data(), MMC3_CHR_BANK_SIZE);
     }
 }
 

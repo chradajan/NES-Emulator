@@ -86,12 +86,7 @@ void NES::InitializeCartridge(std::string const romPath, std::string const saveP
 {
     std::ifstream rom(romPath, std::ios::binary);
     std::array<uint8_t, 0x10> header;
-
-    for (size_t i = 0x00; i < 0x10; ++i)
-    {
-        rom >> std::noskipws >> std::hex >> header[i];
-    }
-
+    rom.read((char*)header.data(), 16);
     uint16_t mapper = (header[7] & UPPER_MAPPER_NYBBLE) | (header[6] >> 4);
 
     switch (mapper)

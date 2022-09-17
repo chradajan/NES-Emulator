@@ -2,7 +2,6 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
-#include <iomanip>
 #include <vector>
 
 UxROM::UxROM(std::ifstream& rom, std::array<uint8_t, 16> const& header)
@@ -100,17 +99,11 @@ void UxROM::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
 
     for (size_t bankIndex = 0; bankIndex < prgRomBanks; ++bankIndex)
     {
-        for (size_t prgIndex = 0x0000; prgIndex < 0x4000; ++prgIndex)
-        {
-            rom >> std::noskipws >> std::hex >> PRG_ROM_BANKS_[bankIndex][prgIndex];
-        }
+        rom.read((char*)PRG_ROM_BANKS_[bankIndex].data(), 0x4000);
     }
 
     if (!chrRamMode_)
     {
-        for (size_t chrIndex = 0x0000; chrIndex < 0x2000; ++chrIndex)
-        {
-            rom >> std::noskipws >> std::hex >> CHR_ROM_[chrIndex];
-        }
+        rom.read((char*)CHR_ROM_.data(), 0x2000);
     }
 }
