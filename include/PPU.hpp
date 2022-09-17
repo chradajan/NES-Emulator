@@ -217,7 +217,7 @@ private:
     bool oddFrame_;
     uint8_t openBus_;
     bool renderingEnabled_;
-    size_t cyclesAhead_;
+    bool runAhead_;
 
 // NMI
 private:

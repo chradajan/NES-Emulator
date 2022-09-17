@@ -86,7 +86,7 @@ void PPU::Reset()
     oddFrame_ = false;
     openBus_ = 0x00;
     renderingEnabled_ = false;
-    cyclesAhead_ = 0;
+    runAhead_ = false;
 
     // NMI
     nmiCpuCheck_ = false;
@@ -164,7 +164,7 @@ void PPU::Initialize()
     oddFrame_ = false;
     openBus_ = 0x00;
     renderingEnabled_ = false;
-    cyclesAhead_ = 0;
+    runAhead_ = false;
 
     // NMI
     nmiCpuCheck_ = false;
@@ -184,44 +184,47 @@ void PPU::Initialize()
 
 void PPU::Clock()
 {
-    if (cyclesAhead_ != 0)
+    if (runAhead_)
     {
-        --cyclesAhead_;
+        runAhead_ = false;
         return;
     }
 
-    renderingEnabled_ = RenderingEnabled();
-
-    if (scanline_ < 240)
+    for (int i = 0; i < 3; ++i)
     {
-        VisibleLine();
+        renderingEnabled_ = RenderingEnabled();
 
-        if ((scanline_ == 239) && (dot_ == 256))
+        if (scanline_ < 240)
         {
-            frameReady_ = true;
-            framePointer_ = 0;
+            VisibleLine();
+
+            if ((scanline_ == 239) && (dot_ == 256))
+            {
+                frameReady_ = true;
+                framePointer_ = 0;
+            }
         }
-    }
-    else if ((scanline_ == 241) && (dot_ == 0))
-    {
-        if (!suppressVblFlag_)
+        else if ((scanline_ == 241) && (dot_ == 0))
         {
-            MemMappedRegisters_.PPUSTATUS |= VBLANK_STARTED_MASK;
-            SetNMI();
+            if (!suppressVblFlag_)
+            {
+                MemMappedRegisters_.PPUSTATUS |= VBLANK_STARTED_MASK;
+                SetNMI();
+            }
+
+            suppressVblFlag_ = false;
+        }
+        else if ((scanline_ == 260) && (dot_ == 340))
+        {
+            MemMappedRegisters_.PPUSTATUS &= ~(SPRITE_0_HIT_MASK | SPRITE_OVERFLOW_MASK);
+        }
+        else if (scanline_ == 261)
+        {
+            PreRenderLine();
         }
 
-        suppressVblFlag_ = false;
+        DotIncrement();
     }
-    else if ((scanline_ == 260) && (dot_ == 340))
-    {
-        MemMappedRegisters_.PPUSTATUS &= ~(SPRITE_0_HIT_MASK | SPRITE_OVERFLOW_MASK);
-    }
-    else if (scanline_ == 261)
-    {
-        PreRenderLine();
-    }
-
-    DotIncrement();
 }
 
 bool PPU::FrameReady()
@@ -477,12 +480,8 @@ void PPU::SetNMI()
 
 void PPU::RunAhead()
 {
-    for (size_t i = 0; i < 3; ++i)
-    {
-        Clock();
-    }
-
-    cyclesAhead_ = 3;
+    Clock();
+    runAhead_ = true;;
 }
 
 void PPU::PreRenderLine()
@@ -1196,7 +1195,7 @@ void PPU::RenderPixel()
 
 bool PPU::Serializable()
 {
-    return (scanline_ == 240);
+    return (!runAhead_ && (scanline_ == 240));
 }
 
 void PPU::Serialize(std::ofstream& saveState)

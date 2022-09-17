@@ -39,8 +39,6 @@ void NES::Run()
     while (!ppu_->FrameReady())
     {
         ppu_->Clock();
-        ppu_->Clock();
-        ppu_->Clock();
         cpu_->Clock();
     }
 }
@@ -61,8 +59,6 @@ void NES::RunUntilSerializable()
 {
     while (!(cpu_->Serializable() && ppu_->Serializable()))
     {
-        ppu_->Clock();
-        ppu_->Clock();
         ppu_->Clock();
         cpu_->Clock();
     }
