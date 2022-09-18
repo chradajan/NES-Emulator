@@ -18,14 +18,13 @@ constexpr int SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS;
 class GameWindow
 {
 public:
-    GameWindow(NES& nes, char* frameBuffer, std::string fileName);
+    GameWindow(NES& nes, char* frameBuffer);
     ~GameWindow() = default;
     void Run();
 
 private:
     NES& nes_;
     char* frameBuffer_;
-    std::string fileName_;
 };
 
 #endif

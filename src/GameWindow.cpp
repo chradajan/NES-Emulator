@@ -5,16 +5,17 @@
 #include "../include/Controller.hpp"
 #include "../include/NES.hpp"
 #include "../include/PPU.hpp"
+#include <filesystem>
 #include <fstream>
 #include <memory>
 #include <string>
 #include <SDL2/SDL.h>
 
-GameWindow::GameWindow(NES& nes, char* frameBuffer, std::string fileName) :
+GameWindow::GameWindow(NES& nes, char* frameBuffer) :
     nes_(nes),
-    frameBuffer_(frameBuffer),
-    fileName_(fileName)
+    frameBuffer_(frameBuffer)
 {
+
 }
 
 void GameWindow::Run()
@@ -49,6 +50,18 @@ void GameWindow::Run()
             if (event.type == SDL_QUIT)
             {
                 exit = true;
+            }
+            else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
+            {
+                exit = true;
+            }
+            else if (event.type == SDL_DROPFILE)
+            {
+                std::filesystem::path romPath = event.drop.file;
+                std::filesystem::path savePath = "../saves/";
+                savePath += romPath.filename();
+                savePath.replace_extension(".sav");
+                nes_.LoadCartridge(romPath, savePath);
             }
             else if (event.type == SDL_KEYUP)
             {
@@ -88,10 +101,6 @@ void GameWindow::Run()
                         break;
                 }
             }
-            else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
-            {
-                exit = true;
-            }
         }
 
         nes_.Run();
@@ -119,28 +128,36 @@ void GameWindow::Run()
         }
         else if (serialize)
         {
-            nes_.RunUntilSerializable();
-            std::string path = "../savestates/" + fileName_ + std::to_string(saveStateNum) + ".sav";
-            std::ofstream saveState(path, std::ios::binary);
-
-            if (!saveState.fail())
-            {
-                nes_.Serialize(saveState);
-            }
-
             serialize = false;
+
+            if (nes_.Ready())
+            {
+                std::string fileName = nes_.GetFileName();
+                nes_.RunUntilSerializable();
+                std::string path = "../savestates/" + fileName + std::to_string(saveStateNum) + ".sav";
+                std::ofstream saveState(path, std::ios::binary);
+
+                if (!saveState.fail())
+                {
+                    nes_.Serialize(saveState);
+                }
+            }
         }
         else if (deserialize)
         {
-            std::string path = "../savestates/" + fileName_ + std::to_string(saveStateNum) + ".sav";
-            std::ifstream saveState(path, std::ios::binary);
-
-            if (!saveState.fail())
-            {
-                nes_.Deserialize(saveState);
-            }
-
             deserialize = false;
+
+            if (nes_.Ready())
+            {
+                std::string fileName = nes_.GetFileName();
+                std::string path = "../savestates/" + fileName + std::to_string(saveStateNum) + ".sav";
+                std::ifstream saveState(path, std::ios::binary);
+
+                if (!saveState.fail())
+                {
+                    nes_.Deserialize(saveState);
+                }
+            }
         }
 
         uint32_t frameTicks = SDL_GetTicks() - startTime;

@@ -2,6 +2,7 @@
 #define NES_HPP
 
 #include <cstdint>
+#include <filesystem>
 #include <memory>
 #include <string>
 
@@ -14,8 +15,12 @@ class PPU;
 class NES
 {
 public:
-    NES(std::string romPath, std::string savePath, char* frameBuffer);
+    NES(char* frameBuffer);
     ~NES();
+
+    std::string GetFileName();
+    void LoadCartridge(std::filesystem::path romPath, std::filesystem::path savePath);
+    void UnloadCartridge();
 
     void Run();
     void Reset();
@@ -32,6 +37,7 @@ private:
     std::unique_ptr<PPU> ppu_;
     std::unique_ptr<CPU> cpu_;
 
+    std::string fileName_;
     bool cartLoaded_;
 
     void InitializeCartridge(std::string romPath, std::string savePath);

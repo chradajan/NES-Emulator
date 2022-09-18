@@ -36,10 +36,11 @@ class PPU;
 class CPU
 {
 public:
-    CPU(APU& apu, Cartridge& cartridge, Controller& controller, PPU& ppu);
+    CPU(APU& apu, Controller& controller, PPU& ppu);
     ~CPU() = default;
     void Clock();
     void Reset();
+    void LoadCartridge(Cartridge* cartridge);
 
 public:
     bool Serializable();
@@ -51,10 +52,10 @@ private:
 
 // Other components
 private:
-    APU& apu;
-    Cartridge& cartridge;
-    Controller& controller;
-    PPU& ppu;
+    APU& apu_;
+    Cartridge* cartridge_;
+    Controller& controller_;
+    PPU& ppu_;
 
 // R/W functions
 private:

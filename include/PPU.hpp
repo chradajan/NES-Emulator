@@ -50,7 +50,7 @@ class Cartridge;
 class PPU
 {
 public:
-    PPU(Cartridge& cartridge, char* frameBuffer);
+    PPU(char* frameBuffer);
     ~PPU() = default;
     void Reset();
 
@@ -63,6 +63,8 @@ public:
 
     bool NMI();
     std::pair<uint16_t, uint16_t> GetState();
+
+    void LoadCartridge(Cartridge* cartridge);
 
 public:
     bool Serializable();
@@ -188,7 +190,7 @@ private:
 
 // Other components
 private:
-    Cartridge& cartridge_;
+    Cartridge* cartridge_;
 
 // Registers
 private:

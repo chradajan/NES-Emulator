@@ -13,33 +13,63 @@
 #include "../include/PPU.hpp"
 #include <cstdint>
 #include <iomanip>
+#include <filesystem>
 #include <fstream>
 #include <memory>
+#include <string>
 
-NES::NES(std::string const romPath, std::string const savePath, char* frameBuffer)
+NES::NES(char* frameBuffer)
 {
-    InitializeCartridge(romPath, savePath);
-
-    if (cartLoaded_)
-    {
-        apu_ = std::make_unique<APU>();
-        controller_ = std::make_unique<Controller>();
-        ppu_ = std::make_unique<PPU>(*cartridge_, frameBuffer);
-        cpu_ = std::make_unique<CPU>(*apu_, *cartridge_, *controller_, *ppu_);
-    }
+    apu_ = std::make_unique<APU>();
+    controller_ = std::make_unique<Controller>();
+    ppu_ = std::make_unique<PPU>(frameBuffer);
+    cpu_ = std::make_unique<CPU>(*apu_, *controller_, *ppu_);
+    cartridge_ = nullptr;
+    cartLoaded_ = false;
+    fileName_ = "";
 }
 
 NES::~NES()
 {
-    cartridge_->SaveRAM();
+    if (cartLoaded_)
+    {
+        cartridge_->SaveRAM();
+    }
+}
+
+std::string NES::GetFileName()
+{
+    return fileName_;
+}
+
+void NES::LoadCartridge(std::filesystem::path romPath, std::filesystem::path savePath)
+{
+    if (cartLoaded_)
+    {
+        cartridge_->SaveRAM();
+        cpu_->Reset();
+        ppu_->Reset();
+    }
+
+    InitializeCartridge(romPath.string(), savePath.string());
+
+    if (cartLoaded_)
+    {
+        fileName_ = romPath.stem().string();
+        cpu_->LoadCartridge(cartridge_.get());
+        ppu_->LoadCartridge(cartridge_.get());
+    }
 }
 
 void NES::Run()
 {
-    while (!ppu_->FrameReady())
+    if (cartLoaded_)
     {
-        ppu_->Clock();
-        cpu_->Clock();
+        while (!ppu_->FrameReady())
+        {
+            ppu_->Clock();
+            cpu_->Clock();
+        }
     }
 }
 
@@ -47,7 +77,11 @@ void NES::Reset()
 {
     cpu_->Reset();
     ppu_->Reset();
-    cartridge_->Reset();
+
+    if (cartLoaded_)
+    {
+        cartridge_->Reset();
+    }
 }
 
 bool NES::Ready()
@@ -57,33 +91,49 @@ bool NES::Ready()
 
 void NES::RunUntilSerializable()
 {
-    while (!(cpu_->Serializable() && ppu_->Serializable()))
+    if (cartLoaded_)
     {
-        ppu_->Clock();
-        cpu_->Clock();
+        while (!(cpu_->Serializable() && ppu_->Serializable()))
+        {
+            ppu_->Clock();
+            cpu_->Clock();
+        }
     }
 }
 
 void NES::Serialize(std::ofstream& saveState)
 {
-    cpu_->Serialize(saveState);
-    ppu_->Serialize(saveState);
-    cartridge_->Serialize(saveState);
+    if (cartLoaded_)
+    {
+        cpu_->Serialize(saveState);
+        ppu_->Serialize(saveState);
+        cartridge_->Serialize(saveState);
+    }
 }
 
 void NES::Deserialize(std::ifstream& saveState)
 {
-    cpu_->Deserialize(saveState);
-    ppu_->Deserialize(saveState);
-    cartridge_->Deserialize(saveState);
+    if (cartLoaded_)
+    {
+        cpu_->Deserialize(saveState);
+        ppu_->Deserialize(saveState);
+        cartridge_->Deserialize(saveState);
+    }
 }
 
 void NES::InitializeCartridge(std::string const romPath, std::string const savePath)
 {
+    cartridge_.reset();
     std::ifstream rom(romPath, std::ios::binary);
     std::array<uint8_t, 0x10> header;
     rom.read((char*)header.data(), 16);
     uint16_t mapper = (header[7] & UPPER_MAPPER_NYBBLE) | (header[6] >> 4);
+
+    if ((header[0] != 0x4E) || (header[1] != 0x45) || (header[2] != 0x53) || (header[3] != 0x1A))
+    {
+        cartLoaded_ = false;
+        return;
+    }
 
     switch (mapper)
     {

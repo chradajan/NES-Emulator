@@ -5,8 +5,7 @@
 #include <cstdint>
 #include <utility>
 
-PPU::PPU(Cartridge& cartridge, char* frameBuffer) :
-    cartridge_(cartridge),
+PPU::PPU(char* frameBuffer) :
     frameBuffer_(frameBuffer)
 {
     uint8_t paletteArray[192] = {
@@ -288,7 +287,7 @@ uint8_t PPU::ReadReg(uint16_t addr)
 
             if (InternalRegisters_.v >= 0x2000)
             {
-                if (MMC3* mmc3Cart = dynamic_cast<MMC3*>(&cartridge_); mmc3Cart != nullptr)
+                if (MMC3* mmc3Cart = dynamic_cast<MMC3*>(cartridge_); mmc3Cart != nullptr)
                 {
                     mmc3Cart->ReadCHR(InternalRegisters_.v);
                 }
@@ -389,7 +388,7 @@ void PPU::WriteReg(uint16_t addr, uint8_t data)
                 InternalRegisters_.v = InternalRegisters_.t;
                 InternalRegisters_.w = false;
 
-                if (MMC3* mmc3Cart = dynamic_cast<MMC3*>(&cartridge_); mmc3Cart != nullptr)
+                if (MMC3* mmc3Cart = dynamic_cast<MMC3*>(cartridge_); mmc3Cart != nullptr)
                 {
                     mmc3Cart->ReadCHR(InternalRegisters_.v);
                 }
@@ -435,11 +434,16 @@ std::pair<uint16_t, uint16_t> PPU::GetState()
     return std::make_pair(scanline_, dot_);
 }
 
+void PPU::LoadCartridge(Cartridge* cartridge)
+{
+    cartridge_ = cartridge;
+}
+
 uint8_t PPU::Read(uint16_t addr)
 {
     if (addr < 0x2000)
     {
-        return cartridge_.ReadCHR(addr);
+        return cartridge_->ReadCHR(addr);
     }
     else if (addr < 0x3F00)
     {
@@ -455,7 +459,7 @@ void PPU::Write(uint16_t addr, uint8_t data)
 {
     if (addr < 0x2000)
     {
-        cartridge_.WriteCHR(addr, data);
+        cartridge_->WriteCHR(addr, data);
     }
     else if (addr < 0x3F00)
     {
@@ -824,7 +828,7 @@ uint16_t PPU::NameTableAddress(uint16_t addr)
         addr -= 0x1000;
     }
 
-    switch (cartridge_.GetMirrorType())
+    switch (cartridge_->GetMirrorType())
     {
         case MirrorType::HORIZONTAL:
             addr = (addr - 0x2000) - (addr / 0x2400 * 0x0400) - (addr / 0x2C00 * 0x0400);

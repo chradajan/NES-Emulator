@@ -13,11 +13,10 @@
 #include <fstream>
 #endif
 
-CPU::CPU(APU& apu, Cartridge& cartridge, Controller& controller, PPU& ppu) :
-    apu(apu),
-    cartridge(cartridge),
-    controller(controller),
-    ppu(ppu)
+CPU::CPU(APU& apu, Controller& controller, PPU& ppu) :
+    apu_(apu),
+    controller_(controller),
+    ppu_(ppu)
 {
     Initialize();
     tickFunction_ = std::bind(&CPU::ResetVector, this);
@@ -72,6 +71,11 @@ void CPU::Reset()
     tickFunction_ = std::bind(&CPU::ResetVector, this);
 }
 
+void CPU::LoadCartridge(Cartridge* cartridge)
+{
+    cartridge_ = cartridge;
+}
+
 void CPU::Initialize()
 {
     // Current state
@@ -121,15 +125,15 @@ uint8_t CPU::Read(uint16_t addr)
     }
     else if (addr < 0x4000)
     {
-        return ppu.ReadReg(addr);
+        return ppu_.ReadReg(addr);
     }
     else if (addr < 0x4016)
     {
-        return apu.ReadReg(addr);
+        return apu_.ReadReg(addr);
     }
     else if (addr < 0x4018)
     {
-        return controller.ReadReg(addr);
+        return controller_.ReadReg(addr);
     }
     else if (addr < 0x4020)
     {
@@ -138,7 +142,7 @@ uint8_t CPU::Read(uint16_t addr)
     }
     else
     {
-        return cartridge.ReadPRG(addr);
+        return cartridge_->ReadPRG(addr);
     }
 }
 
@@ -150,7 +154,7 @@ void CPU::Write(uint16_t addr, uint8_t data)
     }
     else if (addr < 0x4000)
     {
-        ppu.WriteReg(addr, data);
+        ppu_.WriteReg(addr, data);
     }
     else if (addr == OAMDMA_ADDR)
     {
@@ -158,11 +162,11 @@ void CPU::Write(uint16_t addr, uint8_t data)
     }
     else if ((addr < 0x4016) || (addr == JOY2_ADDR))
     {
-        apu.WriteReg(addr, data);
+        apu_.WriteReg(addr, data);
     }
     else if (addr == JOY1_ADDR)
     {
-        controller.WriteReg(data);
+        controller_.WriteReg(data);
     }
     else if (addr < 0x4020)
     {
@@ -171,7 +175,7 @@ void CPU::Write(uint16_t addr, uint8_t data)
     }
     else
     {
-        cartridge.WritePRG(addr, data);
+        cartridge_->WritePRG(addr, data);
     }
 }
 
@@ -221,13 +225,13 @@ void CPU::SetNextOpCode()
 
     #else
 
-    if (ppu.NMI())
+    if (ppu_.NMI())
     {
         cycle_ = 1;
         tickFunction_ = std::bind(&CPU::NMI, this);
         tickFunction_();
     }
-    else if (!IsInterruptDisable() && cartridge.IRQ())
+    else if (!IsInterruptDisable() && cartridge_->IRQ())
     {
         cycle_ = 1;
         tickFunction_ = std::bind(&CPU::IRQ, this);
@@ -455,7 +459,7 @@ void CPU::ExecuteOamDmaTransfer()
         }
         else
         {
-            ppu.WriteReg(OAMDATA_ADDR, oamDmaData_);
+            ppu_.WriteReg(OAMDATA_ADDR, oamDmaData_);
         }
     }
 
