@@ -18,13 +18,17 @@ constexpr int SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS;
 class GameWindow
 {
 public:
-    GameWindow(NES& nes, char* frameBuffer);
+    GameWindow(NES& nes, char* frameBuffer, float* audioBuffer);
     ~GameWindow() = default;
     void Run();
+
+    void PlayAudio();
 
 private:
     NES& nes_;
     char* frameBuffer_;
+    float* audioBuffer_;
+    SDL_AudioDeviceID audioDevice_;
 };
 
 #endif

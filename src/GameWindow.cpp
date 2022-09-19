@@ -11,17 +11,19 @@
 #include <string>
 #include <SDL2/SDL.h>
 
-GameWindow::GameWindow(NES& nes, char* frameBuffer) :
+GameWindow::GameWindow(NES& nes, char* frameBuffer, float* audioBuffer) :
     nes_(nes),
-    frameBuffer_(frameBuffer)
+    frameBuffer_(frameBuffer),
+    audioBuffer_(audioBuffer)
 {
 
 }
 
 void GameWindow::Run()
 {
-    SDL_Init(SDL_INIT_VIDEO);
+    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
 
+    // Rendering setup
     SDL_Window* window = SDL_CreateWindow("NES",
                                           SDL_WINDOWPOS_UNDEFINED,
                                           SDL_WINDOWPOS_UNDEFINED,
@@ -32,6 +34,20 @@ void GameWindow::Run()
     SDL_SetWindowMinimumSize(window, SCREEN_WIDTH, SCREEN_HEIGHT);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+
+    // Audio setup
+    SDL_AudioSpec audioSpec;
+    SDL_zero(audioSpec);
+    audioSpec.freq = 44100;
+    audioSpec.format = AUDIO_S32SYS;
+    audioSpec.channels = 1;
+    audioSpec.samples = AUDIO_SAMPLE_BUFFER_COUNT;
+    audioSpec.callback = NULL;
+
+    audioDevice_ = SDL_OpenAudioDevice(NULL, 0, &audioSpec, NULL, 0);
+    SDL_PauseAudioDevice(audioDevice_, 0);
+
+    std::function<void()> playAudio = std::bind(&GameWindow::PlayAudio, this);
 
     bool exit = false;
     bool resetNES = false;
@@ -103,7 +119,7 @@ void GameWindow::Run()
             }
         }
 
-        nes_.Run();
+        nes_.Run(playAudio);
 
         SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(frameBuffer_,
                                                         SCREEN_WIDTH,
@@ -133,7 +149,7 @@ void GameWindow::Run()
             if (nes_.Ready())
             {
                 std::string fileName = nes_.GetFileName();
-                nes_.RunUntilSerializable();
+                nes_.RunUntilSerializable(playAudio);
                 std::string path = "../savestates/" + fileName + std::to_string(saveStateNum) + ".sav";
                 std::ofstream saveState(path, std::ios::binary);
 
@@ -170,5 +186,11 @@ void GameWindow::Run()
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    SDL_CloseAudioDevice(audioDevice_);
     SDL_Quit();
+}
+
+void GameWindow::PlayAudio()
+{
+    SDL_QueueAudio(audioDevice_, (void*)audioBuffer_, AUDIO_SAMPLE_BUFFER_SIZE);
 }

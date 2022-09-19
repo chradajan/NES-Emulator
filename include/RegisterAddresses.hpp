@@ -35,6 +35,7 @@ constexpr uint16_t DMC_RAW_ADDR =     0x4011;
 constexpr uint16_t DMC_START_ADDR =   0x4012;
 constexpr uint16_t DMC_LEN_ADDR =     0x4013;
 constexpr uint16_t SND_CHN_ADDR =     0x4015;
+constexpr uint16_t FRAME_COUNTER_ADDR = 0x4017;
 
 // Controllers
 constexpr uint16_t JOY1_ADDR =        0x4016;

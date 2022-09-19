@@ -15,10 +15,11 @@
 #include <iomanip>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <memory>
 #include <string>
 
-NES::NES(char* frameBuffer)
+NES::NES(char* frameBuffer, float* audioBuffer)
 {
     apu_ = std::make_unique<APU>();
     controller_ = std::make_unique<Controller>();
@@ -27,6 +28,9 @@ NES::NES(char* frameBuffer)
     cartridge_ = nullptr;
     cartLoaded_ = false;
     fileName_ = "";
+    apuOutputTimer_ = 0;
+    bufferIndex_ = 0;
+    audioBuffer_ = audioBuffer;
 }
 
 NES::~NES()
@@ -61,7 +65,7 @@ void NES::LoadCartridge(std::filesystem::path romPath, std::filesystem::path sav
     }
 }
 
-void NES::Run()
+void NES::Run(std::function<void()>& playAudio)
 {
     if (cartLoaded_)
     {
@@ -69,6 +73,20 @@ void NES::Run()
         {
             ppu_->Clock();
             cpu_->Clock();
+            apu_->Clock();
+            ++apuOutputTimer_;
+
+            if (apuOutputTimer_ == 41)
+            {
+                audioBuffer_[bufferIndex_++] = apu_->Output();
+                apuOutputTimer_ = 0;
+
+                if (bufferIndex_ == AUDIO_SAMPLE_BUFFER_COUNT)
+                {
+                    bufferIndex_ = 0;
+                    playAudio();
+                }
+            }
         }
     }
 }
@@ -89,7 +107,7 @@ bool NES::Ready()
     return cartLoaded_;
 }
 
-void NES::RunUntilSerializable()
+void NES::RunUntilSerializable(std::function<void()>& playAudio)
 {
     if (cartLoaded_)
     {
@@ -97,6 +115,20 @@ void NES::RunUntilSerializable()
         {
             ppu_->Clock();
             cpu_->Clock();
+            apu_->Clock();
+            ++apuOutputTimer_;
+
+            if (apuOutputTimer_ == 41)
+            {
+                audioBuffer_[bufferIndex_++] = apu_->Output();
+                apuOutputTimer_ = 0;
+
+                if (bufferIndex_ == AUDIO_SAMPLE_BUFFER_COUNT)
+                {
+                    bufferIndex_ = 0;
+                    playAudio();
+                }
+            }
         }
     }
 }

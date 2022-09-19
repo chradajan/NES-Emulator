@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -15,18 +16,18 @@ class PPU;
 class NES
 {
 public:
-    NES(char* frameBuffer);
+    NES(char* frameBuffer, float* audioBuffer);
     ~NES();
 
     std::string GetFileName();
     void LoadCartridge(std::filesystem::path romPath, std::filesystem::path savePath);
     void UnloadCartridge();
 
-    void Run();
+    void Run(std::function<void()>& playAudio);
     void Reset();
     bool Ready();
 
-    void RunUntilSerializable();
+    void RunUntilSerializable(std::function<void()>& playAudio);
     void Serialize(std::ofstream& saveState);
     void Deserialize(std::ifstream& saveState);
 
@@ -39,6 +40,10 @@ private:
 
     std::string fileName_;
     bool cartLoaded_;
+
+    int apuOutputTimer_;
+    size_t bufferIndex_;
+    float* audioBuffer_;
 
     void InitializeCartridge(std::string romPath, std::string savePath);
 };

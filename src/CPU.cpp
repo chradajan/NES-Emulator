@@ -160,7 +160,7 @@ void CPU::Write(uint16_t addr, uint8_t data)
     {
         InitiateOamDmaTransfer(data);
     }
-    else if ((addr < 0x4016) || (addr == JOY2_ADDR))
+    else if ((addr < 0x4016) || (addr == FRAME_COUNTER_ADDR))
     {
         apu_.WriteReg(addr, data);
     }
