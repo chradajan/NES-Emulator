@@ -8,6 +8,9 @@
 constexpr size_t AUDIO_SAMPLE_BUFFER_COUNT = 735 * 2;
 constexpr size_t AUDIO_SAMPLE_BUFFER_SIZE = AUDIO_SAMPLE_BUFFER_COUNT * sizeof(float);
 
+// Length counters
+extern int LENGTH_COUNTER_LOOKUP_TABLE[32];
+
 // Pulse Channels
 extern bool DUTY_CYCLE_SEQUENCE[4][8];
 enum class NegateBehavior { OnesComplement, TwosComplement };
@@ -51,11 +54,15 @@ private:
         void Reset();
 
         uint8_t Output();
-        void Silence();
+        void Toggle(bool enabled);
 
         void Clock();
-        void FrameCounterClock();
+        void HalfFrameClock();
+        void QuarterFrameClock();
         void RegisterUpdate(uint16_t addr, uint8_t data);
+
+    private:
+        bool channelEnabled_;
 
     // Duty cycle
     private:
@@ -74,19 +81,38 @@ private:
         uint16_t timerReload_;
         int timer_;
 
+        void SetPeriod();
+
     // Envelope
     private:
         bool silenced_;
-        bool constantVolume_;
-        uint8_t volume_;
+
+        // Constant volume
+        bool useConstantVolume_;
+        uint8_t constantVolume_;
+
+        // Envelope
+        bool envelopeLooped_;
+        bool envelopeStart_;
+        uint8_t envelopeTimerReload_;
+        int envelopeTimer_;
+        uint8_t decayLevel_;
 
     // Sweep
     private:
         NegateBehavior negateBehavior_;
         bool sweepEnabled_;
         bool negate_;
-        int sweepDividerPeriod_;
-        int sweepShiftCount_;
+
+        uint8_t sweepTimerReload_;
+        int sweepTimer_;
+        bool reloadSweepTimer_;
+
+        int sweepShiftAmount_;
+        uint16_t sweepTargetPeriod_;
+
+        void SweepUpdate();
+        void SetTargetPeriod();
     };
 
     PulseChannel pulseChannel1_;

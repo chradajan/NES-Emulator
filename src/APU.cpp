@@ -4,6 +4,10 @@
 
 // APU
 
+int LENGTH_COUNTER_LOOKUP_TABLE[32] = {
+    10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30
+};
+
 APU::APU()
 {
     pulseTable_[0] = 0.0;
@@ -58,12 +62,16 @@ void APU::Clock()
     switch (frameCounterTimer_)
     {
         case 3728:
+            pulseChannel1_.QuarterFrameClock();
+            pulseChannel2_.QuarterFrameClock();
             break;
         case 7456:
-            pulseChannel1_.FrameCounterClock();
-            pulseChannel2_.FrameCounterClock();
+            pulseChannel1_.HalfFrameClock();
+            pulseChannel2_.HalfFrameClock();
             break;
         case 11185:
+            pulseChannel1_.QuarterFrameClock();
+            pulseChannel2_.QuarterFrameClock();
             break;
         case 14915:
             if (!frameCounterMode_)
@@ -73,14 +81,14 @@ void APU::Clock()
                     irq_ = true;
                 }
 
-                pulseChannel1_.FrameCounterClock();
-                pulseChannel2_.FrameCounterClock();
+                pulseChannel1_.HalfFrameClock();
+                pulseChannel2_.HalfFrameClock();
                 frameCounterResetCountdown_ = 1;
             }
             break;
         case 18641:
-            pulseChannel1_.FrameCounterClock();
-            pulseChannel2_.FrameCounterClock();
+            pulseChannel1_.HalfFrameClock();
+            pulseChannel2_.HalfFrameClock();
             frameCounterResetCountdown_ = 1;
             break;
         default:
@@ -121,15 +129,8 @@ void APU::WriteReg(uint16_t addr, uint8_t data)
             pulseChannel2_.RegisterUpdate(addr, data);
             break;
         case SND_CHN_ADDR:
-            if ((data & 0x02) != 0x02)
-            {
-                pulseChannel2_.Silence();
-            }
-
-            if ((data & 0x01) != 0x01)
-            {
-                pulseChannel1_.Silence();
-            }
+            pulseChannel1_.Toggle((data & 0x01) == 0x01);
+            pulseChannel2_.Toggle((data & 0x02) == 0x02);
             break;
         case FRAME_COUNTER_ADDR:
             frameCounterMode_ = (data & 0x80) == 0x80;
