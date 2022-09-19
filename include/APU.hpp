@@ -18,6 +18,9 @@ enum class NegateBehavior { OnesComplement, TwosComplement };
 // Triangle channel
 extern uint8_t TRIANGLE_WAVE_SEQUENCE[32];
 
+// Noise channel
+extern int NOISE_TIMER_LOOKUP_TABLE[16];
+
 class APU
 {
 public:
@@ -166,6 +169,53 @@ private:
     };
 
     TriangleChannel triangleChannel_;
+
+// Noise channel
+private:
+    class NoiseChannel
+    {
+    public:
+        NoiseChannel();
+        void Reset();
+
+        uint8_t Output();
+        void Toggle(bool enabled);
+
+        void Clock();
+        void HalfFrameClock();
+        void QuarterFrameClock();
+        void RegisterUpdate(uint16_t addr, uint8_t data);
+
+    // Control
+    private:
+        bool mode_;
+        uint16_t shiftRegister_;
+
+    // Length counter
+    private:
+        int lengthCounter_;
+        bool halt_;
+
+    // Envelope
+    private:
+        // Constant volume
+        bool useConstantVolume_;
+        uint8_t constantVolume_;
+
+        // Envelope
+        bool envelopeLooped_;
+        bool envelopeStart_;
+        uint8_t envelopeTimerReload_;
+        int envelopeTimer_;
+        uint8_t decayLevel_;
+
+    // Timer
+    private:
+        int timerReload_;
+        int timer_;
+    };
+
+    NoiseChannel noiseChannel_;
 
 // Lookup tables
 private:
