@@ -49,6 +49,8 @@ void APU::Clock()
         }
     }
 
+    triangleChannel_.Clock();
+
     if (!clockAPU_)
     {
         return;
@@ -56,44 +58,7 @@ void APU::Clock()
 
     pulseChannel1_.Clock();
     pulseChannel2_.Clock();
-
-    ++frameCounterTimer_;
-
-    switch (frameCounterTimer_)
-    {
-        case 3728:
-            pulseChannel1_.QuarterFrameClock();
-            pulseChannel2_.QuarterFrameClock();
-            break;
-        case 7456:
-            pulseChannel1_.HalfFrameClock();
-            pulseChannel2_.HalfFrameClock();
-            break;
-        case 11185:
-            pulseChannel1_.QuarterFrameClock();
-            pulseChannel2_.QuarterFrameClock();
-            break;
-        case 14915:
-            if (!frameCounterMode_)
-            {
-                if (!irqInhibit_)
-                {
-                    irq_ = true;
-                }
-
-                pulseChannel1_.HalfFrameClock();
-                pulseChannel2_.HalfFrameClock();
-                frameCounterResetCountdown_ = 1;
-            }
-            break;
-        case 18641:
-            pulseChannel1_.HalfFrameClock();
-            pulseChannel2_.HalfFrameClock();
-            frameCounterResetCountdown_ = 1;
-            break;
-        default:
-            break;
-    }
+    ClockFrameCounter();
 }
 
 void APU::Reset()
@@ -103,7 +68,7 @@ void APU::Reset()
 
 float APU::Output()
 {
-    return pulseTable_[pulseChannel1_.Output() + pulseChannel2_.Output()];
+    return pulseTable_[pulseChannel1_.Output() + pulseChannel2_.Output()] + tndTable_[3 * triangleChannel_.Output()];
 }
 
 uint8_t APU::ReadReg(uint16_t addr)
@@ -128,9 +93,15 @@ void APU::WriteReg(uint16_t addr, uint8_t data)
         case SQ2_HI_ADDR:
             pulseChannel2_.RegisterUpdate(addr, data);
             break;
+        case TRI_LINEAR_ADDR:
+        case TRI_LO_ADDR:
+        case TRI_HI_ADDR:
+            triangleChannel_.RegisterUpdate(addr, data);
+            break;
         case SND_CHN_ADDR:
             pulseChannel1_.Toggle((data & 0x01) == 0x01);
             pulseChannel2_.Toggle((data & 0x02) == 0x02);
+            triangleChannel_.Toggle((data & 0x04) == 0x04);
             break;
         case FRAME_COUNTER_ADDR:
             frameCounterMode_ = (data & 0x80) == 0x80;
@@ -149,8 +120,56 @@ void APU::WriteReg(uint16_t addr, uint8_t data)
 
             if (frameCounterMode_)
             {
-                // TODO: Clock units at start of five-step sequence?
+                pulseChannel1_.HalfFrameClock();
+                pulseChannel2_.HalfFrameClock();
+                triangleChannel_.HalfFrameClock();
             }
+            break;
+    }
+}
+
+void APU::ClockFrameCounter()
+{
+    ++frameCounterTimer_;
+
+    switch (frameCounterTimer_)
+    {
+        case 3728:
+            pulseChannel1_.QuarterFrameClock();
+            pulseChannel2_.QuarterFrameClock();
+            triangleChannel_.QuarterFrameClock();
+            break;
+        case 7456:
+            pulseChannel1_.HalfFrameClock();
+            pulseChannel2_.HalfFrameClock();
+            triangleChannel_.HalfFrameClock();
+            break;
+        case 11185:
+            pulseChannel1_.QuarterFrameClock();
+            pulseChannel2_.QuarterFrameClock();
+            triangleChannel_.QuarterFrameClock();
+            break;
+        case 14915:
+            if (!frameCounterMode_)
+            {
+                if (!irqInhibit_)
+                {
+                    irq_ = true;
+                }
+
+                pulseChannel1_.HalfFrameClock();
+                pulseChannel2_.HalfFrameClock();
+                triangleChannel_.HalfFrameClock();
+                frameCounterResetCountdown_ = 1;
+            }
+            break;
+        case 18641:
+            pulseChannel1_.HalfFrameClock();
+            pulseChannel2_.HalfFrameClock();
+            triangleChannel_.HalfFrameClock();
+            frameCounterResetCountdown_ = 1;
+            break;
+        default:
             break;
     }
 }

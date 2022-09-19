@@ -164,10 +164,10 @@ void APU::PulseChannel::RegisterUpdate(uint16_t addr, uint8_t data)
         case 3:    // $4003, $4007
             lengthCounter_ = LENGTH_COUNTER_LOOKUP_TABLE[(data & 0xF8) >> 3];
             timerReloadHigh_ = data & 0x07;
-            SetPeriod();
             sequencerIndex_ = 0;
             silenced_ = false;
             envelopeStart_ = true;
+            SetPeriod();
             break;
     }
 }
