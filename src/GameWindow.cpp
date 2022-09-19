@@ -192,5 +192,6 @@ void GameWindow::Run()
 
 void GameWindow::PlayAudio()
 {
+    // SDL_ClearQueuedAudio(audioDevice_);
     SDL_QueueAudio(audioDevice_, (void*)audioBuffer_, AUDIO_SAMPLE_BUFFER_SIZE);
 }

@@ -26,6 +26,9 @@ APU::APU()
     irqInhibit_ = true;
     frameCounterTimer_ = 0;
     frameCounterResetCountdown_ = 0;
+
+    pulseChannel1_.SetNegateBehavior(NegateBehavior::OnesComplement);
+    pulseChannel2_.SetNegateBehavior(NegateBehavior::TwosComplement);
 }
 
 void APU::Clock()
@@ -47,8 +50,8 @@ void APU::Clock()
         return;
     }
 
-    pulseChannel_[0].Clock();
-    pulseChannel_[1].Clock();
+    pulseChannel1_.Clock();
+    pulseChannel2_.Clock();
 
     ++frameCounterTimer_;
 
@@ -57,8 +60,8 @@ void APU::Clock()
         case 3728:
             break;
         case 7456:
-            pulseChannel_[0].ClockLengthCounter();
-            pulseChannel_[1].ClockLengthCounter();
+            pulseChannel1_.FrameCounterClock();
+            pulseChannel2_.FrameCounterClock();
             break;
         case 11185:
             break;
@@ -70,14 +73,14 @@ void APU::Clock()
                     irq_ = true;
                 }
 
-                pulseChannel_[0].ClockLengthCounter();
-                pulseChannel_[1].ClockLengthCounter();
+                pulseChannel1_.FrameCounterClock();
+                pulseChannel2_.FrameCounterClock();
                 frameCounterResetCountdown_ = 1;
             }
             break;
         case 18641:
-            pulseChannel_[0].ClockLengthCounter();
-            pulseChannel_[1].ClockLengthCounter();
+            pulseChannel1_.FrameCounterClock();
+            pulseChannel2_.FrameCounterClock();
             frameCounterResetCountdown_ = 1;
             break;
         default:
@@ -92,7 +95,7 @@ void APU::Reset()
 
 float APU::Output()
 {
-    return pulseTable_[pulseChannel_[0].Output() + pulseChannel_[1].Output()];
+    return pulseTable_[pulseChannel1_.Output() + pulseChannel2_.Output()];
 }
 
 uint8_t APU::ReadReg(uint16_t addr)
@@ -109,26 +112,28 @@ void APU::WriteReg(uint16_t addr, uint8_t data)
         case SQ1_SWEEP_ADDR:
         case SQ1_LO_ADDR:
         case SQ1_HI_ADDR:
+            pulseChannel1_.RegisterUpdate(addr, data);
+            break;
         case SQ2_VOL_ADDR:
         case SQ2_SWEEP_ADDR:
         case SQ2_LO_ADDR:
         case SQ2_HI_ADDR:
-            pulseChannel_[(addr & 0x0004) >> 2].RegUpdate(addr, data);
+            pulseChannel2_.RegisterUpdate(addr, data);
             break;
         case SND_CHN_ADDR:
-            if ((data & ENABLE_PULSE1) != ENABLE_PULSE1)
+            if ((data & 0x02) != 0x02)
             {
-                pulseChannel_[1].Silence();
+                pulseChannel2_.Silence();
             }
 
-            if ((data & ENABLE_PULSE0) != ENABLE_PULSE0)
+            if ((data & 0x01) != 0x01)
             {
-                pulseChannel_[0].Silence();
+                pulseChannel1_.Silence();
             }
             break;
         case FRAME_COUNTER_ADDR:
-            frameCounterMode_ = (data & FRAME_COUNTER_SEQUENCER_MODE_MASK) == FRAME_COUNTER_SEQUENCER_MODE_MASK;
-            irqInhibit_ = (data & FRAME_COUNTER_INTERRUPT_MASK) == FRAME_COUNTER_INTERRUPT_MASK;
+            frameCounterMode_ = (data & 0x80) == 0x80;
+            irqInhibit_ = (data & 0x40) == 0x40;
 
             if (clockAPU_)
             {
@@ -143,109 +148,8 @@ void APU::WriteReg(uint16_t addr, uint8_t data)
 
             if (frameCounterMode_)
             {
-                pulseChannel_[0].Clock();
-                pulseChannel_[1].Clock();
+                // TODO: Clock units at start of five-step sequence?
             }
             break;
     }
-}
-
-// PulseChannel
-
-APU::PulseChannel::PulseChannel()
-{
-    dutyCycleIndex_ = 0;
-    sequencerIndex_ = 0;
-    halt_ = false;
-    constantVolume_ = false;
-    volume_ = 0;
-    sweep_ = false;
-    sweepDividerPeriod_ = 0;
-    negate_ = false;
-    sweepShiftCount_ = false;
-    timerReloadLow_ = 0;
-    timerReloadHigh_ = 0;
-    timer_ = 0;
-    lengthCounter_ = 0;
-    silence_ = true;
-}
-
-void APU::PulseChannel::Reset()
-{
-
-}
-
-void APU::PulseChannel::Clock()
-{
-    if (timer_ == 0)
-    {
-        timer_ = (timerReloadHigh_ << 8) | timerReloadLow_;
-        sequencerIndex_ = (sequencerIndex_ + 1) % 8;
-    }
-    else
-    {
-        --timer_;
-    }
-}
-
-void APU::PulseChannel::ClockLengthCounter()
-{
-    if (halt_)
-    {
-        return;
-    }
-    else if (lengthCounter_ == 0)
-    {
-        silence_ = true;
-    }
-    else if (lengthCounter_ > 0)
-    {
-        --lengthCounter_;
-    }
-}
-
-uint8_t APU::PulseChannel::Output()
-{
-    if (!dutyCycleSequence_[dutyCycleIndex_][sequencerIndex_] || !silence_ || (timer_ < 8))
-    {
-        return 0x00;
-    }
-
-    return volume_;
-}
-
-void APU::PulseChannel::RegUpdate(uint16_t addr, uint8_t data)
-{
-    int reg = addr & 0x03;
-
-    switch (reg)
-    {
-        case 0:
-            dutyCycleIndex_ = (data & PULSE_DUTY_CYCLE_MASK) >> 6;
-            halt_ = (data & PULSE_HALT_MASK) == PULSE_HALT_MASK;
-            constantVolume_ = (data & PULSE_CONSTANT_VOLUME_MASK) == PULSE_CONSTANT_VOLUME_MASK;
-            volume_ = data & PULSE_VOLUME_MASK;
-            break;
-        case 1:
-            sweep_ = (data & PULSE_SWEEP_ENABLED_MASK) == PULSE_SWEEP_ENABLED_MASK;
-            sweepDividerPeriod_ = (data & PULSE_SWEEP_DIVIDER_PERIOD_MASK) >> 4;
-            negate_ = (data & PULSE_SWEEP_NEGATE_FLAG_MASK) == PULSE_SWEEP_NEGATE_FLAG_MASK;
-            sweepShiftCount_ = data & PULSE_SWEEP_SHIFT_COUNT_MASK;
-            break;
-        case 2:
-            timerReloadLow_ = data;
-            break;
-        case 3:
-            lengthCounter_ = (data & PULSE_LENGTH_COUNTER_MASK) >> 3;
-            timerReloadHigh_ = data & PULSE_TIMER_HIGH_MASK;
-            sequencerIndex_ = 0;
-            silence_ = false;
-            break;
-    }
-}
-
-void APU::PulseChannel::Silence()
-{
-    lengthCounter_ = 0;
-    silence_ = true;
 }
