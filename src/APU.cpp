@@ -67,11 +67,12 @@ void APU::Reset()
 
 }
 
-float APU::Output()
+int16_t APU::Output()
 {
     float pulseOut = pulseTable_[pulseChannel1_.Output() + pulseChannel2_.Output()];
-    float tndOut = tndTable_[(3 * triangleChannel_.Output()) + (2 * noiseChannel_.Output())];
-    return pulseOut + tndOut;
+    float tndOut = tndTable_[(3 * triangleChannel_.Output()) + (2 * noiseChannel_.Output()) + 127];
+    int16_t signedOut = ((pulseOut + tndOut) * 0xFFFF) - 0x8000;
+    return signedOut;
 }
 
 uint8_t APU::ReadReg(uint16_t addr)

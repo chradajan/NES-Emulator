@@ -11,7 +11,7 @@
 #include <string>
 #include <SDL2/SDL.h>
 
-GameWindow::GameWindow(NES& nes, char* frameBuffer, float* audioBuffer) :
+GameWindow::GameWindow(NES& nes, char* frameBuffer, int16_t* audioBuffer) :
     nes_(nes),
     frameBuffer_(frameBuffer),
     audioBuffer_(audioBuffer)
@@ -39,7 +39,7 @@ void GameWindow::Run()
     SDL_AudioSpec audioSpec;
     SDL_zero(audioSpec);
     audioSpec.freq = 44100;
-    audioSpec.format = AUDIO_S32SYS;
+    audioSpec.format = AUDIO_S16SYS;
     audioSpec.channels = 1;
     audioSpec.samples = AUDIO_SAMPLE_BUFFER_COUNT;
     audioSpec.callback = NULL;
@@ -192,6 +192,5 @@ void GameWindow::Run()
 
 void GameWindow::PlayAudio()
 {
-    // SDL_ClearQueuedAudio(audioDevice_);
     SDL_QueueAudio(audioDevice_, (void*)audioBuffer_, AUDIO_SAMPLE_BUFFER_SIZE);
 }

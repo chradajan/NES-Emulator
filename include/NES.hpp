@@ -16,7 +16,7 @@ class PPU;
 class NES
 {
 public:
-    NES(char* frameBuffer, float* audioBuffer);
+    NES(char* frameBuffer, int16_t* audioBuffer);
     ~NES();
 
     std::string GetFileName();
@@ -43,7 +43,7 @@ private:
 
     int apuOutputTimer_;
     size_t bufferIndex_;
-    float* audioBuffer_;
+    int16_t* audioBuffer_;
 
     void InitializeCartridge(std::string romPath, std::string savePath);
 };

@@ -33,7 +33,8 @@ int main(int argc, char** argv)
     std::array<char, 256 * 240 * 3> frameBuffer;
     frameBuffer.fill(0x00);
 
-    std::array<float, AUDIO_SAMPLE_BUFFER_COUNT> audioBuffer;
+    std::array<int16_t, AUDIO_SAMPLE_BUFFER_COUNT> audioBuffer;
+    audioBuffer.fill(0);
 
     NES nes(frameBuffer.data(), audioBuffer.data());
 

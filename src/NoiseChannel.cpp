@@ -10,6 +10,8 @@ APU::NoiseChannel::NoiseChannel()
 
 void APU::NoiseChannel::Reset()
 {
+    channelEnabled_ = false;
+
     mode_ = false;
     shiftRegister_ = 0x0001;
 
@@ -41,6 +43,8 @@ uint8_t APU::NoiseChannel::Output()
 
 void APU::NoiseChannel::Toggle(bool enabled)
 {
+    channelEnabled_ = enabled;
+
     if (!enabled)
     {
         lengthCounter_ = 0;
@@ -123,7 +127,7 @@ void APU::NoiseChannel::RegisterUpdate(uint16_t addr, uint8_t data)
             timerReload_ = NOISE_TIMER_LOOKUP_TABLE[data & 0x0F];
             break;
         case 3:    // $400F
-            lengthCounter_ = LENGTH_COUNTER_LOOKUP_TABLE[(data & 0xF8) >> 3];
+            lengthCounter_ = channelEnabled_ ? LENGTH_COUNTER_LOOKUP_TABLE[(data & 0xF8) >> 3] : 0;
             envelopeStart_ = true;
             break;
     }

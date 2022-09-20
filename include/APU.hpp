@@ -5,8 +5,8 @@
 #include <cstdint>
 
 // Sampling
-constexpr size_t AUDIO_SAMPLE_BUFFER_COUNT = 735 * 2;
-constexpr size_t AUDIO_SAMPLE_BUFFER_SIZE = AUDIO_SAMPLE_BUFFER_COUNT * sizeof(float);
+constexpr size_t AUDIO_SAMPLE_BUFFER_COUNT = 735;
+constexpr size_t AUDIO_SAMPLE_BUFFER_SIZE = AUDIO_SAMPLE_BUFFER_COUNT * 2;
 
 // Length counters
 extern int LENGTH_COUNTER_LOOKUP_TABLE[32];
@@ -30,7 +30,7 @@ public:
     void Clock();
     void Reset();
 
-    float Output();
+    int16_t Output();
 
     uint8_t ReadReg(uint16_t addr);
     void WriteReg(uint16_t addr, uint8_t data);
@@ -142,6 +142,9 @@ private:
         void QuarterFrameClock();
         void RegisterUpdate(uint16_t addr, uint8_t data);
 
+    private:
+        bool channelEnabled_;
+
     // Sequencer
     private:
         size_t sequencerIndex_;
@@ -185,6 +188,9 @@ private:
         void HalfFrameClock();
         void QuarterFrameClock();
         void RegisterUpdate(uint16_t addr, uint8_t data);
+
+    private:
+        bool channelEnabled_;
 
     // Control
     private:

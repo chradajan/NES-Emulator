@@ -12,6 +12,8 @@ APU::TriangleChannel::TriangleChannel()
 
 void APU::TriangleChannel::Reset()
 {
+    channelEnabled_ = false;
+
     sequencerIndex_ = 0;
 
     lengthCounter_ = 0;
@@ -30,11 +32,18 @@ void APU::TriangleChannel::Reset()
 
 uint8_t APU::TriangleChannel::Output()
 {
+    if (timerReload_ < 2)
+    {
+        return 0x00;
+    }
+
     return TRIANGLE_WAVE_SEQUENCE[sequencerIndex_];
 }
 
 void APU::TriangleChannel::Toggle(bool enabled)
 {
+    channelEnabled_ = enabled;
+
     if (!enabled)
     {
         lengthCounter_ = 0;
@@ -101,7 +110,7 @@ void APU::TriangleChannel::RegisterUpdate(uint16_t addr, uint8_t data)
             SetPeriod();
             break;
         case 3:    // $400B
-            lengthCounter_ = LENGTH_COUNTER_LOOKUP_TABLE[(data & 0xF8) >> 3];
+            lengthCounter_ = channelEnabled_ ? LENGTH_COUNTER_LOOKUP_TABLE[(data & 0xF8) >> 3] : 0;
             timerReloadHigh_ = data & 0x07;
             reloadLinearCounterFlag_ = true;
             SetPeriod();
