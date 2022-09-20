@@ -42,6 +42,7 @@ void NES::Reset()
 {
     cpu_->Reset();
     ppu_->Reset();
+    apu_->Reset();
 
     if (cartLoaded_)
     {
@@ -76,6 +77,7 @@ void NES::LoadCartridge(std::filesystem::path romPath, std::filesystem::path sav
         cartridge_->SaveRAM();
         cpu_->Reset();
         ppu_->Reset();
+        apu_->Reset();
     }
 
     InitializeCartridge(romPath.string(), savePath.string());

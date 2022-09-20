@@ -64,10 +64,10 @@ void APU::Clock()
 
 void APU::Reset()
 {
-    pulseChannel1_.Toggle(false);
-    pulseChannel2_.Toggle(false);
-    triangleChannel_.Toggle(false);
-    noiseChannel_.Toggle(false);
+    pulseChannel1_.Reset();
+    pulseChannel2_.Reset();
+    triangleChannel_.Reset();
+    noiseChannel_.Reset();
 }
 
 int16_t APU::GetSample()

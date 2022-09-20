@@ -70,11 +70,14 @@ void GameWindow::Run()
             }
             else if (event.type == SDL_DROPFILE)
             {
+                SDL_PauseAudioDevice(audioDevice_, 1);
+                SDL_ClearQueuedAudio(audioDevice_);
                 std::filesystem::path romPath = event.drop.file;
                 std::filesystem::path savePath = "../saves/";
                 savePath += romPath.filename();
                 savePath.replace_extension(".sav");
                 nes_.LoadCartridge(romPath, savePath);
+                SDL_PauseAudioDevice(audioDevice_, 0);
             }
             else if (event.type == SDL_KEYUP)
             {
@@ -123,8 +126,11 @@ void GameWindow::Run()
 
         if (resetNES)
         {
+            SDL_PauseAudioDevice(audioDevice_, 1);
+            SDL_ClearQueuedAudio(audioDevice_);
             nes_.Reset();
             resetNES = false;
+            SDL_PauseAudioDevice(audioDevice_, 0);
         }
         else if (serialize)
         {
