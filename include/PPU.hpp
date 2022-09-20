@@ -56,7 +56,6 @@ public:
 
     void Clock();
     bool FrameReady();
-    char* GetFrameBuffer();
 
     uint8_t ReadReg(uint16_t addr);
     void WriteReg(uint16_t addr, uint8_t data);

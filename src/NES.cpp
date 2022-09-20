@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 
-NES::NES(char* frameBuffer, int16_t* audioBuffer)
+NES::NES(char* frameBuffer)
 {
     apu_ = std::make_unique<APU>();
     controller_ = std::make_unique<Controller>();
@@ -28,9 +28,6 @@ NES::NES(char* frameBuffer, int16_t* audioBuffer)
     cartridge_ = nullptr;
     cartLoaded_ = false;
     fileName_ = "";
-    apuOutputTimer_ = 0;
-    bufferIndex_ = 0;
-    audioBuffer_ = audioBuffer;
 }
 
 NES::~NES()
@@ -39,6 +36,27 @@ NES::~NES()
     {
         cartridge_->SaveRAM();
     }
+}
+
+void NES::Reset()
+{
+    cpu_->Reset();
+    ppu_->Reset();
+
+    if (cartLoaded_)
+    {
+        cartridge_->Reset();
+    }
+}
+
+bool NES::Ready()
+{
+    return cartLoaded_;
+}
+
+bool NES::FrameReady()
+{
+    return ppu_->FrameReady();
 }
 
 std::string NES::GetFileName()
@@ -65,72 +83,45 @@ void NES::LoadCartridge(std::filesystem::path romPath, std::filesystem::path sav
     }
 }
 
-void NES::Run(std::function<void()>& playAudio)
+void NES::Clock()
 {
     if (cartLoaded_)
     {
-        while (!ppu_->FrameReady())
-        {
-            ppu_->Clock();
-            cpu_->Clock();
-            apu_->Clock();
-            ++apuOutputTimer_;
-
-            if (apuOutputTimer_ == 41)
-            {
-                audioBuffer_[bufferIndex_++] = apu_->Output();
-                apuOutputTimer_ = 0;
-
-                if (bufferIndex_ == AUDIO_SAMPLE_BUFFER_COUNT)
-                {
-                    bufferIndex_ = 0;
-                    playAudio();
-                }
-            }
-        }
+        ppu_->Clock();
+        cpu_->Clock();
+        apu_->Clock();
     }
 }
 
-void NES::Reset()
+int16_t NES::GetAudioSample()
 {
-    cpu_->Reset();
-    ppu_->Reset();
-
-    if (cartLoaded_)
-    {
-        cartridge_->Reset();
-    }
+    return apu_->GetSample();
 }
 
-bool NES::Ready()
+void NES::RunUntilSerializable()
 {
-    return cartLoaded_;
-}
+    // if (cartLoaded_)
+    // {
+    //     while (!(cpu_->Serializable() && ppu_->Serializable()))
+    //     {
+    //         ppu_->Clock();
+    //         cpu_->Clock();
+    //         apu_->Clock();
+    //         ++apuOutputTimer_;
 
-void NES::RunUntilSerializable(std::function<void()>& playAudio)
-{
-    if (cartLoaded_)
-    {
-        while (!(cpu_->Serializable() && ppu_->Serializable()))
-        {
-            ppu_->Clock();
-            cpu_->Clock();
-            apu_->Clock();
-            ++apuOutputTimer_;
+    //         if (apuOutputTimer_ == 41)
+    //         {
+    //             audioBuffer_[bufferIndex_++] = apu_->Output();
+    //             apuOutputTimer_ = 0;
 
-            if (apuOutputTimer_ == 41)
-            {
-                audioBuffer_[bufferIndex_++] = apu_->Output();
-                apuOutputTimer_ = 0;
-
-                if (bufferIndex_ == AUDIO_SAMPLE_BUFFER_COUNT)
-                {
-                    bufferIndex_ = 0;
-                    playAudio();
-                }
-            }
-        }
-    }
+    //             if (bufferIndex_ == AUDIO_SAMPLE_BUFFER_COUNT)
+    //             {
+    //                 bufferIndex_ = 0;
+    //                 playAudio();
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 void NES::Serialize(std::ofstream& saveState)

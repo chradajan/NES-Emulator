@@ -16,18 +16,22 @@ class PPU;
 class NES
 {
 public:
-    NES(char* frameBuffer, int16_t* audioBuffer);
+    NES(char* frameBuffer);
     ~NES();
+
+    void Reset();
+    bool Ready();
+
+    bool FrameReady();
 
     std::string GetFileName();
     void LoadCartridge(std::filesystem::path romPath, std::filesystem::path savePath);
     void UnloadCartridge();
 
-    void Run(std::function<void()>& playAudio);
-    void Reset();
-    bool Ready();
+    void Clock();
+    int16_t GetAudioSample();
 
-    void RunUntilSerializable(std::function<void()>& playAudio);
+    void RunUntilSerializable();
     void Serialize(std::ofstream& saveState);
     void Deserialize(std::ifstream& saveState);
 
@@ -40,10 +44,6 @@ private:
 
     std::string fileName_;
     bool cartLoaded_;
-
-    int apuOutputTimer_;
-    size_t bufferIndex_;
-    int16_t* audioBuffer_;
 
     void InitializeCartridge(std::string romPath, std::string savePath);
 };

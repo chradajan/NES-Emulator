@@ -11,10 +11,9 @@
 #include <string>
 #include <SDL2/SDL.h>
 
-GameWindow::GameWindow(NES& nes, char* frameBuffer, int16_t* audioBuffer) :
+GameWindow::GameWindow(NES& nes, char* frameBuffer) :
     nes_(nes),
-    frameBuffer_(frameBuffer),
-    audioBuffer_(audioBuffer)
+    frameBuffer_(frameBuffer)
 {
 
 }
@@ -27,8 +26,8 @@ void GameWindow::Run()
     SDL_Window* window = SDL_CreateWindow("NES",
                                           SDL_WINDOWPOS_UNDEFINED,
                                           SDL_WINDOWPOS_UNDEFINED,
-                                          SCREEN_WIDTH * 4,
-                                          SCREEN_HEIGHT * 4,
+                                          SCREEN_WIDTH * WINDOW_SCALE,
+                                          SCREEN_HEIGHT * WINDOW_SCALE,
                                           SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 
     SDL_SetWindowMinimumSize(window, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -38,16 +37,15 @@ void GameWindow::Run()
     // Audio setup
     SDL_AudioSpec audioSpec;
     SDL_zero(audioSpec);
-    audioSpec.freq = 44100;
+    audioSpec.freq = AUDIO_SAMPLE_RATE;
     audioSpec.format = AUDIO_S16SYS;
     audioSpec.channels = 1;
     audioSpec.samples = AUDIO_SAMPLE_BUFFER_COUNT;
-    audioSpec.callback = NULL;
+    audioSpec.callback = GameWindow::GetAudioSamples;
+    audioSpec.userdata = &nes_;
 
     audioDevice_ = SDL_OpenAudioDevice(NULL, 0, &audioSpec, NULL, 0);
     SDL_PauseAudioDevice(audioDevice_, 0);
-
-    std::function<void()> playAudio = std::bind(&GameWindow::PlayAudio, this);
 
     bool exit = false;
     bool resetNES = false;
@@ -58,7 +56,6 @@ void GameWindow::Run()
 
     while (!exit)
     {
-        uint32_t startTime = SDL_GetTicks();
         SDL_Event event;
 
         while (SDL_PollEvent(&event))
@@ -119,23 +116,24 @@ void GameWindow::Run()
             }
         }
 
-        nes_.Run(playAudio);
+        if (nes_.FrameReady())
+        {
+            SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(frameBuffer_,
+                                                            SCREEN_WIDTH,
+                                                            SCREEN_HEIGHT,
+                                                            DEPTH,
+                                                            PITCH,
+                                                            0x0000FF,
+                                                            0x00FF00,
+                                                            0xFF0000,
+                                                            0);
+            SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+            SDL_RenderCopy(renderer, texture, nullptr, nullptr);
 
-        SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(frameBuffer_,
-                                                        SCREEN_WIDTH,
-                                                        SCREEN_HEIGHT,
-                                                        DEPTH,
-                                                        PITCH,
-                                                        0x0000FF,
-                                                        0x00FF00,
-                                                        0xFF0000,
-                                                        0);
-        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-        SDL_RenderCopy(renderer, texture, nullptr, nullptr);
-
-        SDL_RenderPresent(renderer);
-        SDL_FreeSurface(surface);
-        SDL_DestroyTexture(texture);
+            SDL_RenderPresent(renderer);
+            SDL_FreeSurface(surface);
+            SDL_DestroyTexture(texture);
+        }
 
         if (resetNES)
         {
@@ -149,7 +147,7 @@ void GameWindow::Run()
             if (nes_.Ready())
             {
                 std::string fileName = nes_.GetFileName();
-                nes_.RunUntilSerializable(playAudio);
+                nes_.RunUntilSerializable();
                 std::string path = "../savestates/" + fileName + std::to_string(saveStateNum) + ".sav";
                 std::ofstream saveState(path, std::ios::binary);
 
@@ -176,12 +174,7 @@ void GameWindow::Run()
             }
         }
 
-        uint32_t frameTicks = SDL_GetTicks() - startTime;
-
-        if (capFramerate && (frameTicks < SCREEN_TICKS_PER_FRAME))
-        {
-            SDL_Delay(SCREEN_TICKS_PER_FRAME - frameTicks);
-        }
+        SDL_Delay(1);
     }
 
     SDL_DestroyRenderer(renderer);
@@ -190,7 +183,22 @@ void GameWindow::Run()
     SDL_Quit();
 }
 
-void GameWindow::PlayAudio()
+void GameWindow::GetAudioSamples(void* userdata, Uint8* stream, int len)
 {
-    SDL_QueueAudio(audioDevice_, (void*)audioBuffer_, AUDIO_SAMPLE_BUFFER_SIZE);
+    static double audioTime = 0.0;
+    NES* nes = static_cast<NES*>(userdata);
+    int numSamples = len / sizeof(int16_t);
+    int16_t* buffer = (int16_t*)stream;
+
+    for (int i = 0; i < numSamples; ++i)
+    {
+        while (audioTime < TIME_PER_AUDIO_SAMPLE)
+        {
+            nes->Clock();
+            audioTime += TIME_PER_NES_CLOCK;
+        }
+
+        audioTime -= TIME_PER_AUDIO_SAMPLE;
+        buffer[i] = nes->GetAudioSample();
+    }
 }

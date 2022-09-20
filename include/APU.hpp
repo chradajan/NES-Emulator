@@ -4,10 +4,6 @@
 #include <array>
 #include <cstdint>
 
-// Sampling
-constexpr size_t AUDIO_SAMPLE_BUFFER_COUNT = 735;
-constexpr size_t AUDIO_SAMPLE_BUFFER_SIZE = AUDIO_SAMPLE_BUFFER_COUNT * 2;
-
 // Length counters
 extern int LENGTH_COUNTER_LOOKUP_TABLE[32];
 
@@ -30,7 +26,7 @@ public:
     void Clock();
     void Reset();
 
-    int16_t Output();
+    int16_t GetSample();
 
     uint8_t ReadReg(uint16_t addr);
     void WriteReg(uint16_t addr, uint8_t data);

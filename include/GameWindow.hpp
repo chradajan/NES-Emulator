@@ -7,28 +7,37 @@
 #include <string>
 #include <utility>
 
+// Rendering window
 constexpr int SCREEN_WIDTH = 256;
 constexpr int SCREEN_HEIGHT = 240;
 constexpr int CHANNELS = 3;
 constexpr int DEPTH = CHANNELS * 8;
 constexpr int PITCH = SCREEN_WIDTH * CHANNELS;
-constexpr int SCREEN_FPS = 60;
-constexpr int SCREEN_TICKS_PER_FRAME = 1000 / SCREEN_FPS;
+constexpr int WINDOW_SCALE = 4;
+
+// Audio
+constexpr int AUDIO_SAMPLE_RATE = 44100;
+constexpr double TIME_PER_AUDIO_SAMPLE = 1.0 / AUDIO_SAMPLE_RATE;
+constexpr int CPU_CLOCK_SPEED = 1789773;
+constexpr double TIME_PER_NES_CLOCK = 1.0 / CPU_CLOCK_SPEED;
+constexpr int AUDIO_SAMPLE_BUFFER_COUNT = 512;
+
 
 class GameWindow
 {
 public:
-    GameWindow(NES& nes, char* frameBuffer, int16_t* audioBuffer);
+    GameWindow(NES& nes, char* frameBuffer);
     ~GameWindow() = default;
     void Run();
 
-    void PlayAudio();
+    // void PlayAudio();
 
 private:
     NES& nes_;
     char* frameBuffer_;
-    int16_t* audioBuffer_;
+
     SDL_AudioDeviceID audioDevice_;
+    static void GetAudioSamples(void* userdata, Uint8* stream, int len);
 };
 
 #endif

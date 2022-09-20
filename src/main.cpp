@@ -33,10 +33,7 @@ int main(int argc, char** argv)
     std::array<char, 256 * 240 * 3> frameBuffer;
     frameBuffer.fill(0x00);
 
-    std::array<int16_t, AUDIO_SAMPLE_BUFFER_COUNT> audioBuffer;
-    audioBuffer.fill(0);
-
-    NES nes(frameBuffer.data(), audioBuffer.data());
+    NES nes(frameBuffer.data());
 
     if (argc > 1)
     {
@@ -46,7 +43,7 @@ int main(int argc, char** argv)
         nes.LoadCartridge(romPath, savePath);
     }
 
-    GameWindow gameWindow(nes, frameBuffer.data(), audioBuffer.data());
+    GameWindow gameWindow(nes, frameBuffer.data());
     gameWindow.Run();
 
     return 0;
