@@ -20,7 +20,7 @@ constexpr int AUDIO_SAMPLE_RATE = 44100;
 constexpr double TIME_PER_AUDIO_SAMPLE = 1.0 / AUDIO_SAMPLE_RATE;
 constexpr int CPU_CLOCK_SPEED = 1789773;
 constexpr double TIME_PER_NES_CLOCK = 1.0 / CPU_CLOCK_SPEED;
-constexpr int AUDIO_SAMPLE_BUFFER_COUNT = 512;
+constexpr int AUDIO_SAMPLE_BUFFER_COUNT = 256;
 
 class GameWindow
 {
