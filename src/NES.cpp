@@ -38,6 +38,11 @@ NES::~NES()
     }
 }
 
+void NES::SetControllerInputs(uint8_t controller1, uint8_t controller2)
+{
+    controller_->SetControllerInputs(controller1, controller2);
+}
+
 void NES::Reset()
 {
     cpu_->Reset();

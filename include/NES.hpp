@@ -19,6 +19,8 @@ public:
     NES(uint8_t* frameBuffer);
     ~NES();
 
+    void SetControllerInputs(uint8_t controller1, uint8_t controller2);
+
     void Reset();
     bool Ready();
 

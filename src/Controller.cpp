@@ -1,11 +1,16 @@
 #include "../include/Controller.hpp"
 #include "../include/RegisterAddresses.hpp"
 #include <cstdint>
-#include <SDL2/SDL.h>
 
 Controller::Controller()
 {
 
+}
+
+void Controller::SetControllerInputs(uint8_t controller1, uint8_t controller2)
+{
+    controller1_ = controller1;
+    controller2_ = controller2;
 }
 
 uint8_t Controller::ReadReg(uint16_t addr)
@@ -17,27 +22,26 @@ uint8_t Controller::ReadReg(uint16_t addr)
     {
         if (strobeLatch_)
         {
-            uint8_t const* currentKeyStates = SDL_GetKeyboardState(NULL);
-            controllerReading = (currentKeyStates[SDL_SCANCODE_L] ? 0x01 : 0x00);
+            controllerReading = controller1_ & 0x01;
         }
         else
         {
-            controllerReading |= (controller1_ & 0x01);
-            controller1_ >>= 1;
-            controller1_ |= 0x80;
+            controllerReading |= (latchedController1_ & 0x01);
+            latchedController1_ >>= 1;
+            latchedController1_ |= 0x80;
         }
     }
     else if (addr == JOY2_ADDR)
     {
         if (strobeLatch_)
         {
-            controllerReading = 0x00;
+            controllerReading = controller2_ & 0x01;
         }
         else
         {
-            controllerReading |= (controller2_ & 0x01);
-            controller2_ >>= 1;
-            controller2_ |= 0x80;
+            controllerReading |= (latchedController2_ & 0x01);
+            latchedController2_ >>= 1;
+            latchedController2_ |= 0x80;
         }
     }
 
@@ -50,31 +54,11 @@ void Controller::WriteReg(uint8_t data)
     if ((data & LATCH_MASK) == LATCH_MASK)
     {
         strobeLatch_ = true;
-        controller1_ = 0x00;
-        controller2_ = 0x00;
     }
     else
     {
         strobeLatch_ = false;
-        ReadController1();
-        ReadController2();
+        latchedController1_ = controller1_;
+        latchedController2_ = controller2_;
     }
-}
-
-void Controller::ReadController1()
-{
-    uint8_t const* currentKeyStates = SDL_GetKeyboardState(NULL);
-    controller1_ |= currentKeyStates[SDL_SCANCODE_L] ? 0x01 : 0x00; // A
-    controller1_ |= currentKeyStates[SDL_SCANCODE_K] ? 0x02 : 0x00; // B
-    controller1_ |= currentKeyStates[SDL_SCANCODE_O] ? 0x04 : 0x00; // SELECT
-    controller1_ |= currentKeyStates[SDL_SCANCODE_P] ? 0x08 : 0x00; // START
-    controller1_ |= currentKeyStates[SDL_SCANCODE_W] ? 0x10 : 0x00; // UP
-    controller1_ |= currentKeyStates[SDL_SCANCODE_S] ? 0x20 : 0x00; // DOWN
-    controller1_ |= currentKeyStates[SDL_SCANCODE_A] ? 0x40 : 0x00; // LEFT
-    controller1_ |= currentKeyStates[SDL_SCANCODE_D] ? 0x80 : 0x00; // RIGHT
-}
-
-void Controller::ReadController2()
-{
-
 }

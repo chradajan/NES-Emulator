@@ -129,6 +129,20 @@ void GameWindow::Run()
             }
         }
 
+        uint8_t const* keyStates = SDL_GetKeyboardState(NULL);
+        uint8_t controller1 = 0x00;
+
+        controller1 |= keyStates[SDL_SCANCODE_L] ? 0x01 : 0x00; // A
+        controller1 |= keyStates[SDL_SCANCODE_K] ? 0x02 : 0x00; // B
+        controller1 |= keyStates[SDL_SCANCODE_O] ? 0x04 : 0x00; // SELECT
+        controller1 |= keyStates[SDL_SCANCODE_P] ? 0x08 : 0x00; // START
+        controller1 |= keyStates[SDL_SCANCODE_W] ? 0x10 : 0x00; // UP
+        controller1 |= keyStates[SDL_SCANCODE_S] ? 0x20 : 0x00; // DOWN
+        controller1 |= keyStates[SDL_SCANCODE_A] ? 0x40 : 0x00; // LEFT
+        controller1 |= keyStates[SDL_SCANCODE_D] ? 0x80 : 0x00; // RIGHT
+
+        nes_.SetControllerInputs(controller1, 0x00);
+
         if (nes_.FrameReady())
         {
             UpdateScreen();
