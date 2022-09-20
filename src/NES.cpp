@@ -17,11 +17,11 @@
 #include <memory>
 #include <string>
 
-NES::NES(uint8_t* frameBuffer)
+NES::NES(uint8_t* frameBuffer, std::ifstream& normalColors, std::ifstream& grayscaleColors)
 {
     apu_ = std::make_unique<APU>();
     controller_ = std::make_unique<Controller>();
-    ppu_ = std::make_unique<PPU>(frameBuffer);
+    ppu_ = std::make_unique<PPU>(frameBuffer, normalColors, grayscaleColors);
     cpu_ = std::make_unique<CPU>(*apu_, *controller_, *ppu_);
     cartridge_ = nullptr;
     cartLoaded_ = false;

@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <fstream>
 #include <memory>
 #include <string>
 
@@ -15,7 +16,7 @@ class PPU;
 class NES
 {
 public:
-    NES(uint8_t* frameBuffer);
+    NES(uint8_t* frameBuffer, std::ifstream& normalColors, std::ifstream& grayscaleColors);
     ~NES();
 
     void SetControllerInputs(uint8_t controller1, uint8_t controller2);

@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cstdint>
+#include <fstream>
 #include <utility>
 
 // PPUCTRL $2000
@@ -17,7 +18,7 @@ constexpr uint8_t GENERATE_NMI_MASK = 0x80;
 
 // PPUMASK $2001
 
-constexpr uint8_t GREYSCALE_MASK = 0x01;
+constexpr uint8_t GRAYSCALE_MASK = 0x01;
 constexpr uint8_t SHOW_LEFT_BACKGROUND_MASK = 0x02;
 constexpr uint8_t SHOW_LEFT_SPRITE_MASK = 0x04;
 constexpr uint8_t SHOW_BACKGROUND_MASK = 0x08;
@@ -25,6 +26,7 @@ constexpr uint8_t SHOW_SPRITES_MASK = 0x10;
 constexpr uint8_t EMPHASIZE_RED_MASK = 0x20;
 constexpr uint8_t EMPHASIZE_GREEN_MASK = 0x40;
 constexpr uint8_t EMPHASIZE_BLUE_MASK = 0x80;
+constexpr uint8_t COLOR_EMPHASIS_MASK = EMPHASIZE_BLUE_MASK | EMPHASIZE_GREEN_MASK | EMPHASIZE_RED_MASK;
 
 // PPUSTATUS $2002
 
@@ -49,7 +51,7 @@ class Cartridge;
 class PPU
 {
 public:
-    PPU(uint8_t* frameBuffer);
+    PPU(uint8_t* frameBuffer, std::ifstream& normalColors, std::ifstream& grayscaleColors);
     ~PPU() = default;
     void Reset();
 
@@ -71,6 +73,7 @@ public:
 
 private:
     void Initialize();
+    void InitializePalettes(std::ifstream& normalColors, std::ifstream& grayscaleColors);
 
 private:
     uint8_t Read(uint16_t addr);
@@ -87,13 +90,19 @@ private:
     std::array<uint8_t, 0x1000> VRAM_;  // Double the size of actual PPU VRAM. Upper half ignored unless 4-screen mirroring is used.
     std::array<uint8_t, 0x0020> PaletteRAM_;
 
+// Palettes
+private:
     struct RGB
     {
         uint8_t R;
         uint8_t G;
         uint8_t B;
     };
-    std::array<RGB, 0x40> Colors_;
+
+    std::array<std::array<RGB, 0x40>, 8> NormalColors_;
+    std::array<std::array<RGB, 0x40>, 8> GrayscaleColors_;
+    size_t paletteIndex_;
+    bool useGrayscale_;
 
 // Scanlines
 private:
