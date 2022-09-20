@@ -22,11 +22,10 @@ constexpr int CPU_CLOCK_SPEED = 1789773;
 constexpr double TIME_PER_NES_CLOCK = 1.0 / CPU_CLOCK_SPEED;
 constexpr int AUDIO_SAMPLE_BUFFER_COUNT = 512;
 
-
 class GameWindow
 {
 public:
-    GameWindow(NES& nes, char* frameBuffer);
+    GameWindow(NES& nes, uint8_t* frameBuffer);
     ~GameWindow() = default;
     void Run();
 
@@ -35,12 +34,18 @@ public:
 private:
     NES& nes_;
 
-    char* frameBuffer_;
+    uint8_t* frameBuffer_;
     SDL_Renderer* renderer_;
     void UpdateScreen();
 
     SDL_AudioDeviceID audioDevice_;
     static void GetAudioSamples(void* userdata, Uint8* stream, int len);
+
+private:
+    enum ClockMultiplier { QUARTER = 0, HALF, NORMAL, DOUBLE, QUADRUPLE };
+    ClockMultiplier clockMultiplier;
+
+    void UpdateClockMultiplier(bool increase);
 };
 
 #endif

@@ -30,7 +30,7 @@ int main(int argc, char** argv)
         std::filesystem::create_directory(logPath);
     }
 
-    std::array<char, 256 * 240 * 3> frameBuffer;
+    std::array<uint8_t, SCREEN_WIDTH * SCREEN_HEIGHT * CHANNELS> frameBuffer;
     frameBuffer.fill(0x00);
 
     NES nes(frameBuffer.data());

@@ -11,11 +11,15 @@
 #include <string>
 #include <SDL2/SDL.h>
 
-GameWindow::GameWindow(NES& nes, char* frameBuffer) :
+static bool mute = false;
+static double timePerNesClock = TIME_PER_NES_CLOCK;
+
+
+GameWindow::GameWindow(NES& nes, uint8_t* frameBuffer) :
     nes_(nes),
     frameBuffer_(frameBuffer)
 {
-
+    clockMultiplier = ClockMultiplier::NORMAL;
 }
 
 void GameWindow::Run()
@@ -33,6 +37,7 @@ void GameWindow::Run()
     SDL_SetWindowMinimumSize(window, SCREEN_WIDTH, SCREEN_HEIGHT);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     renderer_ = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    UpdateScreen();
 
     // Audio setup
     SDL_AudioSpec audioSpec;
@@ -49,7 +54,6 @@ void GameWindow::Run()
 
     bool exit = false;
     bool resetNES = false;
-    bool capFramerate = true;
     int saveStateNum;
     bool serialize = false;
     bool deserialize = false;
@@ -86,8 +90,14 @@ void GameWindow::Run()
                     case SDL_SCANCODE_R:
                         resetNES = true;
                         break;
-                    case SDL_SCANCODE_T:
-                        capFramerate = !capFramerate;
+                    case SDL_SCANCODE_M:
+                        mute = !mute;
+                        break;
+                    case SDL_SCANCODE_LEFT:
+                        UpdateClockMultiplier(false);
+                        break;
+                    case SDL_SCANCODE_RIGHT:
+                        UpdateClockMultiplier(true);
                         break;
                     case SDL_SCANCODE_1 ... SDL_SCANCODE_0:
                         if (event.key.keysym.scancode == SDL_SCANCODE_0)
@@ -190,14 +200,14 @@ void GameWindow::Run()
 void GameWindow::UpdateScreen()
 {
     SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(frameBuffer_,
-                                                            SCREEN_WIDTH,
-                                                            SCREEN_HEIGHT,
-                                                            DEPTH,
-                                                            PITCH,
-                                                            0x0000FF,
-                                                            0x00FF00,
-                                                            0xFF0000,
-                                                            0);
+                                                    SCREEN_WIDTH,
+                                                    SCREEN_HEIGHT,
+                                                    DEPTH,
+                                                    PITCH,
+                                                    0x0000FF,
+                                                    0x00FF00,
+                                                    0xFF0000,
+                                                    0);
 
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, surface);
     SDL_RenderCopy(renderer_, texture, nullptr, nullptr);
@@ -219,10 +229,46 @@ void GameWindow::GetAudioSamples(void* userdata, Uint8* stream, int len)
         while (audioTime < TIME_PER_AUDIO_SAMPLE)
         {
             nes->Clock();
-            audioTime += TIME_PER_NES_CLOCK;
+            audioTime += timePerNesClock;
         }
 
         audioTime -= TIME_PER_AUDIO_SAMPLE;
-        buffer[i] = nes->GetAudioSample();
+
+        if (mute)
+        {
+            buffer[i] = 0;
+        }
+        else
+        {
+            buffer[i] = nes->GetAudioSample();
+        }
+    }
+}
+
+void GameWindow::UpdateClockMultiplier(bool increase)
+{
+    if (increase)
+    {
+        switch (clockMultiplier)
+        {
+            case ClockMultiplier::QUARTER ... ClockMultiplier::DOUBLE:
+                clockMultiplier = static_cast<ClockMultiplier>(static_cast<int>(clockMultiplier) + 1);
+                timePerNesClock *= 0.5;
+                break;
+            case ClockMultiplier::QUADRUPLE:
+                break;
+        }
+    }
+    else
+    {
+        switch (clockMultiplier)
+        {
+            case ClockMultiplier::HALF ... ClockMultiplier::QUADRUPLE:
+                clockMultiplier = static_cast<ClockMultiplier>(static_cast<int>(clockMultiplier) - 1);
+                timePerNesClock *= 2;
+                break;
+            case ClockMultiplier::QUARTER:
+                break;
+        }
     }
 }

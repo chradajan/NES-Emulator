@@ -19,7 +19,7 @@
 #include <memory>
 #include <string>
 
-NES::NES(char* frameBuffer)
+NES::NES(uint8_t* frameBuffer)
 {
     apu_ = std::make_unique<APU>();
     controller_ = std::make_unique<Controller>();

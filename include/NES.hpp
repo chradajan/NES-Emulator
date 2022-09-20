@@ -16,7 +16,7 @@ class PPU;
 class NES
 {
 public:
-    NES(char* frameBuffer);
+    NES(uint8_t* frameBuffer);
     ~NES();
 
     void Reset();

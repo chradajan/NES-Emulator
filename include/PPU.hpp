@@ -50,7 +50,7 @@ class Cartridge;
 class PPU
 {
 public:
-    PPU(char* frameBuffer);
+    PPU(uint8_t* frameBuffer);
     ~PPU() = default;
     void Reset();
 
@@ -229,7 +229,7 @@ private:
 // Frame buffer
 private:
     bool frameReady_;
-    char* frameBuffer_;
+    uint8_t* frameBuffer_;
     size_t framePointer_;
 };
 

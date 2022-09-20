@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <utility>
 
-PPU::PPU(char* frameBuffer) :
+PPU::PPU(uint8_t* frameBuffer) :
     frameBuffer_(frameBuffer)
 {
     uint8_t paletteArray[192] = {
