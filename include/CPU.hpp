@@ -6,7 +6,6 @@
 #include <cstdint>
 #include <functional>
 #include <fstream>
-#include <memory>
 
 constexpr uint8_t CARRY_FLAG = 0x01;
 constexpr uint8_t ZERO_FLAG = 0x02;

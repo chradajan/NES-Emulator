@@ -1,11 +1,10 @@
 #ifndef GAMEWINDOW_HPP
 #define GAMEWINDOW_HPP
 
-#include "NES.hpp"
-#include <SDL2/SDL.h>
 #include <array>
 #include <string>
 #include <utility>
+#include <SDL2/SDL.h>
 
 // Rendering window
 constexpr int SCREEN_WIDTH = 256;
@@ -22,14 +21,15 @@ constexpr int CPU_CLOCK_SPEED = 1789773;
 constexpr double TIME_PER_NES_CLOCK = 1.0 / CPU_CLOCK_SPEED;
 constexpr int AUDIO_SAMPLE_BUFFER_COUNT = 256;
 
+class NES;
+
 class GameWindow
 {
 public:
     GameWindow(NES& nes, uint8_t* frameBuffer);
     ~GameWindow() = default;
-    void Run();
 
-    // void PlayAudio();
+    void Run();
 
 private:
     NES& nes_;

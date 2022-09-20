@@ -2,6 +2,8 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
+#include <string>
+#include <vector>
 
 MMC1::MMC1(std::ifstream& rom, std::string const savePath, std::array<uint8_t, 16> const& header) :
     savePath_(savePath)

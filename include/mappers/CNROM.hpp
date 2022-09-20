@@ -5,7 +5,6 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
-#include <string>
 #include <vector>
 
 class CNROM : public virtual Cartridge

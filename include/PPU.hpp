@@ -3,7 +3,6 @@
 
 #include <array>
 #include <cstdint>
-#include <memory>
 #include <utility>
 
 // PPUCTRL $2000

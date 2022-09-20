@@ -1,5 +1,5 @@
-#include <cstdint>
 #include "../include/CPU.hpp"
+#include <cstdint>
 
 void CPU::ADC()
 {

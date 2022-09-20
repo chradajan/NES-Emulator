@@ -12,10 +12,8 @@
 #include "../include/mappers/UxROM.hpp"
 #include "../include/PPU.hpp"
 #include <cstdint>
-#include <iomanip>
 #include <filesystem>
 #include <fstream>
-#include <functional>
 #include <memory>
 #include <string>
 

@@ -2,6 +2,7 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
+#include <vector>
 
 AxROM::AxROM(std::ifstream& rom, std::array<uint8_t, 16> const& header)
 {

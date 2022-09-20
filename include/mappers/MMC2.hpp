@@ -5,7 +5,6 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
-#include <string>
 #include <vector>
 
 constexpr size_t MMC2_PRG_BANK_SIZE = 0x2000;

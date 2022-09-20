@@ -1,13 +1,7 @@
-#include "../include/APU.hpp"
-#include "../include/Cartridge.hpp"
-#include "../include/CPU.hpp"
-#include "../include/Controller.hpp"
 #include "../include/GameWindow.hpp"
 #include "../include/NES.hpp"
-#include "../include/PPU.hpp"
 #include <array>
 #include <filesystem>
-#include <string>
 
 int main(int argc, char** argv)
 {

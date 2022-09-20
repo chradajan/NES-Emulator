@@ -5,7 +5,6 @@
 #include <array>
 #include <cstdint>
 #include <fstream>
-#include <string>
 #include <vector>
 
 constexpr uint8_t UXROM_BANK_SELECT_MASK = 0x0F;

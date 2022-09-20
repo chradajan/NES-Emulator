@@ -14,7 +14,6 @@
 static bool mute = false;
 static double timePerNesClock = TIME_PER_NES_CLOCK;
 
-
 GameWindow::GameWindow(NES& nes, uint8_t* frameBuffer) :
     nes_(nes),
     frameBuffer_(frameBuffer)
