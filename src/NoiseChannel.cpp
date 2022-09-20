@@ -118,7 +118,7 @@ void APU::NoiseChannel::RegisterUpdate(uint16_t addr, uint8_t data)
         case 0:  // $400C
             halt_ = (data & 0x20) == 0x20;
             envelopeLooped_ = halt_;
-            useConstantVolume_ = (data & 0x01) == 0x01;
+            useConstantVolume_ = (data & 0x10) == 0x10;
             constantVolume_ = data & 0x0F;
             envelopeTimerReload_ = constantVolume_;
             break;

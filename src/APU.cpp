@@ -70,7 +70,7 @@ void APU::Reset()
 int16_t APU::Output()
 {
     float pulseOut = pulseTable_[pulseChannel1_.Output() + pulseChannel2_.Output()];
-    float tndOut = tndTable_[(3 * triangleChannel_.Output()) + (2 * noiseChannel_.Output()) + 127];
+    float tndOut = tndTable_[(3 * triangleChannel_.Output()) + (2 * noiseChannel_.Output())];
     int16_t signedOut = ((pulseOut + tndOut) * 0xFFFF) - 0x8000;
     return signedOut;
 }
