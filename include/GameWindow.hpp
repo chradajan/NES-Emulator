@@ -34,7 +34,10 @@ public:
 
 private:
     NES& nes_;
+
     char* frameBuffer_;
+    SDL_Renderer* renderer_;
+    void UpdateScreen();
 
     SDL_AudioDeviceID audioDevice_;
     static void GetAudioSamples(void* userdata, Uint8* stream, int len);

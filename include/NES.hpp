@@ -23,15 +23,16 @@ public:
     bool Ready();
 
     bool FrameReady();
+    int16_t GetAudioSample();
 
     std::string GetFileName();
     void LoadCartridge(std::filesystem::path romPath, std::filesystem::path savePath);
     void UnloadCartridge();
 
     void Clock();
-    int16_t GetAudioSample();
-
+    void RunUntilFrameReady();
     void RunUntilSerializable();
+
     void Serialize(std::ofstream& saveState);
     void Deserialize(std::ifstream& saveState);
 

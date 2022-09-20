@@ -59,6 +59,11 @@ bool NES::FrameReady()
     return ppu_->FrameReady();
 }
 
+int16_t NES::GetAudioSample()
+{
+    return apu_->GetSample();
+}
+
 std::string NES::GetFileName()
 {
     return fileName_;
@@ -93,35 +98,30 @@ void NES::Clock()
     }
 }
 
-int16_t NES::GetAudioSample()
+void NES::RunUntilFrameReady()
 {
-    return apu_->GetSample();
+    if (cartLoaded_)
+    {
+        while(!ppu_->FrameReady())
+        {
+            ppu_->Clock();
+            cpu_->Clock();
+            apu_->Clock();
+        }
+    }
 }
 
 void NES::RunUntilSerializable()
 {
-    // if (cartLoaded_)
-    // {
-    //     while (!(cpu_->Serializable() && ppu_->Serializable()))
-    //     {
-    //         ppu_->Clock();
-    //         cpu_->Clock();
-    //         apu_->Clock();
-    //         ++apuOutputTimer_;
-
-    //         if (apuOutputTimer_ == 41)
-    //         {
-    //             audioBuffer_[bufferIndex_++] = apu_->Output();
-    //             apuOutputTimer_ = 0;
-
-    //             if (bufferIndex_ == AUDIO_SAMPLE_BUFFER_COUNT)
-    //             {
-    //                 bufferIndex_ = 0;
-    //                 playAudio();
-    //             }
-    //         }
-    //     }
-    // }
+    if (cartLoaded_)
+    {
+        while (!(cpu_->Serializable() && ppu_->Serializable()))
+        {
+            ppu_->Clock();
+            cpu_->Clock();
+            apu_->Clock();
+        }
+    }
 }
 
 void NES::Serialize(std::ofstream& saveState)
