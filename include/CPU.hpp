@@ -87,6 +87,11 @@ private:
     std::ofstream log_;
     uint64_t totalCycles_;
 
+// APU DMC
+private:
+    int dmcStall_;
+    uint16_t dmcAddr_;
+
 // Registers and memory
 private:
     struct

@@ -26,15 +26,30 @@ CPU::CPU(APU& apu, Controller& controller, PPU& ppu) :
 void CPU::Clock()
 {
     oddCycle_ = !oddCycle_;
-    ++cycle_;
     ++totalCycles_;
+
+    if (dmcStall_ > 0)
+    {
+        --dmcStall_;
+
+        if (dmcStall_ == 0)
+        {
+            apu_.SetDmcSample(Read(dmcAddr_));
+        }
+
+        return;
+    }
 
     auto dmcRequest = apu_.DmcRequestSample();
 
     if (dmcRequest)
     {
-        apu_.SetDmcSample(Read(dmcRequest.value()));
+        dmcAddr_ = dmcRequest.value();
+        dmcStall_ = 3;
+        return;
     }
+
+    ++cycle_;
 
     if (isOamDmaTransfer_)
     {
@@ -56,6 +71,9 @@ void CPU::Reset()
     opCode_ = OpCode::INVALID_CODE;
     cycle_ = 1;
     oddCycle_ = false;
+
+    // APU DMC
+    dmcStall_ = 0;
 
     // Registers
     Registers_.stackPointer -= 3;
@@ -96,6 +114,10 @@ void CPU::Initialize()
     log_.open("../Logs/log.log");
     totalCycles_ = 0;
     #endif
+
+    // APU DMC
+    dmcStall_ = 0;
+    dmcAddr_ = 0x0000;
 
     // Registers
     Registers_.accumulator = 0x00;
