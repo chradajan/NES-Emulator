@@ -1,10 +1,11 @@
 #include "../include/APU.hpp"
+#include "../include/NoiseChannel.hpp"
+#include "../include/PulseChannel.hpp"
 #include "../include/RegisterAddresses.hpp"
+#include "../include/TriangleChannel.hpp"
+#include <cstddef>
 #include <cstdint>
-
-int LENGTH_COUNTER_LOOKUP_TABLE[32] = {
-    10, 254, 20, 2, 40, 4, 80, 6, 160, 8, 60, 10, 14, 12, 26, 14, 12, 16, 24, 18, 48, 20, 96, 22, 192, 24, 72, 26, 16, 28, 32, 30
-};
+#include <memory>
 
 APU::APU()
 {
@@ -29,8 +30,15 @@ APU::APU()
     frameCounterTimer_ = 0;
     frameCounterResetCountdown_ = 0;
 
-    pulseChannel1_.SetNegateBehavior(NegateBehavior::OnesComplement);
-    pulseChannel2_.SetNegateBehavior(NegateBehavior::TwosComplement);
+    CHANNELS_[0] = std::make_unique<PulseChannel>(true);
+    CHANNELS_[1] = std::make_unique<PulseChannel>(false);
+    CHANNELS_[2] = std::make_unique<TriangleChannel>();
+    CHANNELS_[3] = std::make_unique<NoiseChannel>();
+
+    pulseChannel1_ = dynamic_cast<PulseChannel*>(CHANNELS_[0].get());
+    pulseChannel2_ = dynamic_cast<PulseChannel*>(CHANNELS_[1].get());
+    triangleChannel_ = dynamic_cast<TriangleChannel*>(CHANNELS_[2].get());
+    noiseChannel_ = dynamic_cast<NoiseChannel*>(CHANNELS_[3].get());
 }
 
 void APU::Clock()
@@ -47,31 +55,31 @@ void APU::Clock()
         }
     }
 
-    triangleChannel_.Clock();
+    triangleChannel_->Clock();
 
     if (!clockAPU_)
     {
         return;
     }
 
-    pulseChannel1_.Clock();
-    pulseChannel2_.Clock();
-    noiseChannel_.Clock();
+    pulseChannel1_->Clock();
+    pulseChannel2_->Clock();
+    noiseChannel_->Clock();
     ClockFrameCounter();
 }
 
 void APU::Reset()
 {
-    pulseChannel1_.Reset();
-    pulseChannel2_.Reset();
-    triangleChannel_.Reset();
-    noiseChannel_.Reset();
+    for (std::unique_ptr<AudioChannel>& channel : CHANNELS_)
+    {
+        channel->Reset();
+    }
 }
 
 int16_t APU::GetSample()
 {
-    float pulseOut = pulseTable_[pulseChannel1_.Output() + pulseChannel2_.Output()];
-    float tndOut = tndTable_[(3 * triangleChannel_.Output()) + (2 * noiseChannel_.Output())];
+    float pulseOut = pulseTable_[pulseChannel1_->GetOutput() + pulseChannel2_->GetOutput()];
+    float tndOut = tndTable_[(3 * triangleChannel_->GetOutput()) + (2 * noiseChannel_->GetOutput())];
     int16_t signedOut = ((pulseOut + tndOut) * 0xFFFF) - 0x8000;
     return signedOut;
 }
@@ -90,29 +98,29 @@ void APU::WriteReg(uint16_t addr, uint8_t data)
         case SQ1_SWEEP_ADDR:
         case SQ1_LO_ADDR:
         case SQ1_HI_ADDR:
-            pulseChannel1_.RegisterUpdate(addr, data);
+            pulseChannel1_->RegisterUpdate(addr, data);
             break;
         case SQ2_VOL_ADDR:
         case SQ2_SWEEP_ADDR:
         case SQ2_LO_ADDR:
         case SQ2_HI_ADDR:
-            pulseChannel2_.RegisterUpdate(addr, data);
+            pulseChannel2_->RegisterUpdate(addr, data);
             break;
         case TRI_LINEAR_ADDR:
         case TRI_LO_ADDR:
         case TRI_HI_ADDR:
-            triangleChannel_.RegisterUpdate(addr, data);
+            triangleChannel_->RegisterUpdate(addr, data);
             break;
         case NOISE_VOL_ADDR:
         case NOISE_LO_ADDR:
         case NOISE_HI_ADDR:
-            noiseChannel_.RegisterUpdate(addr, data);
+            noiseChannel_->RegisterUpdate(addr, data);
             break;
         case SND_CHN_ADDR:
-            pulseChannel1_.Toggle((data & 0x01) == 0x01);
-            pulseChannel2_.Toggle((data & 0x02) == 0x02);
-            triangleChannel_.Toggle((data & 0x04) == 0x04);
-            noiseChannel_.Toggle((data & 0x08) == 0x08);
+            pulseChannel1_->SetEnabled((data & 0x01) == 0x01);
+            pulseChannel2_->SetEnabled((data & 0x02) == 0x02);
+            triangleChannel_->SetEnabled((data & 0x04) == 0x04);
+            noiseChannel_->SetEnabled((data & 0x08) == 0x08);
             break;
         case FRAME_COUNTER_ADDR:
             frameCounterMode_ = (data & 0x80) == 0x80;
@@ -131,10 +139,7 @@ void APU::WriteReg(uint16_t addr, uint8_t data)
 
             if (frameCounterMode_)
             {
-                pulseChannel1_.HalfFrameClock();
-                pulseChannel2_.HalfFrameClock();
-                triangleChannel_.HalfFrameClock();
-                noiseChannel_.HalfFrameClock();
+                HalfFrameClock();
             }
             break;
     }
@@ -147,22 +152,13 @@ void APU::ClockFrameCounter()
     switch (frameCounterTimer_)
     {
         case 3728:
-            pulseChannel1_.QuarterFrameClock();
-            pulseChannel2_.QuarterFrameClock();
-            triangleChannel_.QuarterFrameClock();
-            noiseChannel_.QuarterFrameClock();
+            QuarterFrameClock();
             break;
         case 7456:
-            pulseChannel1_.HalfFrameClock();
-            pulseChannel2_.HalfFrameClock();
-            triangleChannel_.HalfFrameClock();
-            noiseChannel_.HalfFrameClock();
+            HalfFrameClock();
             break;
         case 11185:
-            pulseChannel1_.QuarterFrameClock();
-            pulseChannel2_.QuarterFrameClock();
-            triangleChannel_.QuarterFrameClock();
-            noiseChannel_.QuarterFrameClock();
+            QuarterFrameClock();
             break;
         case 14915:
             if (!frameCounterMode_)
@@ -172,21 +168,31 @@ void APU::ClockFrameCounter()
                     irq_ = true;
                 }
 
-                pulseChannel1_.HalfFrameClock();
-                pulseChannel2_.HalfFrameClock();
-                triangleChannel_.HalfFrameClock();
-                noiseChannel_.HalfFrameClock();
+                HalfFrameClock();
                 frameCounterResetCountdown_ = 1;
             }
             break;
         case 18641:
-            pulseChannel1_.HalfFrameClock();
-            pulseChannel2_.HalfFrameClock();
-            triangleChannel_.HalfFrameClock();
-            noiseChannel_.HalfFrameClock();
+            HalfFrameClock();
             frameCounterResetCountdown_ = 1;
             break;
         default:
             break;
+    }
+}
+
+void APU::HalfFrameClock()
+{
+    for (std::unique_ptr<AudioChannel>& channel : CHANNELS_)
+    {
+        channel->HalfFrameClock();
+    }
+}
+
+void APU::QuarterFrameClock()
+{
+    for (std::unique_ptr<AudioChannel>& channel : CHANNELS_)
+    {
+        channel->QuarterFrameClock();
     }
 }

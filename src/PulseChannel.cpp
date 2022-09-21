@@ -1,24 +1,14 @@
-#include "../include/APU.hpp"
+#include "../include/PulseChannel.hpp"
+#include <cstddef>
 #include <cstdint>
 
-bool DUTY_CYCLE_SEQUENCE[4][8] = {
-    {0, 1, 0, 0 ,0, 0, 0, 0},
-    {0, 1, 1, 0, 0, 0, 0, 0},
-    {0, 1, 1, 1, 1, 0, 0, 0},
-    {1, 0, 0, 1, 1, 1, 1, 1}
-};
-
-APU::PulseChannel::PulseChannel()
+PulseChannel::PulseChannel(bool onesComplement) :
+    onesComplement_(onesComplement)
 {
     Reset();
 }
 
-void APU::PulseChannel::SetNegateBehavior(NegateBehavior negateBehavior)
-{
-    negateBehavior_ = negateBehavior;
-}
-
-void APU::PulseChannel::Reset()
+void PulseChannel::Reset()
 {
     channelEnabled_ = false;
 
@@ -56,7 +46,7 @@ void APU::PulseChannel::Reset()
     sweepTargetPeriod_ = 0;
 }
 
-uint8_t APU::PulseChannel::Output()
+uint16_t PulseChannel::GetOutput()
 {
     if (!DUTY_CYCLE_SEQUENCE[dutyCycleIndex_][sequencerIndex_] || silenced_ || !channelEnabled_)
     {
@@ -66,7 +56,7 @@ uint8_t APU::PulseChannel::Output()
     return useConstantVolume_ ? constantVolume_ : decayLevel_;
 }
 
-void APU::PulseChannel::Toggle(bool enabled)
+void PulseChannel::SetEnabled(bool enabled)
 {
     channelEnabled_ = enabled;
 
@@ -76,7 +66,7 @@ void APU::PulseChannel::Toggle(bool enabled)
     }
 }
 
-void APU::PulseChannel::Clock()
+void PulseChannel::Clock()
 {
     if (timer_ == 0)
     {
@@ -89,7 +79,7 @@ void APU::PulseChannel::Clock()
     }
 }
 
-void APU::PulseChannel::HalfFrameClock()
+void PulseChannel::HalfFrameClock()
 {
     QuarterFrameClock();
     SweepUpdate();
@@ -109,7 +99,7 @@ void APU::PulseChannel::HalfFrameClock()
     }
 }
 
-void APU::PulseChannel::QuarterFrameClock()
+void PulseChannel::QuarterFrameClock()
 {
     if (envelopeStart_)
     {
@@ -136,7 +126,7 @@ void APU::PulseChannel::QuarterFrameClock()
     }
 }
 
-void APU::PulseChannel::RegisterUpdate(uint16_t addr, uint8_t data)
+void PulseChannel::RegisterUpdate(uint16_t addr, uint8_t data)
 {
     int reg = addr & 0x03;
 
@@ -172,7 +162,7 @@ void APU::PulseChannel::RegisterUpdate(uint16_t addr, uint8_t data)
     }
 }
 
-void APU::PulseChannel::SetPeriod()
+void PulseChannel::SetPeriod()
 {
     timerReload_ = (timerReloadHigh_ << 8) | timerReloadLow_;
 
@@ -184,7 +174,7 @@ void APU::PulseChannel::SetPeriod()
     SetTargetPeriod();
 }
 
-void APU::PulseChannel::SweepUpdate()
+void PulseChannel::SweepUpdate()
 {
     if (sweepEnabled_ && !silenced_ && (sweepTimer_ == 0))
     {
@@ -203,13 +193,13 @@ void APU::PulseChannel::SweepUpdate()
     }
 }
 
-void APU::PulseChannel::SetTargetPeriod()
+void PulseChannel::SetTargetPeriod()
 {
     uint16_t changeAmount = timerReload_ >> sweepShiftAmount_;
 
     if (negate_)
     {
-        if (negateBehavior_ == NegateBehavior::OnesComplement)
+        if (onesComplement_)
         {
             ++changeAmount;
         }

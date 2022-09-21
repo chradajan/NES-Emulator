@@ -1,14 +1,13 @@
-#include "../include/APU.hpp"
+#include "../include/NoiseChannel.hpp"
+#include <cstddef>
 #include <cstdint>
 
-int NOISE_TIMER_LOOKUP_TABLE[16] = {4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068};
-
-APU::NoiseChannel::NoiseChannel()
+NoiseChannel::NoiseChannel()
 {
     Reset();
 }
 
-void APU::NoiseChannel::Reset()
+void NoiseChannel::Reset()
 {
     channelEnabled_ = false;
 
@@ -31,7 +30,7 @@ void APU::NoiseChannel::Reset()
     timer_ = 0;
 }
 
-uint8_t APU::NoiseChannel::Output()
+uint16_t NoiseChannel::GetOutput()
 {
     if (((shiftRegister_ & 0x01) == 0x01) || (lengthCounter_ == 0))
     {
@@ -41,7 +40,7 @@ uint8_t APU::NoiseChannel::Output()
     return useConstantVolume_ ? constantVolume_ : decayLevel_;
 }
 
-void APU::NoiseChannel::Toggle(bool enabled)
+void NoiseChannel::SetEnabled(bool enabled)
 {
     channelEnabled_ = enabled;
 
@@ -51,7 +50,7 @@ void APU::NoiseChannel::Toggle(bool enabled)
     }
 }
 
-void APU::NoiseChannel::Clock()
+void NoiseChannel::Clock()
 {
     if (timer_ == 0)
     {
@@ -72,7 +71,7 @@ void APU::NoiseChannel::Clock()
     }
 }
 
-void APU::NoiseChannel::HalfFrameClock()
+void NoiseChannel::HalfFrameClock()
 {
     QuarterFrameClock();
 
@@ -82,7 +81,7 @@ void APU::NoiseChannel::HalfFrameClock()
     }
 }
 
-void APU::NoiseChannel::QuarterFrameClock()
+void NoiseChannel::QuarterFrameClock()
 {
     if (envelopeStart_)
     {
@@ -109,7 +108,7 @@ void APU::NoiseChannel::QuarterFrameClock()
     }
 }
 
-void APU::NoiseChannel::RegisterUpdate(uint16_t addr, uint8_t data)
+void NoiseChannel::RegisterUpdate(uint16_t addr, uint8_t data)
 {
     int reg = addr & 0x03;
 
