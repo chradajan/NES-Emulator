@@ -173,7 +173,7 @@ void APU::WriteReg(uint16_t addr, uint8_t data)
 
 bool APU::IRQ()
 {
-    return irq_;
+    return (irq_ || dmcChannel_->IRQ());
 }
 
 std::optional<uint16_t> APU::DmcRequestSample()

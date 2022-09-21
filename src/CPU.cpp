@@ -264,7 +264,7 @@ void CPU::SetNextOpCode()
         tickFunction_ = std::bind(&CPU::NMI, this);
         tickFunction_();
     }
-    else if (!IsInterruptDisable() && cartridge_->IRQ())
+    else if (!IsInterruptDisable() && (apu_.IRQ() || cartridge_->IRQ()))
     {
         cycle_ = 1;
         tickFunction_ = std::bind(&CPU::IRQ, this);
