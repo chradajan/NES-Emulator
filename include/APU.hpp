@@ -4,6 +4,7 @@
 #include <array>
 #include <cstdint>
 #include <memory>
+#include <optional>
 
 class AudioChannel;
 class DmcChannel;
@@ -26,6 +27,8 @@ public:
     void WriteReg(uint16_t addr, uint8_t data);
 
     bool IRQ();
+    std::optional<uint16_t> DmcRequestSample();
+    void SetDmcSample(uint8_t sample);
 
 // State
 private:

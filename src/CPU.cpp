@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <functional>
 #include <iostream>
+#include <optional>
 
 #ifdef LOGGING
 #include <iomanip>
@@ -27,6 +28,13 @@ void CPU::Clock()
     oddCycle_ = !oddCycle_;
     ++cycle_;
     ++totalCycles_;
+
+    auto dmcRequest = apu_.DmcRequestSample();
+
+    if (dmcRequest)
+    {
+        apu_.SetDmcSample(Read(dmcRequest.value()));
+    }
 
     if (isOamDmaTransfer_)
     {

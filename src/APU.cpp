@@ -7,6 +7,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 
 APU::APU()
 {
@@ -173,6 +174,16 @@ void APU::WriteReg(uint16_t addr, uint8_t data)
 bool APU::IRQ()
 {
     return irq_;
+}
+
+std::optional<uint16_t> APU::DmcRequestSample()
+{
+    return dmcChannel_->RequestSample();
+}
+
+void APU::SetDmcSample(uint8_t sample)
+{
+    dmcChannel_->SetSample(sample);
 }
 
 void APU::ClockFrameCounter()

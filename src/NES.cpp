@@ -127,8 +127,8 @@ void NES::RunUntilSerializable()
         while (!(cpu_->Serializable() && ppu_->Serializable()))
         {
             ppu_->Clock();
-            cpu_->Clock();
             apu_->Clock();
+            cpu_->Clock();
         }
     }
 }
