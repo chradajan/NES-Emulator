@@ -89,7 +89,8 @@ private:
 
 // APU DMC
 private:
-    int dmcStall_;
+    bool dmcStall_;
+    int dmcStallCycles_;
     uint16_t dmcAddr_;
 
 // Registers and memory

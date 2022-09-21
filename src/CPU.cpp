@@ -28,13 +28,14 @@ void CPU::Clock()
     oddCycle_ = !oddCycle_;
     ++totalCycles_;
 
-    if (dmcStall_ > 0)
+    if (dmcStall_)
     {
-        --dmcStall_;
+        --dmcStallCycles_;
 
-        if (dmcStall_ == 0)
+        if (dmcStallCycles_ == 0)
         {
             apu_.SetDmcSample(Read(dmcAddr_));
+            dmcStall_ = false;
         }
 
         return;
@@ -45,7 +46,8 @@ void CPU::Clock()
     if (dmcRequest)
     {
         dmcAddr_ = dmcRequest.value();
-        dmcStall_ = 3;
+        dmcStall_ = true;
+        dmcStallCycles_ = 3;
         return;
     }
 
@@ -73,7 +75,7 @@ void CPU::Reset()
     oddCycle_ = false;
 
     // APU DMC
-    dmcStall_ = 0;
+    dmcStall_ = false;
 
     // Registers
     Registers_.stackPointer -= 3;
@@ -116,7 +118,8 @@ void CPU::Initialize()
     #endif
 
     // APU DMC
-    dmcStall_ = 0;
+    dmcStall_ = false;
+    dmcStallCycles_ = 0;
     dmcAddr_ = 0x0000;
 
     // Registers
@@ -1194,7 +1197,7 @@ void CPU::DecodeOpCode()
 
 bool CPU::Serializable()
 {
-    return (cycle_ == 0);
+    return (!dmcStall_ && (cycle_ == 0));
 }
 
 void CPU::Serialize(std::ofstream& saveState)
@@ -1217,4 +1220,5 @@ void CPU::Deserialize(std::ifstream& saveState)
     isOamDmaTransfer_ = false;
     isStoreOp_ = false;
     branchCondition_ = false;
+    dmcStall_ = false;
 }
