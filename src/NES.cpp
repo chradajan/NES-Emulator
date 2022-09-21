@@ -140,6 +140,7 @@ void NES::Serialize(std::ofstream& saveState)
         cpu_->Serialize(saveState);
         ppu_->Serialize(saveState);
         cartridge_->Serialize(saveState);
+        apu_->Serialize(saveState);
     }
 }
 
@@ -150,6 +151,7 @@ void NES::Deserialize(std::ifstream& saveState)
         cpu_->Deserialize(saveState);
         ppu_->Deserialize(saveState);
         cartridge_->Deserialize(saveState);
+        apu_->Deserialize(saveState);
     }
 }
 

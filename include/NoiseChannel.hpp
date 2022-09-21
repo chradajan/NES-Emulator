@@ -4,6 +4,7 @@
 #include "AudioChannel.hpp"
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
 
 class NoiseChannel : public virtual AudioChannel
 {
@@ -19,6 +20,9 @@ public:
     void QuarterFrameClock() override;
 
     void RegisterUpdate(uint16_t addr, uint8_t data) override;
+
+    void Serialize(std::ofstream& saveState) override;
+    void Deserialize(std::ifstream& saveState) override;
 
 private:
     static constexpr int NOISE_TIMER_LOOKUP_TABLE[16] = {4, 8, 16, 32, 64, 96, 128, 160, 202, 254, 380, 508, 762, 1016, 2034, 4068};

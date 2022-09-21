@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cstdint>
+#include <fstream>
 #include <memory>
 #include <optional>
 
@@ -29,6 +30,9 @@ public:
     bool IRQ();
     std::optional<uint16_t> DmcRequestSample();
     void SetDmcSample(uint8_t sample);
+
+    void Serialize(std::ofstream& saveState);
+    void Deserialize(std::ifstream& saveState);
 
 // State
 private:

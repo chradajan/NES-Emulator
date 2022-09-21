@@ -1,6 +1,7 @@
 #include "../include/TriangleChannel.hpp"
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
 
 TriangleChannel::TriangleChannel()
 {
@@ -113,6 +114,16 @@ void TriangleChannel::RegisterUpdate(uint16_t addr, uint8_t data)
             SetPeriod();
             break;
     }
+}
+
+void TriangleChannel::Serialize(std::ofstream& saveState)
+{
+    saveState.write((char*)this, sizeof(TriangleChannel));
+}
+
+void TriangleChannel::Deserialize(std::ifstream& saveState)
+{
+    saveState.read((char*)this, sizeof(TriangleChannel));
 }
 
 void TriangleChannel::SetPeriod()

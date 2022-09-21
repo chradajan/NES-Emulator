@@ -1,6 +1,7 @@
 #include "../include/NoiseChannel.hpp"
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
 
 NoiseChannel::NoiseChannel()
 {
@@ -130,4 +131,14 @@ void NoiseChannel::RegisterUpdate(uint16_t addr, uint8_t data)
             envelopeStart_ = true;
             break;
     }
+}
+
+void NoiseChannel::Serialize(std::ofstream& saveState)
+{
+    saveState.write((char*)this, sizeof(NoiseChannel));
+}
+
+void NoiseChannel::Deserialize(std::ifstream& saveState)
+{
+    saveState.read((char*)this, sizeof(NoiseChannel));
 }

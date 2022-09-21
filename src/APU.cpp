@@ -186,6 +186,40 @@ void APU::SetDmcSample(uint8_t sample)
     dmcChannel_->SetSample(sample);
 }
 
+void APU::Serialize(std::ofstream& saveState)
+{
+    saveState.write((char*)&irq_, sizeof(irq_));
+    saveState.write((char*)&clockAPU_, sizeof(clockAPU_));
+    saveState.write((char*)&frameCounterMode_, sizeof(frameCounterMode_));
+    saveState.write((char*)&irqInhibit_, sizeof(irqInhibit_));
+    saveState.write((char*)&frameCounterTimer_, sizeof(frameCounterTimer_));
+    saveState.write((char*)&frameCounterResetCountdown_, sizeof(frameCounterResetCountdown_));
+
+    for (std::unique_ptr<AudioChannel>& channel : CHANNELS_)
+    {
+        channel->Serialize(saveState);
+    }
+
+    dmcChannel_->Serialize(saveState);
+}
+
+void APU::Deserialize(std::ifstream& saveState)
+{
+    saveState.read((char*)&irq_, sizeof(irq_));
+    saveState.read((char*)&clockAPU_, sizeof(clockAPU_));
+    saveState.read((char*)&frameCounterMode_, sizeof(frameCounterMode_));
+    saveState.read((char*)&irqInhibit_, sizeof(irqInhibit_));
+    saveState.read((char*)&frameCounterTimer_, sizeof(frameCounterTimer_));
+    saveState.read((char*)&frameCounterResetCountdown_, sizeof(frameCounterResetCountdown_));
+
+    for (std::unique_ptr<AudioChannel>& channel : CHANNELS_)
+    {
+        channel->Deserialize(saveState);
+    }
+
+    dmcChannel_->Deserialize(saveState);
+}
+
 void APU::ClockFrameCounter()
 {
     ++frameCounterTimer_;

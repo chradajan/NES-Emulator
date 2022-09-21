@@ -4,6 +4,7 @@
 #include "AudioChannel.hpp"
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
 
 class TriangleChannel : public virtual AudioChannel
 {
@@ -19,6 +20,9 @@ public:
     void QuarterFrameClock() override;
 
     void RegisterUpdate(uint16_t addr, uint8_t data) override;
+
+    void Serialize(std::ofstream& saveState) override;
+    void Deserialize(std::ifstream& saveState) override;
 
 private:
     static constexpr uint8_t TRIANGLE_WAVE_SEQUENCE[32] = {

@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
 #include <optional>
 
 class DmcChannel
@@ -22,6 +23,9 @@ public:
     bool IRQ() { return irq_; }
     std::optional<uint16_t> RequestSample();
     void SetSample(uint8_t sample);
+
+    void Serialize(std::ofstream& saveState);
+    void Deserialize(std::ifstream& saveState);
 
 private:
     static constexpr int RATE_LOOKUP_TABLE[16] = {428, 380, 340, 320, 286, 254, 226, 214, 190, 160, 142, 128, 106, 84, 72, 54};

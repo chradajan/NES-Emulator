@@ -1,6 +1,7 @@
 #include "../include/PulseChannel.hpp"
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
 
 PulseChannel::PulseChannel(bool onesComplement) :
     onesComplement_(onesComplement)
@@ -160,6 +161,16 @@ void PulseChannel::RegisterUpdate(uint16_t addr, uint8_t data)
             SetPeriod();
             break;
     }
+}
+
+void PulseChannel::Serialize(std::ofstream& saveState)
+{
+    saveState.write((char*)this, sizeof(PulseChannel));
+}
+
+void PulseChannel::Deserialize(std::ifstream& saveState)
+{
+    saveState.read((char*)this, sizeof(PulseChannel));
 }
 
 void PulseChannel::SetPeriod()

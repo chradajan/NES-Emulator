@@ -4,6 +4,7 @@
 #include "AudioChannel.hpp"
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
 
 class PulseChannel : public virtual AudioChannel
 {
@@ -19,6 +20,9 @@ public:
     void QuarterFrameClock() override;
 
     void RegisterUpdate(uint16_t addr, uint8_t data) override;
+
+    void Serialize(std::ofstream& saveState) override;
+    void Deserialize(std::ifstream& saveState) override;
 
 private:
     static constexpr bool DUTY_CYCLE_SEQUENCE[4][8] = {
@@ -45,12 +49,8 @@ private:
 // Envelope
 private:
     bool silenced_;
-
-    // Constant volume
     bool useConstantVolume_;
     uint8_t constantVolume_;
-
-    // Envelope
     bool envelopeLooped_;
     bool envelopeStart_;
     uint8_t envelopeTimerReload_;

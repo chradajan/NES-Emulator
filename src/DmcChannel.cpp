@@ -1,6 +1,7 @@
 #include "../include/DmcChannel.hpp"
 #include <cstddef>
 #include <cstdint>
+#include <fstream>
 #include <optional>
 
 DmcChannel::DmcChannel()
@@ -151,4 +152,14 @@ void DmcChannel::SetSample(uint8_t sample)
             irq_ = true;
         }
     }
+}
+
+void DmcChannel::Serialize(std::ofstream& saveState)
+{
+    saveState.write((char*)this, sizeof(DmcChannel));
+}
+
+void DmcChannel::Deserialize(std::ifstream& saveState)
+{
+    saveState.read((char*)this, sizeof(DmcChannel));
 }
