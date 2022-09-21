@@ -11,7 +11,7 @@ public:
     PulseChannel(bool onesComplement);
     void Reset() override;
 
-    uint16_t GetOutput() override;
+    uint8_t GetOutput() override;
     void SetEnabled(bool enabled) override;
 
     void Clock() override;
@@ -32,11 +32,6 @@ private:
 private:
     size_t dutyCycleIndex_;
     size_t sequencerIndex_;
-
-// Length counter
-private:
-    int lengthCounter_;
-    bool halt_;
 
 // Timer
 private:

@@ -6,6 +6,7 @@
 #include <memory>
 
 class AudioChannel;
+class DmcChannel;
 class NoiseChannel;
 class PulseChannel;
 class TriangleChannel;
@@ -23,6 +24,8 @@ public:
 
     uint8_t ReadReg(uint16_t addr);
     void WriteReg(uint16_t addr, uint8_t data);
+
+    bool IRQ();
 
 // State
 private:
@@ -48,6 +51,8 @@ private:
     PulseChannel* pulseChannel2_;
     TriangleChannel* triangleChannel_;
     NoiseChannel* noiseChannel_;
+
+    std::unique_ptr<DmcChannel> dmcChannel_;
 
     void HalfFrameClock();
     void QuarterFrameClock();

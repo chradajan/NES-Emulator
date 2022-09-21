@@ -11,7 +11,7 @@ public:
     NoiseChannel();
     void Reset() override;
 
-    uint16_t GetOutput() override;
+    uint8_t GetOutput() override;
     void SetEnabled(bool enabled) override;
 
     void Clock() override;
@@ -27,11 +27,6 @@ private:
 private:
     bool mode_;
     uint16_t shiftRegister_;
-
-// Length counter
-private:
-    int lengthCounter_;
-    bool halt_;
 
 // Envelope
 private:

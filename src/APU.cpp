@@ -1,4 +1,5 @@
 #include "../include/APU.hpp"
+#include "../include/DmcChannel.hpp"
 #include "../include/NoiseChannel.hpp"
 #include "../include/PulseChannel.hpp"
 #include "../include/RegisterAddresses.hpp"
@@ -34,6 +35,7 @@ APU::APU()
     CHANNELS_[1] = std::make_unique<PulseChannel>(false);
     CHANNELS_[2] = std::make_unique<TriangleChannel>();
     CHANNELS_[3] = std::make_unique<NoiseChannel>();
+    dmcChannel_ = std::make_unique<DmcChannel>();
 
     pulseChannel1_ = dynamic_cast<PulseChannel*>(CHANNELS_[0].get());
     pulseChannel2_ = dynamic_cast<PulseChannel*>(CHANNELS_[1].get());
@@ -65,6 +67,7 @@ void APU::Clock()
     pulseChannel1_->Clock();
     pulseChannel2_->Clock();
     noiseChannel_->Clock();
+    dmcChannel_->Clock();
     ClockFrameCounter();
 }
 
@@ -74,20 +77,35 @@ void APU::Reset()
     {
         channel->Reset();
     }
+
+    dmcChannel_->Reset();
 }
 
 int16_t APU::GetSample()
 {
     float pulseOut = pulseTable_[pulseChannel1_->GetOutput() + pulseChannel2_->GetOutput()];
-    float tndOut = tndTable_[(3 * triangleChannel_->GetOutput()) + (2 * noiseChannel_->GetOutput())];
+    float tndOut = tndTable_[(3 * triangleChannel_->GetOutput()) + (2 * noiseChannel_->GetOutput()) + dmcChannel_->GetOutput()];
     int16_t signedOut = ((pulseOut + tndOut) * 0xFFFF) - 0x8000;
     return signedOut;
 }
 
 uint8_t APU::ReadReg(uint16_t addr)
 {
-    (void)addr;
-    return 0x00;
+    uint8_t returnData = 0x00;
+
+    if (addr == SND_CHN_ADDR)
+    {
+        returnData |= (pulseChannel1_->GetLengthCounter() > 0) ? 0x01 : 0x00;
+        returnData |= (pulseChannel2_->GetLengthCounter() > 0) ? 0x02 : 0x00;
+        returnData |= (triangleChannel_->GetLengthCounter() > 0) ? 0x04 : 0x00;
+        returnData |= (noiseChannel_->GetLengthCounter() > 0) ? 0x08 : 0x00;
+        returnData |= (dmcChannel_->GetBytesRemaining() > 0) ? 0x10 : 0x00;
+        returnData |= irq_ ? 0x40 : 0x00;
+        returnData |= dmcChannel_->IRQ() ? 0x80 : 0x00;
+        irq_ = false;
+    }
+
+    return returnData;
 }
 
 void APU::WriteReg(uint16_t addr, uint8_t data)
@@ -116,11 +134,18 @@ void APU::WriteReg(uint16_t addr, uint8_t data)
         case NOISE_HI_ADDR:
             noiseChannel_->RegisterUpdate(addr, data);
             break;
+        case DMC_FREQ_ADDR:
+        case DMC_RAW_ADDR:
+        case DMC_START_ADDR:
+        case DMC_LEN_ADDR:
+            dmcChannel_->RegisterUpdate(addr, data);
+            break;
         case SND_CHN_ADDR:
             pulseChannel1_->SetEnabled((data & 0x01) == 0x01);
             pulseChannel2_->SetEnabled((data & 0x02) == 0x02);
             triangleChannel_->SetEnabled((data & 0x04) == 0x04);
             noiseChannel_->SetEnabled((data & 0x08) == 0x08);
+            dmcChannel_->SetEnabled((data & 0x10) == 0x10);
             break;
         case FRAME_COUNTER_ADDR:
             frameCounterMode_ = (data & 0x80) == 0x80;
@@ -143,6 +168,11 @@ void APU::WriteReg(uint16_t addr, uint8_t data)
             }
             break;
     }
+}
+
+bool APU::IRQ()
+{
+    return irq_;
 }
 
 void APU::ClockFrameCounter()

@@ -13,7 +13,8 @@ public:
     virtual ~AudioChannel() {}
     virtual void Reset() = 0;
 
-    virtual uint16_t GetOutput() = 0;
+    virtual uint8_t GetOutput() = 0;
+    virtual int GetLengthCounter() { return lengthCounter_; }
     virtual void SetEnabled(bool enabled) = 0;
 
     virtual void Clock() = 0;
@@ -24,6 +25,8 @@ public:
 
 protected:
     bool channelEnabled_;
+    int lengthCounter_;
+    bool halt_;
 };
 
 #endif

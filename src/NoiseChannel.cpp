@@ -30,7 +30,7 @@ void NoiseChannel::Reset()
     timer_ = 0;
 }
 
-uint16_t NoiseChannel::GetOutput()
+uint8_t NoiseChannel::GetOutput()
 {
     if (((shiftRegister_ & 0x01) == 0x01) || (lengthCounter_ == 0))
     {
@@ -125,7 +125,7 @@ void NoiseChannel::RegisterUpdate(uint16_t addr, uint8_t data)
             mode_ = (data & 0x80) == 0x80;
             timerReload_ = NOISE_TIMER_LOOKUP_TABLE[data & 0x0F];
             break;
-        case 3:    // $400F
+        case 3:  // $400F
             lengthCounter_ = channelEnabled_ ? LENGTH_COUNTER_LOOKUP_TABLE[(data & 0xF8) >> 3] : 0;
             envelopeStart_ = true;
             break;

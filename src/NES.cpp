@@ -3,6 +3,7 @@
 #include "../include/Cartridge.hpp"
 #include "../include/CPU.hpp"
 #include "../include/Controller.hpp"
+#include "../include/DmcChannel.hpp"
 #include "../include/NoiseChannel.hpp"
 #include "../include/PulseChannel.hpp"
 #include "../include/TriangleChannel.hpp"
@@ -101,8 +102,8 @@ void NES::Clock()
     if (cartLoaded_)
     {
         ppu_->Clock();
-        cpu_->Clock();
         apu_->Clock();
+        cpu_->Clock();
     }
 }
 
@@ -113,8 +114,8 @@ void NES::RunUntilFrameReady()
         while(!ppu_->FrameReady())
         {
             ppu_->Clock();
-            cpu_->Clock();
             apu_->Clock();
+            cpu_->Clock();
         }
     }
 }

@@ -46,7 +46,7 @@ void PulseChannel::Reset()
     sweepTargetPeriod_ = 0;
 }
 
-uint16_t PulseChannel::GetOutput()
+uint8_t PulseChannel::GetOutput()
 {
     if (!DUTY_CYCLE_SEQUENCE[dutyCycleIndex_][sequencerIndex_] || silenced_ || !channelEnabled_)
     {
@@ -151,7 +151,7 @@ void PulseChannel::RegisterUpdate(uint16_t addr, uint8_t data)
             timerReloadLow_ = data;
             SetPeriod();
             break;
-        case 3:    // $4003, $4007
+        case 3:  // $4003, $4007
             lengthCounter_ = LENGTH_COUNTER_LOOKUP_TABLE[(data & 0xF8) >> 3];
             timerReloadHigh_ = data & 0x07;
             sequencerIndex_ = 0;

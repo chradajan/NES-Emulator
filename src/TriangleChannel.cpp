@@ -27,7 +27,7 @@ void TriangleChannel::Reset()
     timer_ = 0;
 }
 
-uint16_t TriangleChannel::GetOutput()
+uint8_t TriangleChannel::GetOutput()
 {
     if (timerReload_ < 2)
     {
@@ -106,7 +106,7 @@ void TriangleChannel::RegisterUpdate(uint16_t addr, uint8_t data)
             timerReloadLow_ = data;
             SetPeriod();
             break;
-        case 3:    // $400B
+        case 3:  // $400B
             lengthCounter_ = channelEnabled_ ? LENGTH_COUNTER_LOOKUP_TABLE[(data & 0xF8) >> 3] : 0;
             timerReloadHigh_ = data & 0x07;
             reloadLinearCounterFlag_ = true;
