@@ -9,20 +9,7 @@ MMC3::MMC3(std::ifstream& rom, std::string savePath, std::array<uint8_t, 16> con
     savePath_(savePath)
 {
     batteryBackedRam_ = ((header[6] & BATTERY_BACKED_PRG_RAM) == BATTERY_BACKED_PRG_RAM);
-    PRG_RAM_.fill(0x00);
-    bankRegToUpdate_ = 0;
-    bankRegister_.fill(0);
-    prgBankMode_ = false;
-    chrBankMode_ = false;
-
-    ramEnabled_ = true;
-    ramWritesDisabled_ = false;
-    irqLatch_ = 0;
-    irqCounter_ = 0;
-    irqEnable_ = false;
-    reloadIrqCounter_ = false;
-    prevA12State = false;
-    sendInterrupt_ = false;
+    Initialize();
 
     if (batteryBackedRam_)
     {
@@ -54,7 +41,7 @@ MMC3::MMC3(std::ifstream& rom, std::string savePath, std::array<uint8_t, 16> con
     SetBanks();
 }
 
-void MMC3::Reset()
+void MMC3::Initialize()
 {
     bankRegToUpdate_ = 0;
     bankRegister_.fill(0);
@@ -69,7 +56,12 @@ void MMC3::Reset()
     reloadIrqCounter_ = false;
     prevA12State = false;
     sendInterrupt_ = false;
+    a12Counter_ = 0;
+}
 
+void MMC3::Reset()
+{
+    Initialize();
     SetBanks();
 }
 
@@ -265,6 +257,7 @@ void MMC3::Serialize(std::ofstream& saveState)
     saveState.write((char*)&reloadIrqCounter_, sizeof(reloadIrqCounter_));
     saveState.write((char*)&prevA12State, sizeof(prevA12State));
     saveState.write((char*)&sendInterrupt_, sizeof(sendInterrupt_));
+    saveState.write((char*)&a12Counter_, sizeof(a12Counter_));
 
     byteExpander = static_cast<uint16_t>(mirrorType_);
     saveState.write((char*)&byteExpander, sizeof(mirrorType_));
@@ -296,6 +289,7 @@ void MMC3::Deserialize(std::ifstream& saveState)
     saveState.read((char*)&reloadIrqCounter_, sizeof(reloadIrqCounter_));
     saveState.read((char*)&prevA12State, sizeof(prevA12State));
     saveState.read((char*)&sendInterrupt_, sizeof(sendInterrupt_));
+    saveState.read((char*)&a12Counter_, sizeof(a12Counter_));
     saveState.read((char*)&mirrorType_, sizeof(mirrorType_));
 }
 
@@ -388,10 +382,17 @@ void MMC3::CheckA12(uint16_t addr)
 {
     bool currA12State = ((addr & PPU_A12_MASK) == PPU_A12_MASK);
 
-    if (!prevA12State && currA12State)
+    if (!prevA12State && currA12State && (a12Counter_ > 12))
     {
-        // Rising edge detected
         ClockIRQ();
+    }
+    else if (!prevA12State && !currA12State)
+    {
+        ++a12Counter_;
+    }
+    else if (currA12State)
+    {
+        a12Counter_ = 0;
     }
 
     prevA12State = currA12State;

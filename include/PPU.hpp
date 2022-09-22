@@ -47,6 +47,7 @@ constexpr uint8_t LARGE_SPRITE_TILE_MASK = 0xFE;
 constexpr uint16_t VRAM_ADDR_MASK = 0x3FFF;
 
 class Cartridge;
+class MMC3;
 
 class PPU
 {
@@ -239,6 +240,12 @@ private:
     bool frameReady_;
     uint8_t* frameBuffer_;
     size_t framePointer_;
+
+// Special mappers
+private:
+    MMC3* mmc3Cart_;
+
+    void SetCartType();
 };
 
 #endif

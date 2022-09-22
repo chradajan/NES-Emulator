@@ -167,6 +167,9 @@ void PPU::Initialize()
     OAM_Secondary_.fill(0xFF);
     VRAM_.fill(0x00);
     PaletteRAM_.fill(0x00);
+
+    // Cartridge
+    SetCartType();
 }
 
 void PPU::InitializePalettes(std::ifstream& normalColors, std::ifstream& grayscaleColors)
@@ -279,12 +282,9 @@ uint8_t PPU::ReadReg(uint16_t addr)
                 readBuffer_ = Read(InternalRegisters_.v - 0x1000);
             }
 
-            if (InternalRegisters_.v >= 0x2000)
+            if (mmc3Cart_ && (InternalRegisters_.v >= 0x2000))
             {
-                if (MMC3* mmc3Cart = dynamic_cast<MMC3*>(cartridge_); mmc3Cart != nullptr)
-                {
-                    mmc3Cart->ReadCHR(InternalRegisters_.v);
-                }
+                mmc3Cart_->ReadCHR(InternalRegisters_.v);
             }
 
             if (RenderingEnabled() && scanline_ < 240)
@@ -384,9 +384,9 @@ void PPU::WriteReg(uint16_t addr, uint8_t data)
                 InternalRegisters_.v = InternalRegisters_.t;
                 InternalRegisters_.w = false;
 
-                if (MMC3* mmc3Cart = dynamic_cast<MMC3*>(cartridge_); mmc3Cart != nullptr)
+                if (mmc3Cart_)
                 {
-                    mmc3Cart->ReadCHR(InternalRegisters_.v);
+                    mmc3Cart_->ReadCHR(InternalRegisters_.v);
                 }
             }
             else
@@ -398,6 +398,12 @@ void PPU::WriteReg(uint16_t addr, uint8_t data)
             break;
         case PPUDATA_ADDR:
             Write(InternalRegisters_.v & VRAM_ADDR_MASK, data);
+
+            if (mmc3Cart_ && (InternalRegisters_.v >= 0x2000))
+            {
+                mmc3Cart_->ReadCHR(InternalRegisters_.v);
+            }
+
             IncrementVRAMAddr();
             break;
         default:
@@ -433,6 +439,7 @@ std::pair<uint16_t, uint16_t> PPU::GetState()
 void PPU::LoadCartridge(Cartridge* cartridge)
 {
     cartridge_ = cartridge;
+    SetCartType();
 }
 
 uint8_t PPU::Read(uint16_t addr)
@@ -1248,4 +1255,9 @@ void PPU::Deserialize(std::ifstream& saveState)
 
     useGrayscale_ = (MemMappedRegisters_.PPUMASK & GRAYSCALE_MASK) == GRAYSCALE_MASK;
     paletteIndex_ = (MemMappedRegisters_.PPUMASK & COLOR_EMPHASIS_MASK) >> 5;
+}
+
+void PPU::SetCartType()
+{
+    mmc3Cart_ = dynamic_cast<MMC3*>(cartridge_);
 }

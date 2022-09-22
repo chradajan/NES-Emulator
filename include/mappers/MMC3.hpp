@@ -50,6 +50,7 @@ public:
 
 private:
     void LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks) override;
+    void Initialize();
 
 private:
     std::array<uint8_t, 0x2000> PRG_RAM_;
@@ -89,6 +90,7 @@ private:
     bool reloadIrqCounter_;
     bool prevA12State;
     bool sendInterrupt_;
+    int a12Counter_;
 
     void CheckA12(uint16_t addr);
     void ClockIRQ();
