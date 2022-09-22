@@ -57,7 +57,7 @@ void DmcChannel::Clock()
     {
         if (!silence_)
         {
-            if (((shiftReg_ & 0x01) == 0x01) && (outputLevel_ <= 125))
+            if ((shiftReg_ & 0x01) == 0x01)
             {
                 if (outputLevel_ <= 125)
                 {
