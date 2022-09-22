@@ -19,6 +19,7 @@ GameWindow::GameWindow(NES& nes, uint8_t* frameBuffer) :
     frameBuffer_(frameBuffer)
 {
     clockMultiplier = ClockMultiplier::NORMAL;
+    renderThread_ = nullptr;
 }
 
 void GameWindow::Run()
@@ -48,7 +49,7 @@ void GameWindow::Run()
     audioSpec.callback = GameWindow::GetAudioSamples;
     audioSpec.userdata = this;
 
-    audioDevice_ = SDL_OpenAudioDevice(NULL, 0, &audioSpec, NULL, 0);
+    audioDevice_ = SDL_OpenAudioDevice(nullptr, 0, &audioSpec, nullptr, 0);
     SDL_PauseAudioDevice(audioDevice_, 0);
 
     bool exit = false;
@@ -140,7 +141,7 @@ void GameWindow::Run()
             }
         }
 
-        uint8_t const* keyStates = SDL_GetKeyboardState(NULL);
+        uint8_t const* keyStates = SDL_GetKeyboardState(nullptr);
         uint8_t controller1 = 0x00;
 
         controller1 |= keyStates[SDL_SCANCODE_L] ? 0x01 : 0x00; // A
@@ -256,7 +257,8 @@ void GameWindow::GetAudioSamples(void* userdata, Uint8* stream, int len)
 
             if (gameWindow->nes_.FrameReady())
             {
-                SDL_CreateThread(GameWindow::UpdateScreen, "UpdateScreen", gameWindow);
+                SDL_WaitThread(gameWindow->renderThread_, nullptr);
+                gameWindow->renderThread_ = SDL_CreateThread(GameWindow::UpdateScreen, "UpdateScreen", gameWindow);
             }
         }
 

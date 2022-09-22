@@ -44,6 +44,7 @@ private:
 private:
     enum ClockMultiplier { QUARTER = 0, HALF, NORMAL, DOUBLE, QUADRUPLE };
     ClockMultiplier clockMultiplier;
+    SDL_Thread* renderThread_;
 
     void UpdateClockMultiplier(bool increase);
 };
