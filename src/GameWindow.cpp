@@ -46,7 +46,7 @@ void GameWindow::Run()
     audioSpec.channels = 1;
     audioSpec.samples = AUDIO_SAMPLE_BUFFER_COUNT;
     audioSpec.callback = GameWindow::GetAudioSamples;
-    audioSpec.userdata = &nes_;
+    audioSpec.userdata = this;
 
     audioDevice_ = SDL_OpenAudioDevice(NULL, 0, &audioSpec, NULL, 0);
     SDL_PauseAudioDevice(audioDevice_, 0);
@@ -142,11 +142,6 @@ void GameWindow::Run()
 
         nes_.SetControllerInputs(controller1, 0x00);
 
-        if (nes_.FrameReady())
-        {
-            UpdateScreen();
-        }
-
         if (resetNES)
         {
             SDL_PauseAudioDevice(audioDevice_, 1);
@@ -233,7 +228,7 @@ void GameWindow::UpdateScreen()
 void GameWindow::GetAudioSamples(void* userdata, Uint8* stream, int len)
 {
     static double audioTime = 0.0;
-    NES* nes = static_cast<NES*>(userdata);
+    GameWindow* gameWindow = static_cast<GameWindow*>(userdata);
     int numSamples = len / sizeof(int16_t);
     int16_t* buffer = (int16_t*)stream;
 
@@ -241,8 +236,13 @@ void GameWindow::GetAudioSamples(void* userdata, Uint8* stream, int len)
     {
         while (audioTime < TIME_PER_AUDIO_SAMPLE)
         {
-            nes->Clock();
+            gameWindow->nes_.Clock();
             audioTime += timePerNesClock;
+
+            if (gameWindow->nes_.FrameReady())
+            {
+                gameWindow->UpdateScreen();
+            }
         }
 
         audioTime -= TIME_PER_AUDIO_SAMPLE;
@@ -253,7 +253,7 @@ void GameWindow::GetAudioSamples(void* userdata, Uint8* stream, int len)
         }
         else
         {
-            buffer[i] = nes->GetAudioSample();
+            buffer[i] = gameWindow->nes_.GetAudioSample();
         }
     }
 }
