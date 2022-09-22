@@ -1,5 +1,5 @@
 .vscode/
-bin/main.exe
+bin/NES_EMU.exe
 roms/
 saves/
 savestates/

@@ -36,7 +36,7 @@ private:
 
     uint8_t* frameBuffer_;
     SDL_Renderer* renderer_;
-    void UpdateScreen();
+    static int UpdateScreen(void* data);
 
     SDL_AudioDeviceID audioDevice_;
     static void GetAudioSamples(void* userdata, Uint8* stream, int len);

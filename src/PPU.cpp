@@ -161,6 +161,7 @@ void PPU::Initialize()
     // Frame buffer
     frameReady_ = false;
     framePointer_ = 0;
+    overscan_ = false;
 
     // Initialize memory
     OAM_.fill(0xFF);
@@ -440,6 +441,11 @@ void PPU::LoadCartridge(Cartridge* cartridge)
 {
     cartridge_ = cartridge;
     SetCartType();
+}
+
+void PPU::ToggleOverscan()
+{
+    overscan_ = !overscan_;
 }
 
 uint8_t PPU::Read(uint16_t addr)
@@ -1194,6 +1200,13 @@ PPU::RGB PPU::PixelMultiplexer()
 void PPU::RenderPixel()
 {
     RGB rgb = PixelMultiplexer();
+
+    if (overscan_ && ((scanline_ < 8) || (scanline_ > 231)))
+    {
+        rgb.R = 0x00;
+        rgb.G = 0x00;
+        rgb.B = 0x00;
+    }
 
     frameBuffer_[framePointer_++] = rgb.R;
     frameBuffer_[framePointer_++] = rgb.G;

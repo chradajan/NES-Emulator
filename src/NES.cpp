@@ -133,6 +133,11 @@ void NES::RunUntilSerializable()
     }
 }
 
+void NES::ToggleOverscan()
+{
+    ppu_->ToggleOverscan();
+}
+
 void NES::Serialize(std::ofstream& saveState)
 {
     if (cartLoaded_)

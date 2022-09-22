@@ -36,7 +36,7 @@ void GameWindow::Run()
     SDL_SetWindowMinimumSize(window, SCREEN_WIDTH, SCREEN_HEIGHT);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     renderer_ = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    UpdateScreen();
+    UpdateScreen(this);
 
     // Audio setup
     SDL_AudioSpec audioSpec;
@@ -67,9 +67,18 @@ void GameWindow::Run()
             {
                 exit = true;
             }
-            else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(window))
+            else if (event.type == SDL_WINDOWEVENT)
             {
-                exit = true;
+                if ((event.window.event == SDL_WINDOWEVENT_CLOSE) && (event.window.windowID == SDL_GetWindowID(window)))
+                {
+                    exit = true;
+                }
+                else if ((event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) || (event.window.event == SDL_WINDOWEVENT_MAXIMIZED))
+                {
+                    SDL_PauseAudioDevice(audioDevice_, 1);
+                    UpdateScreen(this);
+                    SDL_PauseAudioDevice(audioDevice_, 0);
+                }
             }
             else if (event.type == SDL_DROPFILE)
             {
@@ -88,6 +97,9 @@ void GameWindow::Run()
                 {
                     case SDL_SCANCODE_R:
                         resetNES = true;
+                        break;
+                    case SDL_SCANCODE_T:
+                        nes_.ToggleOverscan();
                         break;
                     case SDL_SCANCODE_M:
                         mute = !mute;
@@ -161,7 +173,7 @@ void GameWindow::Run()
                 std::string fileName = nes_.GetFileName();
 
                 nes_.RunUntilFrameReady();
-                UpdateScreen();
+                UpdateScreen(this);
                 nes_.RunUntilSerializable();
 
                 std::string path = "../savestates/" + fileName + std::to_string(saveStateNum) + ".sav";
@@ -205,9 +217,11 @@ void GameWindow::Run()
     SDL_Quit();
 }
 
-void GameWindow::UpdateScreen()
+int GameWindow::UpdateScreen(void* data)
 {
-    SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(frameBuffer_,
+    GameWindow* gameWindow = static_cast<GameWindow*>(data);
+
+    SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(gameWindow->frameBuffer_,
                                                     SCREEN_WIDTH,
                                                     SCREEN_HEIGHT,
                                                     DEPTH,
@@ -217,12 +231,13 @@ void GameWindow::UpdateScreen()
                                                     0xFF0000,
                                                     0);
 
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_, surface);
-    SDL_RenderCopy(renderer_, texture, nullptr, nullptr);
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(gameWindow->renderer_, surface);
+    SDL_RenderCopy(gameWindow->renderer_, texture, nullptr, nullptr);
 
-    SDL_RenderPresent(renderer_);
+    SDL_RenderPresent(gameWindow->renderer_);
     SDL_FreeSurface(surface);
     SDL_DestroyTexture(texture);
+    return 0;
 }
 
 void GameWindow::GetAudioSamples(void* userdata, Uint8* stream, int len)
@@ -241,7 +256,7 @@ void GameWindow::GetAudioSamples(void* userdata, Uint8* stream, int len)
 
             if (gameWindow->nes_.FrameReady())
             {
-                gameWindow->UpdateScreen();
+                SDL_CreateThread(GameWindow::UpdateScreen, "UpdateScreen", gameWindow);
             }
         }
 

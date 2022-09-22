@@ -66,6 +66,7 @@ public:
     std::pair<uint16_t, uint16_t> GetState();
 
     void LoadCartridge(Cartridge* cartridge);
+    void ToggleOverscan();
 
 public:
     bool Serializable();
@@ -240,6 +241,7 @@ private:
     bool frameReady_;
     uint8_t* frameBuffer_;
     size_t framePointer_;
+    bool overscan_;
 
 // Special mappers
 private:

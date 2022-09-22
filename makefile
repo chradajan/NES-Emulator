@@ -8,10 +8,10 @@ LINKER_FLAGS = -lmingw32 -lSDL2main -lSDL2
 LOGGING_FLAGS = -DLOGGING
 
 main: ./src/*.cpp
-	g++ $(COMPILER_FLAGS) $(SRC_DIR)/*.cpp $(MAPPER_DIR)/*.cpp -I$(SDL_INCLUDE) -L$(SDL_LIBRARY) $(LINKER_FLAGS) -o $(OUT_DIR)/main
+	g++ $(COMPILER_FLAGS) $(SRC_DIR)/*.cpp $(MAPPER_DIR)/*.cpp -I$(SDL_INCLUDE) -L$(SDL_LIBRARY) $(LINKER_FLAGS) -o $(OUT_DIR)/NES_EMU
 logging:
-	g++ $(COMPILER_FLAGS) $(LOGGING_FLAGS) $(SRC_DIR)/*.cpp $(MAPPER_DIR)/*.cpp -I$(SDL_INCLUDE) -L$(SDL_LIBRARY) $(LINKER_FLAGS) -o $(OUT_DIR)/main
+	g++ $(COMPILER_FLAGS) $(LOGGING_FLAGS) $(SRC_DIR)/*.cpp $(MAPPER_DIR)/*.cpp -I$(SDL_INCLUDE) -L$(SDL_LIBRARY) $(LINKER_FLAGS) -o $(OUT_DIR)/NES_EMU
 clean:
-	cd bin && rm -f main
+	cd bin && rm -f NES_EMU
 run:
-	cd bin && ./main
+	cd bin && ./NES_EMU
