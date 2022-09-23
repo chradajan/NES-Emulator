@@ -66,7 +66,7 @@ public:
     std::pair<uint16_t, uint16_t> GetState();
 
     void LoadCartridge(Cartridge* cartridge);
-    void ToggleOverscan();
+    void SetOverscan(bool enabled);
 
 public:
     bool Serializable();

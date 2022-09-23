@@ -29,7 +29,7 @@ NES::NES(uint8_t* frameBuffer, std::ifstream& normalColors, std::ifstream& grays
     cpu_ = std::make_unique<CPU>(*apu_, *controller_, *ppu_);
     cartridge_ = nullptr;
     cartLoaded_ = false;
-    fileName_ = "";
+    fileName_ = "No cartridge loaded";
 }
 
 NES::~NES()
@@ -95,6 +95,10 @@ void NES::LoadCartridge(std::filesystem::path romPath, std::filesystem::path sav
         cpu_->LoadCartridge(cartridge_.get());
         ppu_->LoadCartridge(cartridge_.get());
     }
+    else
+    {
+        fileName_ = "No cartridge loaded";
+    }
 }
 
 void NES::Clock()
@@ -133,9 +137,9 @@ void NES::RunUntilSerializable()
     }
 }
 
-void NES::ToggleOverscan()
+void NES::SetOverscan(bool enabled)
 {
-    ppu_->ToggleOverscan();
+    ppu_->SetOverscan(enabled);
 }
 
 void NES::Serialize(std::ofstream& saveState)

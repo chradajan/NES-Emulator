@@ -35,7 +35,7 @@ public:
     void RunUntilFrameReady();
     void RunUntilSerializable();
 
-    void ToggleOverscan();
+    void SetOverscan(bool enabled);
 
     void Serialize(std::ofstream& saveState);
     void Deserialize(std::ifstream& saveState);

@@ -443,9 +443,9 @@ void PPU::LoadCartridge(Cartridge* cartridge)
     SetCartType();
 }
 
-void PPU::ToggleOverscan()
+void PPU::SetOverscan(bool enabled)
 {
-    overscan_ = !overscan_;
+    overscan_ = enabled;
 }
 
 uint8_t PPU::Read(uint16_t addr)
