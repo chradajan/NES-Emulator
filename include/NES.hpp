@@ -27,8 +27,7 @@ public:
     bool FrameReady();
     int16_t GetAudioSample();
 
-    std::string GetFileName();
-    void LoadCartridge(std::filesystem::path romPath, std::filesystem::path savePath);
+    bool LoadCartridge(std::filesystem::path romPath, std::filesystem::path savePath);
     void UnloadCartridge();
 
     void Clock();
@@ -47,7 +46,6 @@ private:
     std::unique_ptr<PPU> ppu_;
     std::unique_ptr<CPU> cpu_;
 
-    std::string fileName_;
     bool cartLoaded_;
 
     void InitializeCartridge(std::string romPath, std::string savePath);

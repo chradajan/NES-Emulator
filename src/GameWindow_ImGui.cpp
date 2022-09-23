@@ -109,12 +109,7 @@ void GameWindow::OptionsMenu()
 
     if (fileBrowser_.HasSelected())
     {
-        std::filesystem::path romPath = fileBrowser_.GetSelected();
-        std::filesystem::path savePath = "../saves/";
-        savePath += romPath.filename();
-        savePath.replace_extension(".sav");
-        nes_.LoadCartridge(romPath, savePath);
-        UpdateTitle();
+        LoadCartridge(fileBrowser_.GetSelected());
         fileBrowser_.ClearSelected();
     }
 

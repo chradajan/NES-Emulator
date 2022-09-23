@@ -29,6 +29,7 @@ void GameWindow::InitializeSDL()
     audioSpec.callback = GameWindow::GetAudioSamples;
     audioSpec.userdata = this;
     audioDevice_ = SDL_OpenAudioDevice(nullptr, 0, &audioSpec, nullptr, 0);
+    renderThread_ = nullptr;
 }
 
 void GameWindow::HandleSDLInputs(SDL_Scancode key)
@@ -94,7 +95,7 @@ void GameWindow::HandleSDLInputs(SDL_Scancode key)
 
 void GameWindow::UpdateTitle()
 {
-    SDL_SetWindowTitle(window_, (std::string("NES EMU - ") + nes_.GetFileName()).c_str());
+    SDL_SetWindowTitle(window_, (std::string("NES EMU - ") + fileName_).c_str());
 }
 
 

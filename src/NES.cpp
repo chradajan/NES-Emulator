@@ -29,7 +29,6 @@ NES::NES(uint8_t* frameBuffer, std::ifstream& normalColors, std::ifstream& grays
     cpu_ = std::make_unique<CPU>(*apu_, *controller_, *ppu_);
     cartridge_ = nullptr;
     cartLoaded_ = false;
-    fileName_ = "No cartridge loaded";
 }
 
 NES::~NES()
@@ -72,12 +71,7 @@ int16_t NES::GetAudioSample()
     return apu_->GetSample();
 }
 
-std::string NES::GetFileName()
-{
-    return fileName_;
-}
-
-void NES::LoadCartridge(std::filesystem::path romPath, std::filesystem::path savePath)
+bool NES::LoadCartridge(std::filesystem::path romPath, std::filesystem::path savePath)
 {
     if (cartLoaded_)
     {
@@ -91,14 +85,11 @@ void NES::LoadCartridge(std::filesystem::path romPath, std::filesystem::path sav
 
     if (cartLoaded_)
     {
-        fileName_ = romPath.stem().string();
         cpu_->LoadCartridge(cartridge_.get());
         ppu_->LoadCartridge(cartridge_.get());
     }
-    else
-    {
-        fileName_ = "No cartridge loaded";
-    }
+
+    return cartLoaded_;
 }
 
 void NES::Clock()

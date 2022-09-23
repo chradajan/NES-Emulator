@@ -1,28 +1,25 @@
 #include "../include/GameWindow.hpp"
 #include "../include/NES.hpp"
+#include "../include/Paths.hpp"
 #include <array>
 #include <filesystem>
 #include <fstream>
 
 int main(int argc, char** argv)
 {
-    std::filesystem::path savePath = std::filesystem::path("../saves/");
-    std::filesystem::path saveStatePath = std::filesystem::path("../savestates/");
-    std::filesystem::path logPath = std::filesystem::path("../logs/");
-
-    if (!std::filesystem::is_directory(savePath))
+    if (!std::filesystem::is_directory(SAVE_PATH))
     {
-        std::filesystem::create_directory(savePath);
+        std::filesystem::create_directory(SAVE_PATH);
     }
 
-    if (!std::filesystem::is_directory(saveStatePath))
+    if (!std::filesystem::is_directory(SAVE_STATE_PATH))
     {
-        std::filesystem::create_directory(saveStatePath);
+        std::filesystem::create_directory(SAVE_STATE_PATH);
     }
 
-    if (!std::filesystem::is_directory(logPath))
+    if (!std::filesystem::is_directory(LOG_PATH))
     {
-        std::filesystem::create_directory(logPath);
+        std::filesystem::create_directory(LOG_PATH);
     }
 
     std::array<uint8_t, SCREEN_WIDTH * SCREEN_HEIGHT * CHANNELS> frameBuffer;
@@ -32,16 +29,14 @@ int main(int argc, char** argv)
     std::ifstream grayscaleColors("../palettes/ntsc_grayscale.pal", std::ios::binary);
 
     NES nes(frameBuffer.data(), normalColors, grayscaleColors);
+    std::filesystem::path romPath = "";
 
     if (argc > 1)
     {
-        std::filesystem::path romPath = argv[1];
-        savePath += romPath.filename();
-        savePath.replace_extension(".sav");
-        nes.LoadCartridge(romPath, savePath);
+        romPath = argv[1];
     }
 
-    GameWindow gameWindow(nes, frameBuffer.data());
+    GameWindow gameWindow(nes, frameBuffer.data(), romPath);
     gameWindow.Run();
 
     return 0;

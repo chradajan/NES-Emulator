@@ -2,6 +2,7 @@
 #define GAMEWINDOW_HPP
 
 #include <array>
+#include <filesystem>
 #include <string>
 #include <utility>
 #include <SDL.h>
@@ -31,7 +32,7 @@ class NES;
 class GameWindow
 {
 public:
-    GameWindow(NES& nes, uint8_t* frameBuffer);
+    GameWindow(NES& nes, uint8_t* frameBuffer, std::filesystem::path romPath = "");
     ~GameWindow() = default;
 
     void Run();
@@ -40,11 +41,14 @@ public:
 private:
     NES& nes_;
     uint8_t* frameBuffer_;
+    std::string romHash_;
+    std::string fileName_;
 
     enum ClockMultiplier { QUARTER = 0, HALF, NORMAL, DOUBLE, QUADRUPLE };
     ClockMultiplier clockMultiplier_;
 
-    void GetControllerInputs();
+    void LoadCartridge(std::filesystem::path romPath);
+    void SetControllerInputs();
     void UpdateClockMultiplier(bool increase);
 
 // SDL Components

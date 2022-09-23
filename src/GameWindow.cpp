@@ -1,29 +1,35 @@
 #include "../include/GameWindow.hpp"
 #include "../include/NesComponent.hpp"
+#include "../include/Paths.hpp"
 #include <filesystem>
 #include <fstream>
 #include <memory>
 #include <string>
+#include <vector>
 #include <SDL.h>
 #include "../library/imgui/imgui.h"
 #include "../library/imgui/imgui_impl_sdl.h"
 #include "../library/imgui/imgui_impl_sdlrenderer.h"
 #include "../library/imgui/imfilebrowser.h"
+#include "../library/md5/md5.hpp"
 
 static double timePerNesClock = TIME_PER_NES_CLOCK;
 
-GameWindow::GameWindow(NES& nes, uint8_t* frameBuffer) :
+GameWindow::GameWindow(NES& nes, uint8_t* frameBuffer, std::filesystem::path romPath) :
     nes_(nes),
     frameBuffer_(frameBuffer),
     fileBrowser_(ImGuiFileBrowserFlags_NoModal)
 {
     clockMultiplier_ = ClockMultiplier::NORMAL;
-    renderThread_ = nullptr;
+    romHash_ = "";
+    fileName_ = "";
 
     exit_ = false;
     resetNES_ = false;
     serialize_ = false;
     deserialize_ = false;
+
+    LoadCartridge(romPath);
 
     optionsMenuOpen_ = !nes_.Ready();
     settingsOpen_ = false;
@@ -88,12 +94,7 @@ void GameWindow::Run()
                     SDL_ClearQueuedAudio(audioDevice_);
                 }
 
-                std::filesystem::path romPath = event.drop.file;
-                std::filesystem::path savePath = "../saves/";
-                savePath += romPath.filename();
-                savePath.replace_extension(".sav");
-                nes_.LoadCartridge(romPath, savePath);
-                UpdateTitle();
+                LoadCartridge(event.drop.file);
 
                 if (!optionsMenuOpen_)
                 {
@@ -112,7 +113,7 @@ void GameWindow::Run()
         }
         else
         {
-            GetControllerInputs();
+            SetControllerInputs();
 
             if (resetNES_)
             {
@@ -130,14 +131,13 @@ void GameWindow::Run()
 
                 if (nes_.Ready())
                 {
-                    std::string fileName = nes_.GetFileName();
-
                     nes_.RunUntilFrameReady();
                     UpdateScreen(this);
                     nes_.RunUntilSerializable();
 
-                    std::string path = "../savestates/" + fileName + std::to_string(saveStateNum_) + ".sav";
-                    std::ofstream saveState(path, std::ios::binary);
+                    std::filesystem::path saveStatePath = SAVE_STATE_PATH;
+                    saveStatePath += romHash_ + "_" + std::to_string(saveStateNum_);
+                    std::ofstream saveState(saveStatePath, std::ios::binary);
 
                     if (!saveState.fail())
                     {
@@ -155,9 +155,9 @@ void GameWindow::Run()
 
                 if (nes_.Ready())
                 {
-                    std::string fileName = nes_.GetFileName();
-                    std::string path = "../savestates/" + fileName + std::to_string(saveStateNum_) + ".sav";
-                    std::ifstream saveState(path, std::ios::binary);
+                    std::filesystem::path saveStatePath = SAVE_STATE_PATH;
+                    saveStatePath += romHash_ + "_" + std::to_string(saveStateNum_);
+                    std::ifstream saveState(saveStatePath, std::ios::binary);
 
                     if (!saveState.fail())
                     {
@@ -238,7 +238,42 @@ void GameWindow::GetAudioSamples(void* userdata, Uint8* stream, int len)
     }
 }
 
-void GameWindow::GetControllerInputs()
+void GameWindow::LoadCartridge(std::filesystem::path romPath)
+{
+    romHash_ = "";
+    fileName_ = "No ROM loaded";
+
+    if (romPath != "")
+    {
+        auto romSize = std::filesystem::file_size(romPath);
+
+        // Games should not typically exceed 1MB.
+        if (romSize < 5000000)
+        {
+            std::vector<char> buffer(romSize);
+            std::ifstream rom(romPath, std::ios::binary);
+            rom.read(buffer.data(), romSize);
+            rom.close();
+            std::string romHash = md5(std::string(buffer.begin(), buffer.end()));
+
+            std::filesystem::path savePath = SAVE_PATH;
+            savePath += romHash + ".sav";
+
+            if (nes_.LoadCartridge(romPath, savePath))
+            {
+                romHash_ = romHash;
+                fileName_ = romPath.stem().string();
+            }
+        }
+    }
+
+    if (window_)
+    {
+        UpdateTitle();
+    }
+}
+
+void GameWindow::SetControllerInputs()
 {
      uint8_t const* keyStates = SDL_GetKeyboardState(nullptr);
     uint8_t controller1 = 0x00;
