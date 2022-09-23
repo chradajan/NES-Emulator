@@ -6,9 +6,10 @@ SDL_INCLUDE = ./library/SDL2/include
 SDL_LIBRARY = ./library/SDL2/lib
 LINKER_FLAGS = -lmingw32 -lSDL2main -lSDL2
 LOGGING_FLAGS = -DLOGGING
+IMGUI = ./library/imgui
 
 main: ./src/*.cpp
-	g++ $(COMPILER_FLAGS) $(SRC_DIR)/*.cpp $(MAPPER_DIR)/*.cpp -I$(SDL_INCLUDE) -L$(SDL_LIBRARY) $(LINKER_FLAGS) -o $(OUT_DIR)/NES_EMU
+	g++ $(COMPILER_FLAGS) $(SRC_DIR)/*.cpp $(MAPPER_DIR)/*.cpp $(IMGUI)/*.cpp -I$(SDL_INCLUDE) -L$(SDL_LIBRARY) $(LINKER_FLAGS) -o $(OUT_DIR)/NES_EMU
 logging:
 	g++ $(COMPILER_FLAGS) $(LOGGING_FLAGS) $(SRC_DIR)/*.cpp $(MAPPER_DIR)/*.cpp -I$(SDL_INCLUDE) -L$(SDL_LIBRARY) $(LINKER_FLAGS) -o $(OUT_DIR)/NES_EMU
 clean:
