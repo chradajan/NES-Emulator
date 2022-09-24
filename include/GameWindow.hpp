@@ -4,6 +4,7 @@
 #include <array>
 #include <filesystem>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <SDL.h>
 #include "../library/imgui/imgui.h"
@@ -45,6 +46,8 @@ private:
     std::string fileName_;
 
     enum ClockMultiplier { QUARTER = 0, HALF, NORMAL, DOUBLE, QUADRUPLE };
+    static std::unordered_map<ClockMultiplier, std::string> clockMultiplierMap_;
+
     ClockMultiplier clockMultiplier_;
 
     void LoadCartridge(std::filesystem::path romPath);

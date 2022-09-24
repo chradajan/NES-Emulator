@@ -1,10 +1,19 @@
 #include "../include/GameWindow.hpp"
 #include "../include/NesComponent.hpp"
+#include <unordered_map>
 #include <SDL.h>
 #include "../library/imgui/imgui.h"
 #include "../library/imgui/imgui_impl_sdl.h"
 #include "../library/imgui/imgui_impl_sdlrenderer.h"
 #include "../library/imgui/imfilebrowser.h"
+
+std::unordered_map<GameWindow::ClockMultiplier, std::string> GameWindow::clockMultiplierMap_ = {
+    {ClockMultiplier::QUARTER,      "0.25x"},
+    {ClockMultiplier::HALF,         "0.50x"},
+    {ClockMultiplier::NORMAL,       "1.00x"},
+    {ClockMultiplier::DOUBLE,       "2.00x"},
+    {ClockMultiplier::QUADRUPLE,    "4.00x"},
+};
 
 void GameWindow::InitializeImGui()
 {
@@ -100,6 +109,24 @@ void GameWindow::OptionsMenu()
             nes_.SetOverscan(overscan_);
 
             ImGui::Checkbox("Mute audio", &mute_);
+
+            ImGui::NewLine();
+            ImGui::Text("CPU Speed");
+
+            if (ImGui::ArrowButton("left", ImGuiDir_Left))
+            {
+                UpdateClockMultiplier(false);
+            }
+
+            ImGui::SameLine();
+            ImGui::Text(clockMultiplierMap_[clockMultiplier_].c_str());
+
+            ImGui::SameLine();
+
+            if (ImGui::ArrowButton("right", ImGuiDir_Right))
+            {
+                UpdateClockMultiplier(true);
+            }
         }
 
         ImGui::End();
