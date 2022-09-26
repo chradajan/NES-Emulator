@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <string>
 #include <unordered_map>
-#include <utility>
+#include <tuple>
 #include <SDL.h>
 #include "../library/imgui/imgui.h"
 #include "../library/imgui/imfilebrowser.h"
@@ -17,6 +17,7 @@ constexpr int CHANNELS = 3;
 constexpr int DEPTH = CHANNELS * 8;
 constexpr int PITCH = SCREEN_WIDTH * CHANNELS;
 constexpr int WINDOW_SCALE = 4;
+constexpr float ASPECT_RATIO = (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
 
 // Audio
 constexpr int AUDIO_SAMPLE_RATE = 44100;
@@ -54,6 +55,11 @@ private:
     void SetControllerInputs();
     void UpdateClockMultiplier(bool increase);
 
+// Save states
+private:
+    void CreateSaveState();
+    void LoadSaveState();
+
 // SDL Components
 private:
     SDL_Window* window_;
@@ -66,6 +72,8 @@ private:
     void InitializeSDL();
     void HandleSDLInputs(SDL_Scancode key);
     void UpdateTitle();
+    void LockAudio();
+    void UnlockAudio();
     static int UpdateScreen(void* data);
     static void GetAudioSamples(void* userdata, Uint8* stream, int len);
 
@@ -82,6 +90,8 @@ private:
     ImGuiContext* imGuiContext_;
     ImGui::FileBrowser fileBrowser_;
 
+    std::array<std::tuple<SDL_Texture*, std::filesystem::file_time_type, bool>, 5> saveStateImages_;
+
     int windowWidth_;
     int windowHeight_;
     float halfWindowWidth_;
@@ -89,18 +99,26 @@ private:
     float buttonYPos_;
     ImVec2 buttonSize_;
 
+    float imageYPos_;
+    ImVec2 imageSize_;
+
 // Options menu
 private:
-    bool optionsMenuOpen_;
-    bool settingsOpen_;
+    bool pauseMenuOpen_;
+
+    enum class RightMenuOption { BLANK, SETTINGS, SAVE, LOAD };
+    RightMenuOption rightMenuOption_;
+
     bool overscan_;
     bool mute_;
 
 private:
     void InitializeImGui();
     void OptionsMenu();
-    void CloseOptionsMenu();
+    void ClosePauseMenu();
     void ScaleGui();
+    void ShowSaveStates(bool save);
+    void LoadSaveStateImages();
 };
 
 #endif

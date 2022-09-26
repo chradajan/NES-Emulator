@@ -1197,7 +1197,7 @@ void CPU::DecodeOpCode()
 
 bool CPU::Serializable()
 {
-    return (!dmcStall_ && (cycle_ == 0));
+    return (!dmcStall_ && !isOamDmaTransfer_ && (cycle_ == 0));
 }
 
 void CPU::Serialize(std::ofstream& saveState)

@@ -1,11 +1,12 @@
 #include "../../include/mappers/MMC1.hpp"
 #include <array>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <vector>
 
-MMC1::MMC1(std::ifstream& rom, std::string const savePath, std::array<uint8_t, 16> const& header) :
+MMC1::MMC1(std::ifstream& rom, std::filesystem::path const savePath, std::array<uint8_t, 16> const& header) :
     savePath_(savePath)
 {
     batteryBackedRam_ = ((header[6] & BATTERY_BACKED_PRG_RAM) == BATTERY_BACKED_PRG_RAM);

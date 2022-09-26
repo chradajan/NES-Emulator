@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <SDL.h>
+#include <SDL_image.h>
 #include "../library/imgui/imgui.h"
 #include "../library/imgui/imgui_impl_sdl.h"
 #include "../library/imgui/imgui_impl_sdlrenderer.h"
@@ -31,8 +32,8 @@ GameWindow::GameWindow(NES& nes, uint8_t* frameBuffer, std::filesystem::path rom
 
     LoadCartridge(romPath);
 
-    optionsMenuOpen_ = !nes_.Ready();
-    settingsOpen_ = false;
+    pauseMenuOpen_ = !nes_.Ready();
+    rightMenuOption_ = RightMenuOption::BLANK;
     overscan_ = false;
     mute_ = false;
 }
@@ -43,7 +44,7 @@ void GameWindow::Run()
     InitializeImGui();
     ScaleGui();
 
-    if (!optionsMenuOpen_)
+    if (!pauseMenuOpen_)
     {
         SDL_PauseAudioDevice(audioDevice_, 0);
     }
@@ -54,7 +55,7 @@ void GameWindow::Run()
 
         while (SDL_PollEvent(&event))
         {
-            if (optionsMenuOpen_)
+            if (pauseMenuOpen_)
             {
                 ImGui_ImplSDL2_ProcessEvent(&event);
             }
@@ -73,11 +74,11 @@ void GameWindow::Run()
                 {
                     ScaleGui();
 
-                    if (!optionsMenuOpen_)
+                    if (!pauseMenuOpen_)
                     {
-                        SDL_PauseAudioDevice(audioDevice_, 1);
+                        LockAudio();
                         UpdateScreen(this);
-                        SDL_PauseAudioDevice(audioDevice_, 0);
+                        UnlockAudio();
                     }
                     else
                     {
@@ -88,17 +89,16 @@ void GameWindow::Run()
             }
             else if (event.type == SDL_DROPFILE)
             {
-                if (!optionsMenuOpen_)
+                if (!pauseMenuOpen_)
                 {
-                    SDL_PauseAudioDevice(audioDevice_, 1);
-                    SDL_ClearQueuedAudio(audioDevice_);
+                    LockAudio();
                 }
 
                 LoadCartridge(event.drop.file);
 
-                if (!optionsMenuOpen_)
+                if (!pauseMenuOpen_)
                 {
-                    SDL_PauseAudioDevice(audioDevice_, 0);
+                    UnlockAudio();
                 }
             }
             else if (event.type == SDL_KEYUP)
@@ -107,7 +107,7 @@ void GameWindow::Run()
             }
         }
 
-        if (optionsMenuOpen_)
+        if (pauseMenuOpen_)
         {
             OptionsMenu();
         }
@@ -117,55 +117,24 @@ void GameWindow::Run()
 
             if (resetNES_)
             {
-                SDL_PauseAudioDevice(audioDevice_, 1);
-                SDL_ClearQueuedAudio(audioDevice_);
+                LockAudio();
                 nes_.Reset();
                 resetNES_ = false;
-                SDL_PauseAudioDevice(audioDevice_, 0);
+                UnlockAudio();
             }
             else if (serialize_)
             {
-                SDL_PauseAudioDevice(audioDevice_, 1);
-                SDL_ClearQueuedAudio(audioDevice_);
                 serialize_ = false;
-
-                if (nes_.Ready())
-                {
-                    nes_.RunUntilFrameReady();
-                    UpdateScreen(this);
-                    nes_.RunUntilSerializable();
-
-                    std::filesystem::path saveStatePath = SAVE_STATE_PATH;
-                    saveStatePath += romHash_ + "_" + std::to_string(saveStateNum_);
-                    std::ofstream saveState(saveStatePath, std::ios::binary);
-
-                    if (!saveState.fail())
-                    {
-                        nes_.Serialize(saveState);
-                    }
-                }
-
-                SDL_PauseAudioDevice(audioDevice_, 0);
+                LockAudio();
+                CreateSaveState();
+                UnlockAudio();
             }
             else if (deserialize_)
             {
-                SDL_PauseAudioDevice(audioDevice_, 1);
-                SDL_ClearQueuedAudio(audioDevice_);
                 deserialize_ = false;
-
-                if (nes_.Ready())
-                {
-                    std::filesystem::path saveStatePath = SAVE_STATE_PATH;
-                    saveStatePath += romHash_ + "_" + std::to_string(saveStateNum_);
-                    std::ifstream saveState(saveStatePath, std::ios::binary);
-
-                    if (!saveState.fail())
-                    {
-                        nes_.Deserialize(saveState);
-                    }
-                }
-
-                SDL_PauseAudioDevice(audioDevice_, 0);
+                LockAudio();
+                LoadSaveState();
+                UnlockAudio();
             }
         }
 
@@ -275,7 +244,7 @@ void GameWindow::LoadCartridge(std::filesystem::path romPath)
 
 void GameWindow::SetControllerInputs()
 {
-     uint8_t const* keyStates = SDL_GetKeyboardState(nullptr);
+    uint8_t const* keyStates = SDL_GetKeyboardState(nullptr);
     uint8_t controller1 = 0x00;
 
     controller1 |= keyStates[SDL_SCANCODE_L] ? 0x01 : 0x00; // A
@@ -314,6 +283,54 @@ void GameWindow::UpdateClockMultiplier(bool increase)
                 break;
             case ClockMultiplier::QUARTER:
                 break;
+        }
+    }
+}
+
+void GameWindow::CreateSaveState()
+{
+    if (nes_.Ready())
+    {
+        nes_.RunUntilFrameReady();
+        // UpdateScreen(this);
+        nes_.RunUntilSerializable();
+
+        std::filesystem::path saveStatePath = SAVE_STATE_PATH;
+        saveStatePath += romHash_ + "_" + std::to_string(saveStateNum_);
+        std::ofstream saveState(saveStatePath, std::ios::binary);
+
+        SDL_Surface* surface = SDL_CreateRGBSurfaceFrom(frameBuffer_,
+                                                        SCREEN_WIDTH,
+                                                        SCREEN_HEIGHT,
+                                                        DEPTH,
+                                                        PITCH,
+                                                        0x0000FF,
+                                                        0x00FF00,
+                                                        0xFF0000,
+                                                        0);
+
+        saveStatePath.replace_extension(".png");
+        IMG_SavePNG(surface, saveStatePath.string().c_str());
+        SDL_FreeSurface(surface);
+
+        if (!saveState.fail())
+        {
+            nes_.Serialize(saveState);
+        }
+    }
+}
+
+void GameWindow::LoadSaveState()
+{
+    if (nes_.Ready())
+    {
+        std::filesystem::path saveStatePath = SAVE_STATE_PATH;
+        saveStatePath += romHash_ + "_" + std::to_string(saveStateNum_);
+        std::ifstream saveState(saveStatePath, std::ios::binary);
+
+        if (!saveState.fail())
+        {
+            nes_.Deserialize(saveState);
         }
     }
 }

@@ -34,7 +34,7 @@ void GameWindow::InitializeSDL()
 
 void GameWindow::HandleSDLInputs(SDL_Scancode key)
 {
-    if (!optionsMenuOpen_)
+    if (!pauseMenuOpen_)
     {
         switch (key)
         {
@@ -49,9 +49,13 @@ void GameWindow::HandleSDLInputs(SDL_Scancode key)
                 mute_ = !mute_;
                 break;
             case SDL_SCANCODE_ESCAPE:
-                optionsMenuOpen_ = true;
-                SDL_PauseAudioDevice(audioDevice_, 1);
-                SDL_ClearQueuedAudio(audioDevice_);
+                pauseMenuOpen_ = true;
+                LockAudio();
+
+                if ((rightMenuOption_ == RightMenuOption::SAVE) || (rightMenuOption_ == RightMenuOption::LOAD))
+                {
+                    LoadSaveStateImages();
+                }
                 break;
             case SDL_SCANCODE_LEFT:
                 UpdateClockMultiplier(false);
@@ -59,28 +63,12 @@ void GameWindow::HandleSDLInputs(SDL_Scancode key)
             case SDL_SCANCODE_RIGHT:
                 UpdateClockMultiplier(true);
                 break;
-            case SDL_SCANCODE_1 ... SDL_SCANCODE_0:
-                if (key == SDL_SCANCODE_0)
-                {
-                    saveStateNum_ = 0;
-                }
-                else
-                {
-                    saveStateNum_ = (int)key - 29;
-                }
-
+            case SDL_SCANCODE_1 ... SDL_SCANCODE_5:
+                saveStateNum_ = (int)key - 29;
                 serialize_ = true;
                 break;
-            case SDL_SCANCODE_F1 ... SDL_SCANCODE_F10:
-                if (key == SDL_SCANCODE_F10)
-                {
-                    saveStateNum_ = 0;
-                }
-                else
-                {
-                    saveStateNum_ = (int)key - 57;
-                }
-
+            case SDL_SCANCODE_F1 ... SDL_SCANCODE_F5:
+                saveStateNum_ = (int)key - 57;
                 deserialize_ = true;
                 break;
             default:
@@ -89,7 +77,7 @@ void GameWindow::HandleSDLInputs(SDL_Scancode key)
     }
     else if (key == SDL_SCANCODE_ESCAPE)
     {
-        CloseOptionsMenu();
+        ClosePauseMenu();
     }
 }
 
@@ -98,4 +86,15 @@ void GameWindow::UpdateTitle()
     SDL_SetWindowTitle(window_, (std::string("NES EMU - ") + fileName_).c_str());
 }
 
+void GameWindow::LockAudio()
+{
+    SDL_LockAudioDevice(audioDevice_);
+    SDL_PauseAudioDevice(audioDevice_, 1);
+    SDL_Delay(20);
+}
 
+void GameWindow::UnlockAudio()
+{
+    SDL_UnlockAudioDevice(audioDevice_);
+    SDL_PauseAudioDevice(audioDevice_, 0);
+}

@@ -4,6 +4,7 @@
 #include "../Cartridge.hpp"
 #include <array>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -32,7 +33,7 @@ constexpr uint16_t PPU_A12_MASK = 0x1000;
 class MMC3 : public virtual Cartridge
 {
 public:
-    MMC3(std::ifstream& rom, std::string savePath, std::array<uint8_t, 16> const& header);
+    MMC3(std::ifstream& rom, std::filesystem::path savePath, std::array<uint8_t, 16> const& header);
 
     void Reset() override;
 
@@ -80,7 +81,7 @@ private:
     bool batteryBackedRam_;
     bool ramEnabled_;
     bool ramWritesDisabled_;
-    std::string savePath_;
+    std::filesystem::path savePath_;
 
 // IRQ
 private:

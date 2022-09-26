@@ -4,6 +4,7 @@
 #include "../Cartridge.hpp"
 #include <array>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <vector>
@@ -17,7 +18,7 @@ constexpr uint16_t MMC1_ADDR_MASK = 0x6000;
 class MMC1 : public virtual Cartridge
 {
 public:
-    MMC1(std::ifstream& rom, std::string savePath, std::array<uint8_t, 16> const& header);
+    MMC1(std::ifstream& rom, std::filesystem::path savePath, std::array<uint8_t, 16> const& header);
 
     void Reset() override;
 
@@ -57,7 +58,7 @@ private:
 
     bool batteryBackedRam_;
     uint8_t writeCounter_;
-    std::string savePath_;
+    std::filesystem::path savePath_;
 
     void LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks) override;
     void SetRegisters(uint16_t addr);

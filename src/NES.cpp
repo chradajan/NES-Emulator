@@ -81,7 +81,7 @@ bool NES::LoadCartridge(std::filesystem::path romPath, std::filesystem::path sav
         apu_->Reset();
     }
 
-    InitializeCartridge(romPath.string(), savePath.string());
+    InitializeCartridge(romPath, savePath);
 
     if (cartLoaded_)
     {
@@ -155,7 +155,7 @@ void NES::Deserialize(std::ifstream& saveState)
     }
 }
 
-void NES::InitializeCartridge(std::string const romPath, std::string const savePath)
+void NES::InitializeCartridge(std::filesystem::path const romPath, std::filesystem::path const savePath)
 {
     cartridge_.reset();
     std::ifstream rom(romPath, std::ios::binary);

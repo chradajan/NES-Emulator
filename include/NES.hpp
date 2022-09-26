@@ -48,7 +48,7 @@ private:
 
     bool cartLoaded_;
 
-    void InitializeCartridge(std::string romPath, std::string savePath);
+    void InitializeCartridge(std::filesystem::path romPath, std::filesystem::path savePath);
 };
 
 #endif

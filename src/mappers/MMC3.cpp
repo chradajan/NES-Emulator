@@ -1,14 +1,17 @@
 #include "../../include/mappers/MMC3.hpp"
 #include <array>
 #include <cstdint>
+#include <filesystem>
 #include <fstream>
 #include <string>
 #include <vector>
 
-MMC3::MMC3(std::ifstream& rom, std::string savePath, std::array<uint8_t, 16> const& header) :
+MMC3::MMC3(std::ifstream& rom, std::filesystem::path const savePath, std::array<uint8_t, 16> const& header) :
     savePath_(savePath)
 {
     batteryBackedRam_ = ((header[6] & BATTERY_BACKED_PRG_RAM) == BATTERY_BACKED_PRG_RAM);
+    PRG_RAM_.fill(0x00);
+    chrRamMode_ = false;
     Initialize();
 
     if (batteryBackedRam_)
@@ -43,16 +46,21 @@ MMC3::MMC3(std::ifstream& rom, std::string savePath, std::array<uint8_t, 16> con
 
 void MMC3::Initialize()
 {
+    prgIndex_.fill(0);
+    chrIndex_.fill(0);
+
     bankRegToUpdate_ = 0;
     bankRegister_.fill(0);
+
     prgBankMode_ = false;
     chrBankMode_ = false;
 
     ramEnabled_ = true;
     ramWritesDisabled_ = false;
+
     irqLatch_ = 0;
-    irqEnable_ = false;
     irqCounter_ = 0;
+    irqEnable_ = false;
     reloadIrqCounter_ = false;
     prevA12State = false;
     sendInterrupt_ = false;
@@ -304,8 +312,6 @@ void MMC3::LoadROM(std::ifstream& rom, size_t prgRomBanks, size_t chrRomBanks)
         CHR_ROM_BANKS_.resize(256);
     }
 
-    prgIndex_[3] = PRG_ROM_BANKS_.size() - 1;
-
     for (size_t bankIndex = 0; bankIndex < prgRomBanks; ++bankIndex)
     {
         rom.read((char*)PRG_ROM_BANKS_[bankIndex].data(), MMC3_PRG_BANK_SIZE);
@@ -341,6 +347,7 @@ void MMC3::SetBanks()
 
     // Set PRG Banks
     prgIndex_[1] = (bankRegister_[7] & PRG_BANK_MASK) % PRG_ROM_BANKS_.size();
+    prgIndex_[3] = PRG_ROM_BANKS_.size() - 1;
 
     if (prgBankMode_)
     {
