@@ -12,7 +12,7 @@ void GameWindow::InitializeSDL()
                                SDL_WINDOWPOS_UNDEFINED,
                                SCREEN_WIDTH * WINDOW_SCALE,
                                SCREEN_HEIGHT * WINDOW_SCALE,
-                               SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+                               SDL_WINDOW_ALLOW_HIGHDPI);
 
     SDL_SetWindowMinimumSize(window_, SCREEN_WIDTH * 2, SCREEN_HEIGHT * 2);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");

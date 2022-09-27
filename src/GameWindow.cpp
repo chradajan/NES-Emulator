@@ -36,6 +36,7 @@ GameWindow::GameWindow(NES& nes, uint8_t* frameBuffer, std::filesystem::path rom
     rightMenuOption_ = RightMenuOption::BLANK;
     overscan_ = false;
     mute_ = false;
+    windowScale_ = static_cast<WindowScale>(WINDOW_SCALE);
 }
 
 void GameWindow::Run()
@@ -70,21 +71,11 @@ void GameWindow::Run()
                 {
                     exit_ = true;
                 }
-                else if ((event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED) || (event.window.event == SDL_WINDOWEVENT_MAXIMIZED))
+                else if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
                 {
                     ScaleGui();
-
-                    if (!pauseMenuOpen_)
-                    {
-                        LockAudio();
-                        UpdateScreen(this);
-                        UnlockAudio();
-                    }
-                    else
-                    {
-                        SDL_RenderClear(renderer_);
-                        SDL_RenderPresent(renderer_);
-                    }
+                    SDL_RenderClear(renderer_);
+                    SDL_RenderPresent(renderer_);
                 }
             }
             else if (event.type == SDL_DROPFILE)
@@ -143,7 +134,7 @@ void GameWindow::Run()
 
     ImGui_ImplSDLRenderer_Shutdown();
     ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext(imGuiContext_);
+    ImGui::DestroyContext();
     SDL_DestroyRenderer(renderer_);
     SDL_DestroyWindow(window_);
     SDL_CloseAudioDevice(audioDevice_);
@@ -292,7 +283,6 @@ void GameWindow::CreateSaveState()
     if (nes_.Ready())
     {
         nes_.RunUntilFrameReady();
-        // UpdateScreen(this);
         nes_.RunUntilSerializable();
 
         std::filesystem::path saveStatePath = SAVE_STATE_PATH;

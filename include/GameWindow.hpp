@@ -87,7 +87,6 @@ private:
 
 // ImGui
 private:
-    ImGuiContext* imGuiContext_;
     ImGui::FileBrowser fileBrowser_;
 
     std::array<std::tuple<SDL_Texture*, std::filesystem::file_time_type, bool>, 5> saveStateImages_;
@@ -102,6 +101,10 @@ private:
     float imageYPos_;
     ImVec2 imageSize_;
 
+    ImFont* smallFont_;
+    ImFont* mediumFont_;
+    ImFont* largeFont_;
+
 // Options menu
 private:
     bool pauseMenuOpen_;
@@ -112,10 +115,15 @@ private:
     bool overscan_;
     bool mute_;
 
+    enum WindowScale { TWO = 2, THREE, FOUR, FIVE };
+    WindowScale windowScale_;
+    static std::unordered_map<WindowScale, std::string> windowScaleMap_;
+
 private:
     void InitializeImGui();
     void OptionsMenu();
     void ClosePauseMenu();
+    void UpdateWindowSize(bool increase);
     void ScaleGui();
     void ShowSaveStates(bool save);
     void LoadSaveStateImages();

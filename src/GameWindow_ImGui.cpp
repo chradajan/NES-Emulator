@@ -23,6 +23,13 @@ std::unordered_map<GameWindow::ClockMultiplier, std::string> GameWindow::clockMu
     {ClockMultiplier::QUADRUPLE,    "4.00x"},
 };
 
+std::unordered_map<GameWindow::WindowScale, std::string> GameWindow::windowScaleMap_ = {
+    {WindowScale::TWO,      "2x"},
+    {WindowScale::THREE,    "3x"},
+    {WindowScale::FOUR,     "4x"},
+    {WindowScale::FIVE,     "5x"},
+};
+
 template <typename T>
 std::time_t to_time_t(T time)
 {
@@ -34,11 +41,15 @@ std::time_t to_time_t(T time)
 void GameWindow::InitializeImGui()
 {
     IMGUI_CHECKVERSION();
-    imGuiContext_ = ImGui::CreateContext();
+    ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     ImGui::StyleColorsDark();
 
-    io.Fonts->AddFontFromFileTTF("../library/imgui/fonts/DroidSans.ttf", 34.0);
+    smallFont_ = io.Fonts->AddFontFromFileTTF("../library/imgui/fonts/DroidSans.ttf", 16.0);
+    mediumFont_ = io.Fonts->AddFontFromFileTTF("../library/imgui/fonts/DroidSans.ttf", 24.0);
+    largeFont_ = io.Fonts->AddFontFromFileTTF("../library/imgui/fonts/DroidSans.ttf", 34.0);
+
+    io.FontDefault = largeFont_;
 
     ImGui_ImplSDL2_InitForSDLRenderer(window_, renderer_);
     ImGui_ImplSDLRenderer_Init(renderer_);
@@ -63,13 +74,15 @@ void GameWindow::OptionsMenu()
         ImGui::SetCursorPosX(buttonXPos_);
         ImGui::SetCursorPosY(buttonYPos_);
 
-        if (ImGui::Button("Continue", buttonSize_))
+        // Resume button
+        if (ImGui::Button("Resume", buttonSize_))
         {
             ClosePauseMenu();
         }
 
         ImGui::SetCursorPosX(buttonXPos_);
 
+        // ROM select button
         if (ImGui::Button("Select ROM", buttonSize_))
         {
             fileBrowser_.Open();
@@ -77,6 +90,7 @@ void GameWindow::OptionsMenu()
 
         ImGui::SetCursorPosX(buttonXPos_);
 
+        // Settings button
         if (ImGui::Button("Settings", buttonSize_))
         {
             if (rightMenuOption_ == RightMenuOption::SETTINGS)
@@ -91,6 +105,7 @@ void GameWindow::OptionsMenu()
 
         ImGui::SetCursorPosX(buttonXPos_);
 
+        // Save state button
         if (ImGui::Button("Save State", buttonSize_))
         {
             if (rightMenuOption_ == RightMenuOption::SAVE)
@@ -106,6 +121,7 @@ void GameWindow::OptionsMenu()
 
         ImGui::SetCursorPosX(buttonXPos_);
 
+        // Load state button
         if (ImGui::Button("Load State", buttonSize_))
         {
             if (rightMenuOption_ == RightMenuOption::LOAD)
@@ -121,6 +137,7 @@ void GameWindow::OptionsMenu()
 
         ImGui::SetCursorPosX(buttonXPos_);
 
+        // Reset button
         if (ImGui::Button("Reset", buttonSize_))
         {
             nes_.Reset();
@@ -128,6 +145,7 @@ void GameWindow::OptionsMenu()
 
         ImGui::SetCursorPosX(buttonXPos_);
 
+        // Quit button
         if (ImGui::Button("Quit", buttonSize_))
         {
             exit_ = true;
@@ -147,15 +165,37 @@ void GameWindow::OptionsMenu()
         {
             case RightMenuOption::SETTINGS:
             {
+                // Overscan toggle
                 ImGui::Checkbox("Overscan", &overscan_);
                 nes_.SetOverscan(overscan_);
 
+                // Mute toggle
                 ImGui::Checkbox("Mute audio", &mute_);
 
+                // Window scale arrows
+                ImGui::NewLine();
+                ImGui::Text("Window Scale");
+
+                if (ImGui::ArrowButton("WindowScaleLeft", ImGuiDir_Left))
+                {
+                    UpdateWindowSize(false);
+                }
+
+                ImGui::SameLine();
+                ImGui::Text(windowScaleMap_[windowScale_].c_str());
+
+                ImGui::SameLine();
+
+                if (ImGui::ArrowButton("WindowScaleRight", ImGuiDir_Right))
+                {
+                    UpdateWindowSize(true);
+                }
+
+                // CPU speed arrows
                 ImGui::NewLine();
                 ImGui::Text("CPU Speed");
 
-                if (ImGui::ArrowButton("left", ImGuiDir_Left))
+                if (ImGui::ArrowButton("CPUSpeedLeft", ImGuiDir_Left))
                 {
                     UpdateClockMultiplier(false);
                 }
@@ -165,7 +205,7 @@ void GameWindow::OptionsMenu()
 
                 ImGui::SameLine();
 
-                if (ImGui::ArrowButton("right", ImGuiDir_Right))
+                if (ImGui::ArrowButton("CPUSpeedRight", ImGuiDir_Right))
                 {
                     UpdateClockMultiplier(true);
                 }
@@ -290,6 +330,53 @@ void GameWindow::ClosePauseMenu()
         pauseMenuOpen_ = false;
         UnlockAudio();
     }
+}
+
+void GameWindow::UpdateWindowSize(bool increase)
+{
+    int windowScaleInt = static_cast<int>(windowScale_);
+
+    if (increase)
+    {
+        switch (windowScale_)
+        {
+            case WindowScale::TWO:
+                ImGui::GetIO().FontDefault = mediumFont_;
+                ++windowScaleInt;
+                break;
+            case WindowScale::THREE:
+                ImGui::GetIO().FontDefault = largeFont_;
+                ++windowScaleInt;
+                break;
+            case WindowScale::FOUR:
+                ++windowScaleInt;
+                break;
+            case WindowScale::FIVE:
+                break;
+        }
+    }
+    else
+    {
+        switch (windowScale_)
+        {
+            case WindowScale::TWO:
+                break;
+            case WindowScale::THREE:
+                ImGui::GetIO().FontDefault = smallFont_;
+                --windowScaleInt;
+                break;
+            case WindowScale::FOUR:
+                ImGui::GetIO().FontDefault = mediumFont_;
+                --windowScaleInt;
+                break;
+            case WindowScale::FIVE:
+                --windowScaleInt;
+                break;
+        }
+    }
+
+    windowScale_ = static_cast<WindowScale>(windowScaleInt);
+    SDL_SetWindowSize(window_, SCREEN_WIDTH * windowScaleInt, SCREEN_HEIGHT * windowScaleInt);
 }
 
 void GameWindow::ScaleGui()
