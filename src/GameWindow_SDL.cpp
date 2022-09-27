@@ -1,6 +1,9 @@
 #include "../include/GameWindow.hpp"
 #include "../include/NesComponent.hpp"
+#include "../include/Paths.hpp"
+#include <filesystem>
 #include <SDL.h>
+#include <SDL_image.h>
 
 void GameWindow::InitializeSDL()
 {
@@ -18,6 +21,12 @@ void GameWindow::InitializeSDL()
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
     UpdateTitle();
     renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED);
+
+    std::filesystem::path iconPath = RESOURCES_PATH;
+    iconPath += "icon.png";
+    SDL_Surface* surface = IMG_Load(iconPath.string().c_str());
+    SDL_SetWindowIcon(window_, surface);
+    SDL_FreeSurface(surface);
 
     // Audio setup
     SDL_AudioSpec audioSpec;
