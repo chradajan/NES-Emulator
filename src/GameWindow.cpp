@@ -38,7 +38,7 @@ GameWindow::GameWindow(NES& nes, uint8_t* frameBuffer, std::filesystem::path rom
     mute_ = false;
     windowScale_ = static_cast<WindowScale>(WINDOW_SCALE);
 
-    InitializeKeyBindings();
+    LoadKeyBindings();
 }
 
 void GameWindow::Run()
@@ -327,29 +327,90 @@ void GameWindow::LoadSaveState()
     }
 }
 
-void GameWindow::InitializeKeyBindings()
+void GameWindow::LoadKeyBindings()
 {
     inputToBind_ = InputType::INVALID;
+    std::ifstream keyBindingsFile(KEY_BINDINGS_PATH);
 
-    keyBindings_[InputType::UP] = std::make_pair("W", SDL_SCANCODE_W);
-    keyBindings_[InputType::DOWN] = std::make_pair("S", SDL_SCANCODE_S);
-    keyBindings_[InputType::LEFT] = std::make_pair("A", SDL_SCANCODE_A);
-    keyBindings_[InputType::RIGHT] = std::make_pair("D", SDL_SCANCODE_D);
+    if (keyBindingsFile.fail())
+    {
+        SaveKeyBindings(true);
+        keyBindingsFile = std::ifstream(KEY_BINDINGS_PATH);
+    }
 
-    keyBindings_[InputType::A] = std::make_pair("L", SDL_SCANCODE_L);
-    keyBindings_[InputType::B] = std::make_pair("K", SDL_SCANCODE_K);
+    for (auto [inputType, inputStr, inputInt] : INPUT_DATA)
+    {
+        (void)inputStr; (void)inputInt;
+        std::string scancodeName, scancodeStr;
+        SDL_Scancode scancode;
+        keyBindingsFile >> scancodeName >> scancodeStr;
+        scancode = static_cast<SDL_Scancode>(std::stoi(scancodeStr));
+        scancodeName = SDL_GetScancodeName(scancode);
 
-    keyBindings_[InputType::START] = std::make_pair("P", SDL_SCANCODE_P);
-    keyBindings_[InputType::SELECT] = std::make_pair("O", SDL_SCANCODE_O);
+        if (scancodeName.empty())
+        {
+            scancodeName = "NOT SET";
+        }
 
-    keyBindings_[InputType::MUTE] = std::make_pair("M", SDL_SCANCODE_M);
-    keyBindings_[InputType::OVERSCAN] = std::make_pair("T", SDL_SCANCODE_T);
-    keyBindings_[InputType::RESET] = std::make_pair("R", SDL_SCANCODE_R);
-    keyBindings_[InputType::SPEEDDOWN] = std::make_pair("LEFT", SDL_SCANCODE_LEFT);
-    keyBindings_[InputType::SPEEDUP] = std::make_pair("RIGHT", SDL_SCANCODE_RIGHT);
+        keyBindings_[inputType] = std::make_pair(scancodeName, scancode);
+    }
 
     for (auto [inputType, inputInfo] : keyBindings_)
     {
         reverseKeyBindings_[inputInfo.second] = inputType;
     }
+}
+
+void GameWindow::SaveKeyBindings(bool restoreDefaults)
+{
+    std::ofstream keyBindingsFile(KEY_BINDINGS_PATH);
+
+    for (auto [inputType, inputStr, inputInt] : INPUT_DATA)
+    {
+        if (!restoreDefaults)
+        {
+            inputInt = static_cast<int>(keyBindings_[inputType].second);
+        }
+
+        keyBindingsFile << inputStr << inputInt << "\n";
+    }
+}
+
+void GameWindow::SetKeyBindings(SDL_Scancode scancode)
+{
+    if (((scancode >= SDL_SCANCODE_1) && (scancode <= SDL_SCANCODE_5)) ||
+        ((scancode >= SDL_SCANCODE_F1) && (scancode <= SDL_SCANCODE_F5)))
+    {
+        return;
+    }
+
+    if (keyBindings_[inputToBind_].second == scancode)
+    {
+        keyBindings_[inputToBind_].first = oldKeyStr_;
+        inputToBind_ = InputType::INVALID;
+        return;
+    }
+
+    if (reverseKeyBindings_.count(scancode) == 1)
+    {
+        keyBindings_[reverseKeyBindings_[scancode]] = std::make_pair("NOT SET", SDL_SCANCODE_UNKNOWN);
+    }
+
+    reverseKeyBindings_.erase(keyBindings_[inputToBind_].second);
+    reverseKeyBindings_[scancode] = inputToBind_;
+    keyBindings_[inputToBind_] = std::make_pair(SDL_GetScancodeName(scancode), scancode);
+    inputToBind_ = InputType::INVALID;
+    SaveKeyBindings(false);
+}
+
+void GameWindow::PrepareForKeyBinding(InputType keyToBind)
+{
+    if (inputToBind_ != InputType::INVALID)
+    {
+        keyBindings_[inputToBind_].first = oldKeyStr_;
+    }
+
+    oldKeyStr_ = keyBindings_[keyToBind].first;
+    keyBindings_[keyToBind].first = "...";
+    inputToBind_ = keyToBind;
 }

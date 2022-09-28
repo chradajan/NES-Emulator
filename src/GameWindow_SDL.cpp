@@ -81,11 +81,11 @@ void GameWindow::HandleSDLInputs(SDL_Scancode scancode)
                     }
                     break;
                 case SDL_SCANCODE_1 ... SDL_SCANCODE_5:
-                    saveStateNum_ = (int)scancode - 29;
+                    saveStateNum_ = static_cast<int>(scancode) - 29;
                     serialize_ = true;
                     break;
                 case SDL_SCANCODE_F1 ... SDL_SCANCODE_F5:
-                    saveStateNum_ = (int)scancode - 57;
+                    saveStateNum_ = static_cast<int>(scancode) - 57;
                     deserialize_ = true;
                     break;
                 default:
@@ -99,28 +99,7 @@ void GameWindow::HandleSDLInputs(SDL_Scancode scancode)
     }
     else if (inputToBind_ != InputType::INVALID)
     {
-        if (((scancode >= SDL_SCANCODE_1) && (scancode <= SDL_SCANCODE_5)) ||
-            ((scancode >= SDL_SCANCODE_F1) && (scancode <= SDL_SCANCODE_F5)))
-        {
-            return;
-        }
-
-        if (keyBindings_[inputToBind_].second == scancode)
-        {
-            keyBindings_[inputToBind_].first = oldKeyStr_;
-            inputToBind_ = InputType::INVALID;
-            return;
-        }
-
-        if (reverseKeyBindings_.count(scancode) == 1)
-        {
-            keyBindings_[reverseKeyBindings_[scancode]] = std::make_pair("NOT SET", SDL_SCANCODE_UNKNOWN);
-        }
-
-        reverseKeyBindings_.erase(keyBindings_[inputToBind_].second);
-        reverseKeyBindings_[scancode] = inputToBind_;
-        keyBindings_[inputToBind_] = std::make_pair(SDL_GetScancodeName(scancode), scancode);
-        inputToBind_ = InputType::INVALID;
+        SetKeyBindings(scancode);
     }
 }
 

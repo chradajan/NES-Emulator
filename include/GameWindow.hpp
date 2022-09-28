@@ -104,6 +104,8 @@ private:
 
     ImVec2 keyBindButtonSize_;
     float keyBindButtonXPos_;
+    ImVec2 restoreDefaultsButtonSize_;
+    float restoreDefaultsButtonXPos_;
 
     ImFont* smallFont_;
     ImFont* mediumFont_;
@@ -135,14 +137,33 @@ private:
 // Key bindings
 private:
     enum class InputType { UP, DOWN, LEFT, RIGHT, A, B, START, SELECT, MUTE, OVERSCAN, RESET, SPEEDDOWN, SPEEDUP, INVALID };
+
+    std::array<std::tuple<InputType, std::string, int>, 13> INPUT_DATA = {{
+        {InputType::UP,         "Up:         ", 26},
+        {InputType::DOWN,       "Down:       ", 22},
+        {InputType::LEFT,       "Left:       ", 4},
+        {InputType::RIGHT,      "Right:      ", 7},
+        {InputType::A,          "A:          ", 15},
+        {InputType::B,          "B:          ", 14},
+        {InputType::START,      "Start:      ", 19},
+        {InputType::SELECT,     "Select:     ", 18},
+        {InputType::MUTE,       "Mute:       ", 16},
+        {InputType::OVERSCAN,   "Overscan:   ", 23},
+        {InputType::RESET,      "Reset:      ", 21},
+        {InputType::SPEEDDOWN,  "SpeedDown:  ", 80},
+        {InputType::SPEEDUP,    "SpeedUp:    ", 79}
+    }};
+
     std::unordered_map<InputType, std::pair<std::string, SDL_Scancode>> keyBindings_;
     std::unordered_map<SDL_Scancode, InputType> reverseKeyBindings_;
 
     InputType inputToBind_;
     std::string oldKeyStr_;
 
-    void InitializeKeyBindings();
-    void PrepareForBinding(InputType keyToBind);
+    void LoadKeyBindings();
+    void SaveKeyBindings(bool restoreDefaults);
+    void SetKeyBindings(SDL_Scancode scancode);
+    void PrepareForKeyBinding(InputType keyToBind);
 };
 
 #endif

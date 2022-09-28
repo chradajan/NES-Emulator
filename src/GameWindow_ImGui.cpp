@@ -188,7 +188,7 @@ void GameWindow::OptionsMenu()
                 ImGui::SetCursorPosX(keyBindButtonXPos_);
                 if (ImGui::Button(keyBindings_[InputType::UP].first.c_str(), keyBindButtonSize_))
                 {
-                    PrepareForBinding(InputType::UP);
+                    PrepareForKeyBinding(InputType::UP);
                 }
 
                 ImGui::Text("Down");
@@ -196,7 +196,7 @@ void GameWindow::OptionsMenu()
                 ImGui::SetCursorPosX(keyBindButtonXPos_);
                 if(ImGui::Button(keyBindings_[InputType::DOWN].first.c_str(), keyBindButtonSize_))
                 {
-                    PrepareForBinding(InputType::DOWN);
+                    PrepareForKeyBinding(InputType::DOWN);
                 }
 
                 ImGui::Text("Left");
@@ -204,7 +204,7 @@ void GameWindow::OptionsMenu()
                 ImGui::SetCursorPosX(keyBindButtonXPos_);
                 if(ImGui::Button(keyBindings_[InputType::LEFT].first.c_str(), keyBindButtonSize_))
                 {
-                    PrepareForBinding(InputType::LEFT);
+                    PrepareForKeyBinding(InputType::LEFT);
                 }
 
                 ImGui::Text("Right");
@@ -212,7 +212,7 @@ void GameWindow::OptionsMenu()
                 ImGui::SetCursorPosX(keyBindButtonXPos_);
                 if (ImGui::Button(keyBindings_[InputType::RIGHT].first.c_str(), keyBindButtonSize_))
                 {
-                    PrepareForBinding(InputType::RIGHT);
+                    PrepareForKeyBinding(InputType::RIGHT);
                 }
 
                 ImGui::Text("A");
@@ -220,7 +220,7 @@ void GameWindow::OptionsMenu()
                 ImGui::SetCursorPosX(keyBindButtonXPos_);
                 if (ImGui::Button(keyBindings_[InputType::A].first.c_str(), keyBindButtonSize_))
                 {
-                    PrepareForBinding(InputType::A);
+                    PrepareForKeyBinding(InputType::A);
                 }
 
                 ImGui::Text("B");
@@ -228,7 +228,7 @@ void GameWindow::OptionsMenu()
                 ImGui::SetCursorPosX(keyBindButtonXPos_);
                 if (ImGui::Button(keyBindings_[InputType::B].first.c_str(), keyBindButtonSize_))
                 {
-                    PrepareForBinding(InputType::B);
+                    PrepareForKeyBinding(InputType::B);
                 }
 
                 ImGui::Text("Start");
@@ -236,7 +236,7 @@ void GameWindow::OptionsMenu()
                 ImGui::SetCursorPosX(keyBindButtonXPos_);
                 if (ImGui::Button(keyBindings_[InputType::START].first.c_str(), keyBindButtonSize_))
                 {
-                    PrepareForBinding(InputType::START);
+                    PrepareForKeyBinding(InputType::START);
                 }
 
                 ImGui::Text("Select");
@@ -244,7 +244,7 @@ void GameWindow::OptionsMenu()
                 ImGui::SetCursorPosX(keyBindButtonXPos_);
                 if (ImGui::Button(keyBindings_[InputType::SELECT].first.c_str(), keyBindButtonSize_))
                 {
-                    PrepareForBinding(InputType::SELECT);
+                    PrepareForKeyBinding(InputType::SELECT);
                 }
 
                 ImGui::NewLine();
@@ -256,7 +256,7 @@ void GameWindow::OptionsMenu()
                 ImGui::SetCursorPosX(keyBindButtonXPos_);
                 if (ImGui::Button(keyBindings_[InputType::MUTE].first.c_str(), keyBindButtonSize_))
                 {
-                    PrepareForBinding(InputType::MUTE);
+                    PrepareForKeyBinding(InputType::MUTE);
                 }
 
                 ImGui::Text("Overscan");
@@ -264,7 +264,7 @@ void GameWindow::OptionsMenu()
                 ImGui::SetCursorPosX(keyBindButtonXPos_);
                 if (ImGui::Button(keyBindings_[InputType::OVERSCAN].first.c_str(), keyBindButtonSize_))
                 {
-                    PrepareForBinding(InputType::OVERSCAN);
+                    PrepareForKeyBinding(InputType::OVERSCAN);
                 }
 
                 ImGui::Text("Reset");
@@ -272,7 +272,7 @@ void GameWindow::OptionsMenu()
                 ImGui::SetCursorPosX(keyBindButtonXPos_);
                 if (ImGui::Button(keyBindings_[InputType::RESET].first.c_str(), keyBindButtonSize_))
                 {
-                    PrepareForBinding(InputType::RESET);
+                    PrepareForKeyBinding(InputType::RESET);
                 }
 
                 ImGui::Text("Speed down");
@@ -280,7 +280,7 @@ void GameWindow::OptionsMenu()
                 ImGui::SetCursorPosX(keyBindButtonXPos_);
                 if (ImGui::Button(keyBindings_[InputType::SPEEDDOWN].first.c_str(), keyBindButtonSize_))
                 {
-                    PrepareForBinding(InputType::SPEEDDOWN);
+                    PrepareForKeyBinding(InputType::SPEEDDOWN);
                 }
 
                 ImGui::Text("Speed up");
@@ -288,7 +288,15 @@ void GameWindow::OptionsMenu()
                 ImGui::SetCursorPosX(keyBindButtonXPos_);
                 if (ImGui::Button(keyBindings_[InputType::SPEEDUP].first.c_str(), keyBindButtonSize_))
                 {
-                    PrepareForBinding(InputType::SPEEDUP);
+                    PrepareForKeyBinding(InputType::SPEEDUP);
+                }
+
+                ImGui::NewLine();
+                ImGui::SetCursorPosX(restoreDefaultsButtonXPos_);
+                if (ImGui::Button("Restore Default Bindings", restoreDefaultsButtonSize_))
+                {
+                    SaveKeyBindings(true);
+                    LoadKeyBindings();
                 }
 
                 // Window scale arrows
@@ -527,6 +535,9 @@ void GameWindow::ScaleGui()
 
     keyBindButtonSize_ = ImVec2(halfWindowWidth_ / 3.5, windowHeight_ / 25);
     keyBindButtonXPos_ = halfWindowWidth_ / 2.5;
+
+    restoreDefaultsButtonSize_ = ImVec2(halfWindowWidth_ / 1.5, windowHeight_ / 15);
+    restoreDefaultsButtonXPos_ = (halfWindowWidth_ / 2) - (restoreDefaultsButtonSize_.x / 2);
 }
 
 void GameWindow::LoadSaveStateImages()
@@ -560,16 +571,4 @@ void GameWindow::LoadSaveStateImages()
             SDL_FreeSurface(surface);
         }
     }
-}
-
-void GameWindow::PrepareForBinding(InputType keyToBind)
-{
-    if (inputToBind_ != InputType::INVALID)
-    {
-        keyBindings_[inputToBind_].first = oldKeyStr_;
-    }
-
-    oldKeyStr_ = keyBindings_[keyToBind].first;
-    keyBindings_[keyToBind].first = "...";
-    inputToBind_ = keyToBind;
 }
