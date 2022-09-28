@@ -1,8 +1,8 @@
 .vscode/
-bin/NES_EMU.exe
-bin/imgui.ini
 roms/
 saves/
 savestates/
 logs/
+NES_EMU.exe
+imgui.ini
 KeyBindings.txt

@@ -25,8 +25,8 @@ int main(int argc, char** argv)
     std::array<uint8_t, SCREEN_WIDTH * SCREEN_HEIGHT * CHANNELS> frameBuffer;
     frameBuffer.fill(0x00);
 
-    std::ifstream normalColors("../palettes/ntsc_normal.pal", std::ios::binary);
-    std::ifstream grayscaleColors("../palettes/ntsc_grayscale.pal", std::ios::binary);
+    std::ifstream normalColors(PALETTE_PATH.string() + "ntsc_normal.pal", std::ios::binary);
+    std::ifstream grayscaleColors(PALETTE_PATH.string() + "ntsc_grayscale.pal", std::ios::binary);
 
     NES nes(frameBuffer.data(), normalColors, grayscaleColors);
     std::filesystem::path romPath = "";
