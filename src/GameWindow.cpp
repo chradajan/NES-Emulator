@@ -134,6 +134,7 @@ void GameWindow::Run()
         SDL_Delay(1);
     }
 
+    SDL_UnlockAudioDevice(audioDevice_);
     ImGui_ImplSDLRenderer_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
