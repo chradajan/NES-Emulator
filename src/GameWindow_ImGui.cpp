@@ -56,6 +56,8 @@ void GameWindow::InitializeImGui()
 
     fileBrowser_.SetTitle("ROM Select");
     fileBrowser_.SetTypeFilters({".nes"});
+    inputToBind_ = InputType::INVALID;
+    oldKeyStr_ = "";
 }
 
 void GameWindow::OptionsMenu()
@@ -159,7 +161,11 @@ void GameWindow::OptionsMenu()
 
     // Right
     {
-        ImGui::Begin("More Options", nullptr, ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove);
+        ImGuiWindowFlags flags = (ImGuiWindowFlags_NoTitleBar |
+                                  ImGuiWindowFlags_NoResize |
+                                  ImGuiWindowFlags_NoCollapse |
+                                  ImGuiWindowFlags_NoMove);
+        ImGui::Begin("More Options", nullptr, flags);
 
         switch (rightMenuOption_)
         {
@@ -171,6 +177,119 @@ void GameWindow::OptionsMenu()
 
                 // Mute toggle
                 ImGui::Checkbox("Mute audio", &mute_);
+
+                // Key binding
+                ImGui::NewLine();
+                ImGui::Text("NES Controller");
+                ImGui::NewLine();
+
+                ImGui::Text("Up");
+                ImGui::SameLine();
+                ImGui::SetCursorPosX(keyBindButtonXPos_);
+                if (ImGui::Button(keyBindings_[InputType::UP].first.c_str(), keyBindButtonSize_))
+                {
+                    PrepareForBinding(InputType::UP);
+                }
+
+                ImGui::Text("Down");
+                ImGui::SameLine();
+                ImGui::SetCursorPosX(keyBindButtonXPos_);
+                if(ImGui::Button(keyBindings_[InputType::DOWN].first.c_str(), keyBindButtonSize_))
+                {
+                    PrepareForBinding(InputType::DOWN);
+                }
+
+                ImGui::Text("Left");
+                ImGui::SameLine();
+                ImGui::SetCursorPosX(keyBindButtonXPos_);
+                if(ImGui::Button(keyBindings_[InputType::LEFT].first.c_str(), keyBindButtonSize_))
+                {
+                    PrepareForBinding(InputType::LEFT);
+                }
+
+                ImGui::Text("Right");
+                ImGui::SameLine();
+                ImGui::SetCursorPosX(keyBindButtonXPos_);
+                if (ImGui::Button(keyBindings_[InputType::RIGHT].first.c_str(), keyBindButtonSize_))
+                {
+                    PrepareForBinding(InputType::RIGHT);
+                }
+
+                ImGui::Text("A");
+                ImGui::SameLine();
+                ImGui::SetCursorPosX(keyBindButtonXPos_);
+                if (ImGui::Button(keyBindings_[InputType::A].first.c_str(), keyBindButtonSize_))
+                {
+                    PrepareForBinding(InputType::A);
+                }
+
+                ImGui::Text("B");
+                ImGui::SameLine();
+                ImGui::SetCursorPosX(keyBindButtonXPos_);
+                if (ImGui::Button(keyBindings_[InputType::B].first.c_str(), keyBindButtonSize_))
+                {
+                    PrepareForBinding(InputType::B);
+                }
+
+                ImGui::Text("Start");
+                ImGui::SameLine();
+                ImGui::SetCursorPosX(keyBindButtonXPos_);
+                if (ImGui::Button(keyBindings_[InputType::START].first.c_str(), keyBindButtonSize_))
+                {
+                    PrepareForBinding(InputType::START);
+                }
+
+                ImGui::Text("Select");
+                ImGui::SameLine();
+                ImGui::SetCursorPosX(keyBindButtonXPos_);
+                if (ImGui::Button(keyBindings_[InputType::SELECT].first.c_str(), keyBindButtonSize_))
+                {
+                    PrepareForBinding(InputType::SELECT);
+                }
+
+                ImGui::NewLine();
+                ImGui::Text("Other controls");
+                ImGui::NewLine();
+
+                ImGui::Text("Mute");
+                ImGui::SameLine();
+                ImGui::SetCursorPosX(keyBindButtonXPos_);
+                if (ImGui::Button(keyBindings_[InputType::MUTE].first.c_str(), keyBindButtonSize_))
+                {
+                    PrepareForBinding(InputType::MUTE);
+                }
+
+                ImGui::Text("Overscan");
+                ImGui::SameLine();
+                ImGui::SetCursorPosX(keyBindButtonXPos_);
+                if (ImGui::Button(keyBindings_[InputType::OVERSCAN].first.c_str(), keyBindButtonSize_))
+                {
+                    PrepareForBinding(InputType::OVERSCAN);
+                }
+
+                ImGui::Text("Reset");
+                ImGui::SameLine();
+                ImGui::SetCursorPosX(keyBindButtonXPos_);
+                if (ImGui::Button(keyBindings_[InputType::RESET].first.c_str(), keyBindButtonSize_))
+                {
+                    PrepareForBinding(InputType::RESET);
+                }
+
+                ImGui::Text("Speed down");
+                ImGui::SameLine();
+                ImGui::SetCursorPosX(keyBindButtonXPos_);
+                if (ImGui::Button(keyBindings_[InputType::SPEEDDOWN].first.c_str(), keyBindButtonSize_))
+                {
+                    PrepareForBinding(InputType::SPEEDDOWN);
+                }
+
+                ImGui::Text("Speed up");
+                ImGui::SameLine();
+                ImGui::SetCursorPosX(keyBindButtonXPos_);
+                if (ImGui::Button(keyBindings_[InputType::SPEEDUP].first.c_str(), keyBindButtonSize_))
+                {
+                    PrepareForBinding(InputType::SPEEDUP);
+                }
 
                 // Window scale arrows
                 ImGui::NewLine();
@@ -325,6 +444,12 @@ void GameWindow::OptionsMenu()
 
 void GameWindow::ClosePauseMenu()
 {
+    if (inputToBind_ != InputType::INVALID)
+    {
+        keyBindings_[inputToBind_].first = oldKeyStr_;
+        inputToBind_ = InputType::INVALID;
+    }
+
     if (nes_.Ready())
     {
         pauseMenuOpen_ = false;
@@ -399,6 +524,9 @@ void GameWindow::ScaleGui()
     float imageWidth_ = imageHeight_ * ASPECT_RATIO;
     imageSize_ = ImVec2(imageWidth_, imageHeight_);
     imageYPos_ = imageHeight_ / 2.5;
+
+    keyBindButtonSize_ = ImVec2(halfWindowWidth_ / 3.5, windowHeight_ / 25);
+    keyBindButtonXPos_ = halfWindowWidth_ / 2.5;
 }
 
 void GameWindow::LoadSaveStateImages()
@@ -432,4 +560,16 @@ void GameWindow::LoadSaveStateImages()
             SDL_FreeSurface(surface);
         }
     }
+}
+
+void GameWindow::PrepareForBinding(InputType keyToBind)
+{
+    if (inputToBind_ != InputType::INVALID)
+    {
+        keyBindings_[inputToBind_].first = oldKeyStr_;
+    }
+
+    oldKeyStr_ = keyBindings_[keyToBind].first;
+    keyBindings_[keyToBind].first = "...";
+    inputToBind_ = keyToBind;
 }

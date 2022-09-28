@@ -5,6 +5,7 @@
 #include <fstream>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 #include <SDL.h>
 #include <SDL_image.h>
@@ -36,6 +37,8 @@ GameWindow::GameWindow(NES& nes, uint8_t* frameBuffer, std::filesystem::path rom
     overscan_ = false;
     mute_ = false;
     windowScale_ = static_cast<WindowScale>(WINDOW_SCALE);
+
+    InitializeKeyBindings();
 }
 
 void GameWindow::Run()
@@ -237,14 +240,14 @@ void GameWindow::SetControllerInputs()
     uint8_t const* keyStates = SDL_GetKeyboardState(nullptr);
     uint8_t controller1 = 0x00;
 
-    controller1 |= keyStates[SDL_SCANCODE_L] ? 0x01 : 0x00; // A
-    controller1 |= keyStates[SDL_SCANCODE_K] ? 0x02 : 0x00; // B
-    controller1 |= keyStates[SDL_SCANCODE_O] ? 0x04 : 0x00; // SELECT
-    controller1 |= keyStates[SDL_SCANCODE_P] ? 0x08 : 0x00; // START
-    controller1 |= keyStates[SDL_SCANCODE_W] ? 0x10 : 0x00; // UP
-    controller1 |= keyStates[SDL_SCANCODE_S] ? 0x20 : 0x00; // DOWN
-    controller1 |= keyStates[SDL_SCANCODE_A] ? 0x40 : 0x00; // LEFT
-    controller1 |= keyStates[SDL_SCANCODE_D] ? 0x80 : 0x00; // RIGHT
+    controller1 |= keyStates[keyBindings_[InputType::A].second] ? 0x01 : 0x00;
+    controller1 |= keyStates[keyBindings_[InputType::B].second] ? 0x02 : 0x00;
+    controller1 |= keyStates[keyBindings_[InputType::SELECT].second] ? 0x04 : 0x00;
+    controller1 |= keyStates[keyBindings_[InputType::START].second] ? 0x08 : 0x00;
+    controller1 |= keyStates[keyBindings_[InputType::UP].second] ? 0x10 : 0x00;
+    controller1 |= keyStates[keyBindings_[InputType::DOWN].second] ? 0x20 : 0x00;
+    controller1 |= keyStates[keyBindings_[InputType::LEFT].second] ? 0x40 : 0x00;
+    controller1 |= keyStates[keyBindings_[InputType::RIGHT].second] ? 0x80 : 0x00;
 
     nes_.SetControllerInputs(controller1, 0x00);
 }
@@ -321,5 +324,32 @@ void GameWindow::LoadSaveState()
         {
             nes_.Deserialize(saveState);
         }
+    }
+}
+
+void GameWindow::InitializeKeyBindings()
+{
+    inputToBind_ = InputType::INVALID;
+
+    keyBindings_[InputType::UP] = std::make_pair("W", SDL_SCANCODE_W);
+    keyBindings_[InputType::DOWN] = std::make_pair("S", SDL_SCANCODE_S);
+    keyBindings_[InputType::LEFT] = std::make_pair("A", SDL_SCANCODE_A);
+    keyBindings_[InputType::RIGHT] = std::make_pair("D", SDL_SCANCODE_D);
+
+    keyBindings_[InputType::A] = std::make_pair("L", SDL_SCANCODE_L);
+    keyBindings_[InputType::B] = std::make_pair("K", SDL_SCANCODE_K);
+
+    keyBindings_[InputType::START] = std::make_pair("P", SDL_SCANCODE_P);
+    keyBindings_[InputType::SELECT] = std::make_pair("O", SDL_SCANCODE_O);
+
+    keyBindings_[InputType::MUTE] = std::make_pair("M", SDL_SCANCODE_M);
+    keyBindings_[InputType::OVERSCAN] = std::make_pair("T", SDL_SCANCODE_T);
+    keyBindings_[InputType::RESET] = std::make_pair("R", SDL_SCANCODE_R);
+    keyBindings_[InputType::SPEEDDOWN] = std::make_pair("LEFT", SDL_SCANCODE_LEFT);
+    keyBindings_[InputType::SPEEDUP] = std::make_pair("RIGHT", SDL_SCANCODE_RIGHT);
+
+    for (auto [inputType, inputInfo] : keyBindings_)
+    {
+        reverseKeyBindings_[inputInfo.second] = inputType;
     }
 }

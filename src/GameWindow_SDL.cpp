@@ -2,6 +2,7 @@
 #include "../include/NesComponent.hpp"
 #include "../include/Paths.hpp"
 #include <filesystem>
+#include <utility>
 #include <SDL.h>
 #include <SDL_image.h>
 
@@ -41,52 +42,85 @@ void GameWindow::InitializeSDL()
     renderThread_ = nullptr;
 }
 
-void GameWindow::HandleSDLInputs(SDL_Scancode key)
+void GameWindow::HandleSDLInputs(SDL_Scancode scancode)
 {
     if (!pauseMenuOpen_)
     {
-        switch (key)
+        if (scancode == keyBindings_[InputType::RESET].second)
         {
-            case SDL_SCANCODE_R:
-                resetNES_ = true;
-                break;
-            case SDL_SCANCODE_T:
-                overscan_ = !overscan_;
-                nes_.SetOverscan(overscan_);
-                break;
-            case SDL_SCANCODE_M:
-                mute_ = !mute_;
-                break;
-            case SDL_SCANCODE_ESCAPE:
-                pauseMenuOpen_ = true;
-                LockAudio();
+            resetNES_ = true;
+        }
+        else if (scancode == keyBindings_[InputType::OVERSCAN].second)
+        {
+            overscan_ = !overscan_;
+            nes_.SetOverscan(overscan_);
+        }
+        else if (scancode == keyBindings_[InputType::MUTE].second)
+        {
+            mute_ = !mute_;
+        }
+        else if (scancode == keyBindings_[InputType::SPEEDDOWN].second)
+        {
+            UpdateClockMultiplier(false);
+        }
+        else if (scancode == keyBindings_[InputType::SPEEDUP].second)
+        {
+            UpdateClockMultiplier(true);
+        }
+        else
+        {
+            switch (scancode)
+            {
+                case SDL_SCANCODE_ESCAPE:
+                    pauseMenuOpen_ = true;
+                    LockAudio();
 
-                if ((rightMenuOption_ == RightMenuOption::SAVE) || (rightMenuOption_ == RightMenuOption::LOAD))
-                {
-                    LoadSaveStateImages();
-                }
-                break;
-            case SDL_SCANCODE_LEFT:
-                UpdateClockMultiplier(false);
-                break;
-            case SDL_SCANCODE_RIGHT:
-                UpdateClockMultiplier(true);
-                break;
-            case SDL_SCANCODE_1 ... SDL_SCANCODE_5:
-                saveStateNum_ = (int)key - 29;
-                serialize_ = true;
-                break;
-            case SDL_SCANCODE_F1 ... SDL_SCANCODE_F5:
-                saveStateNum_ = (int)key - 57;
-                deserialize_ = true;
-                break;
-            default:
-                break;
+                    if ((rightMenuOption_ == RightMenuOption::SAVE) || (rightMenuOption_ == RightMenuOption::LOAD))
+                    {
+                        LoadSaveStateImages();
+                    }
+                    break;
+                case SDL_SCANCODE_1 ... SDL_SCANCODE_5:
+                    saveStateNum_ = (int)scancode - 29;
+                    serialize_ = true;
+                    break;
+                case SDL_SCANCODE_F1 ... SDL_SCANCODE_F5:
+                    saveStateNum_ = (int)scancode - 57;
+                    deserialize_ = true;
+                    break;
+                default:
+                    break;
+            }
         }
     }
-    else if (key == SDL_SCANCODE_ESCAPE)
+    else if (scancode == SDL_SCANCODE_ESCAPE)
     {
         ClosePauseMenu();
+    }
+    else if (inputToBind_ != InputType::INVALID)
+    {
+        if (((scancode >= SDL_SCANCODE_1) && (scancode <= SDL_SCANCODE_5)) ||
+            ((scancode >= SDL_SCANCODE_F1) && (scancode <= SDL_SCANCODE_F5)))
+        {
+            return;
+        }
+
+        if (keyBindings_[inputToBind_].second == scancode)
+        {
+            keyBindings_[inputToBind_].first = oldKeyStr_;
+            inputToBind_ = InputType::INVALID;
+            return;
+        }
+
+        if (reverseKeyBindings_.count(scancode) == 1)
+        {
+            keyBindings_[reverseKeyBindings_[scancode]] = std::make_pair("NOT SET", SDL_SCANCODE_UNKNOWN);
+        }
+
+        reverseKeyBindings_.erase(keyBindings_[inputToBind_].second);
+        reverseKeyBindings_[scancode] = inputToBind_;
+        keyBindings_[inputToBind_] = std::make_pair(SDL_GetScancodeName(scancode), scancode);
+        inputToBind_ = InputType::INVALID;
     }
 }
 

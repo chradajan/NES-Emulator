@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <tuple>
+#include <utility>
 #include <SDL.h>
 #include "../library/imgui/imgui.h"
 #include "../library/imgui/imfilebrowser.h"
@@ -101,6 +102,9 @@ private:
     float imageYPos_;
     ImVec2 imageSize_;
 
+    ImVec2 keyBindButtonSize_;
+    float keyBindButtonXPos_;
+
     ImFont* smallFont_;
     ImFont* mediumFont_;
     ImFont* largeFont_;
@@ -127,6 +131,18 @@ private:
     void ScaleGui();
     void ShowSaveStates(bool save);
     void LoadSaveStateImages();
+
+// Key bindings
+private:
+    enum class InputType { UP, DOWN, LEFT, RIGHT, A, B, START, SELECT, MUTE, OVERSCAN, RESET, SPEEDDOWN, SPEEDUP, INVALID };
+    std::unordered_map<InputType, std::pair<std::string, SDL_Scancode>> keyBindings_;
+    std::unordered_map<SDL_Scancode, InputType> reverseKeyBindings_;
+
+    InputType inputToBind_;
+    std::string oldKeyStr_;
+
+    void InitializeKeyBindings();
+    void PrepareForBinding(InputType keyToBind);
 };
 
 #endif
