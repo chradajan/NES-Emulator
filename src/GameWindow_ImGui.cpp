@@ -172,11 +172,16 @@ void GameWindow::OptionsMenu()
             case RightMenuOption::SETTINGS:
             {
                 // Overscan toggle
+                ImGui::NewLine();
                 ImGui::Checkbox("Overscan", &overscan_);
                 nes_.SetOverscan(overscan_);
 
                 // Mute toggle
                 ImGui::Checkbox("Mute audio", &mute_);
+
+                // Volume level
+                ImGui::NewLine();
+                ImGui::SliderInt("Volume", &audioVolume_, 0, 100, "%d%%", ImGuiSliderFlags_NoInput);
 
                 // Key binding
                 ImGui::NewLine();
@@ -336,6 +341,8 @@ void GameWindow::OptionsMenu()
                 {
                     UpdateClockMultiplier(true);
                 }
+
+                ImGui::NewLine();
                 break;
             }
             case RightMenuOption::SAVE:

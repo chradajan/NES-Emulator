@@ -120,6 +120,7 @@ private:
 
     bool overscan_;
     bool mute_;
+    int audioVolume_;
 
     enum WindowScale { TWO = 2, THREE, FOUR, FIVE };
     WindowScale windowScale_;

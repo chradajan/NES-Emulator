@@ -36,6 +36,7 @@ GameWindow::GameWindow(NES& nes, uint8_t* frameBuffer, std::filesystem::path rom
     rightMenuOption_ = RightMenuOption::BLANK;
     overscan_ = false;
     mute_ = false;
+    audioVolume_ = 100;
     windowScale_ = static_cast<WindowScale>(WINDOW_SCALE);
 
     LoadKeyBindings();
@@ -173,6 +174,7 @@ void GameWindow::GetAudioSamples(void* userdata, Uint8* stream, int len)
     GameWindow* gameWindow = static_cast<GameWindow*>(userdata);
     int numSamples = len / sizeof(int16_t);
     int16_t* buffer = (int16_t*)stream;
+    float audioVolume = gameWindow->audioVolume_ / 100.0;
 
     for (int i = 0; i < numSamples; ++i)
     {
@@ -196,7 +198,7 @@ void GameWindow::GetAudioSamples(void* userdata, Uint8* stream, int len)
         }
         else
         {
-            buffer[i] = gameWindow->nes_.GetAudioSample();
+            buffer[i] = gameWindow->nes_.GetAudioSample() * audioVolume;
         }
     }
 }
