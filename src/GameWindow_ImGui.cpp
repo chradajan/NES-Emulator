@@ -45,9 +45,9 @@ void GameWindow::InitializeImGui()
     ImGuiIO& io = ImGui::GetIO();
     ImGui::StyleColorsDark();
 
-    smallFont_ = io.Fonts->AddFontFromFileTTF("../library/imgui/fonts/DroidSans.ttf", 16.0);
-    mediumFont_ = io.Fonts->AddFontFromFileTTF("../library/imgui/fonts/DroidSans.ttf", 24.0);
-    largeFont_ = io.Fonts->AddFontFromFileTTF("../library/imgui/fonts/DroidSans.ttf", 34.0);
+    smallFont_ = io.Fonts->AddFontFromFileTTF(FONT_PATH.string().c_str(), 16.0);
+    mediumFont_ = io.Fonts->AddFontFromFileTTF(FONT_PATH.string().c_str(), 24.0);
+    largeFont_ = io.Fonts->AddFontFromFileTTF(FONT_PATH.string().c_str(), 34.0);
 
     io.FontDefault = largeFont_;
 
