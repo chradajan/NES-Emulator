@@ -335,19 +335,18 @@ inline void ImGui::FileBrowser::Display()
                     ImVec2(static_cast<float>(posX_), static_cast<float>(posY_)),
                     ImGuiCond_FirstUseEver);
         SetNextWindowSize(
-            ImVec2(static_cast<float>(width_), static_cast<float>(height_)),
-            ImGuiCond_FirstUseEver);
+            ImVec2(static_cast<float>(width_), static_cast<float>(height_)));
     }
     if(flags_ & ImGuiFileBrowserFlags_NoModal)
     {
-        if(!BeginPopup(openLabel_.c_str()))
+        if(!BeginPopup(openLabel_.c_str(), ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
         {
             return;
         }
     }
     else if(!BeginPopupModal(openLabel_.c_str(), nullptr,
-                             flags_ & ImGuiFileBrowserFlags_NoTitleBar ?
-                                ImGuiWindowFlags_NoTitleBar : 0))
+                             (flags_ & ImGuiFileBrowserFlags_NoTitleBar ?
+                                ImGuiWindowFlags_NoTitleBar : 0) | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove))
     {
         return;
     }

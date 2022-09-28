@@ -18,8 +18,7 @@ static double timePerNesClock = TIME_PER_NES_CLOCK;
 
 GameWindow::GameWindow(NES& nes, uint8_t* frameBuffer, std::filesystem::path romPath) :
     nes_(nes),
-    frameBuffer_(frameBuffer),
-    fileBrowser_(ImGuiFileBrowserFlags_NoModal)
+    frameBuffer_(frameBuffer)
 {
     clockMultiplier_ = ClockMultiplier::NORMAL;
     romHash_ = "";
