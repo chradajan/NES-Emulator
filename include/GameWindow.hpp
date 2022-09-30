@@ -7,9 +7,9 @@
 #include <unordered_map>
 #include <tuple>
 #include <utility>
-#include <SDL.h>
-#include "../library/imgui/imgui.h"
-#include "../library/imgui/imfilebrowser.h"
+#include <SDL2/SDL.h>
+#include <imgui.h>
+#include <imfilebrowser.h>
 
 // Rendering window
 constexpr int SCREEN_WIDTH = 256;
