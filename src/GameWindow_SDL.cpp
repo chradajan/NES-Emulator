@@ -3,8 +3,8 @@
 #include "../include/Paths.hpp"
 #include <filesystem>
 #include <utility>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
+#include <SDL.h>
+#include <SDL_image.h>
 
 void GameWindow::InitializeSDL()
 {
@@ -16,7 +16,7 @@ void GameWindow::InitializeSDL()
                                SDL_WINDOWPOS_UNDEFINED,
                                SCREEN_WIDTH * WINDOW_SCALE,
                                SCREEN_HEIGHT * WINDOW_SCALE,
-                               SDL_WINDOW_ALLOW_HIGHDPI);
+                               0);
 
     SDL_SetWindowMinimumSize(window_, SCREEN_WIDTH * 2, SCREEN_HEIGHT * 2);
     SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
@@ -117,6 +117,7 @@ void GameWindow::LockAudio()
 
 void GameWindow::UnlockAudio()
 {
+    SDL_ClearQueuedAudio(audioDevice_);
     SDL_UnlockAudioDevice(audioDevice_);
     SDL_PauseAudioDevice(audioDevice_, 0);
 }

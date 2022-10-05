@@ -157,7 +157,7 @@ private:
         READ,
         WRITE_Y,
         WRITE_DATA,
-        OVERFLOW,
+        SPRITE_OVERFLOW,
         FINISHED,
     };
     SpriteEvalState spriteState_;

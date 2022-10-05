@@ -8,12 +8,12 @@
 #include <sstream>
 #include <tuple>
 #include <unordered_map>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-#include <imgui.h>
-#include <imgui_impl_sdl.h>
-#include <imgui_impl_sdlrenderer.h>
-#include <imfilebrowser.h>
+#include <SDL.h>
+#include <SDL_image.h>
+#include "../library/DearImGui/imgui.h"
+#include "../library/DearImGui/imgui_impl_sdl.h"
+#include "../library/DearImGui/imgui_impl_sdlrenderer.h"
+#include "../library/DearImGui/imfilebrowser.h"
 
 std::unordered_map<GameWindow::ClockMultiplier, std::string> GameWindow::clockMultiplierMap_ = {
     {ClockMultiplier::QUARTER,      "0.25x"},

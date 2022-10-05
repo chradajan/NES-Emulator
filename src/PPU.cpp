@@ -881,7 +881,7 @@ void PPU::SpriteEvaluation()
 
             if (spritesFound_ == 8)
             {
-                spriteState_ = SpriteEvalState::OVERFLOW;
+                spriteState_ = SpriteEvalState::SPRITE_OVERFLOW;
             }
             else if (oamOffset_ == 0)
             {
@@ -952,7 +952,7 @@ void PPU::SpriteEvaluation()
             }
             break;
         }
-        case SpriteEvalState::OVERFLOW:
+        case SpriteEvalState::SPRITE_OVERFLOW:
         {
             int16_t yOffset = scanline_ - oamByte_;
             uint8_t spriteHeight = ((MemMappedRegisters_.PPUCTRL & SPRITE_SIZE_MASK) == SPRITE_SIZE_MASK) ? 16 : 8;

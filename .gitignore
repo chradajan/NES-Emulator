@@ -6,3 +6,5 @@ logs/
 NES_EMU.exe
 imgui.ini
 KeyBindings.txt
+.DS_Store
+NES_EMU

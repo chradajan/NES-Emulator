@@ -22,7 +22,7 @@ public:
     virtual void HalfFrameClock() = 0;
     virtual void QuarterFrameClock() = 0;
 
-    virtual void RegisterUpdate(uint16_t addr, uint8_t data);
+    virtual void RegisterUpdate(uint16_t addr, uint8_t data) = 0;
 
     virtual void Serialize(std::ofstream& saveState) = 0;
     virtual void Deserialize(std::ifstream& saveState) = 0;

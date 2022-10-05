@@ -7,9 +7,9 @@
 #include <unordered_map>
 #include <tuple>
 #include <utility>
-#include <SDL2/SDL.h>
-#include <imgui.h>
-#include <imfilebrowser.h>
+#include <SDL.h>
+#include "../library/DearImGui/imgui.h"
+#include "../library/DearImGui/imfilebrowser.h"
 
 // Rendering window
 constexpr int SCREEN_WIDTH = 256;
@@ -17,7 +17,7 @@ constexpr int SCREEN_HEIGHT = 240;
 constexpr int CHANNELS = 3;
 constexpr int DEPTH = CHANNELS * 8;
 constexpr int PITCH = SCREEN_WIDTH * CHANNELS;
-constexpr int WINDOW_SCALE = 4;
+constexpr int WINDOW_SCALE = 3;
 constexpr float ASPECT_RATIO = (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
 
 // Audio

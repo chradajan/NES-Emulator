@@ -7,12 +7,12 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_image.h>
-#include <imgui.h>
-#include <imgui_impl_sdl.h>
-#include <imgui_impl_sdlrenderer.h>
-#include <imfilebrowser.h>
+#include <SDL.h>
+#include <SDL_image.h>
+#include "../library/DearImGui/imgui.h"
+#include "../library/DearImGui/imgui_impl_sdl.h"
+#include "../library/DearImGui/imgui_impl_sdlrenderer.h"
+#include "../library/DearImGui/imfilebrowser.h"
 #include "../library/md5/md5.hpp"
 
 static double timePerNesClock = TIME_PER_NES_CLOCK;
